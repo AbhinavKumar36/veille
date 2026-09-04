@@ -1,0 +1,52 @@
+## VEILLE v4.0 — Backend Python Dependencies
+
+# --- Web Framework ---
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+python-multipart==0.0.6    # Required for form/file uploads
+
+# --- Data Validation ---
+pydantic==2.5.2
+pydantic-settings==2.1.0   # Replaces hardcoded config — reads from .env
+
+# --- Database ---
+SQLAlchemy==2.0.23
+psycopg2-binary==2.9.9     # PostgreSQL driver
+alembic==1.13.0             # Schema migrations
+
+# --- Graph Database ---
+neo4j==5.11.0
+
+# --- Authentication ---
+python-jose[cryptography]==3.3.0  # JWT encoding/decoding
+passlib[bcrypt]==1.7.4            # bcrypt password hashing
+
+# --- Async Task Queue ---
+celery==5.3.4
+redis==5.0.0
+
+# --- Kafka (CDR Streaming) ---
+confluent-kafka==2.3.0
+
+# --- Object Storage ---
+minio==7.2.0                      # MinIO/S3 client
+
+# --- AI / ML ---
+google-genai                       # Gemini API client
+
+# --- Utilities ---
+httpx==0.25.2                     # Async HTTP client (for testing + webhooks)
+pytesseract==0.3.10               # OCR for scanned PDFs
+
+# --- Testing (install with: pip install -r requirements-test.txt) ---
+# See requirements-test.txt
+rapidfuzz==3.5.2
+
+# --- Observability / OpenTelemetry ---
+opentelemetry-api==1.22.0
+opentelemetry-sdk==1.22.0
+opentelemetry-instrumentation-fastapi==0.43b0
+opentelemetry-instrumentation-sqlalchemy==0.43b0
+opentelemetry-instrumentation-redis==0.43b0
+opentelemetry-instrumentation-celery==0.43b0
+opentelemetry-exporter-otlp==1.22.0

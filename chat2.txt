@@ -1,0 +1,32 @@
+I went through the codebase in detail — backend, ML pipeline, infra, and frontend. Overall this is a genuinely strong hackathon submission: real architecture, not just a mockup. But there are a few things worth fixing before you demo or submit, including one urgent one.
+
+🚨 Fix this first: a live API key is sitting in the zip
+
+backend/.env is included in the archive with what looks like a real Gemini API key. .env isn't in any .gitignore (there's no root or backend .gitignore at all), so this would get committed straight to GitHub if you push as-is. Revoke/rotate that key now, then add a proper .gitignore (.env, celerybeat-schedule.*, __pycache__/, node_modules/, dist/) and commit a .env.example with placeholder values instead. SIH judges and mentors will look at your repo — a leaked key is the kind of thing that gets noticed fast.
+
+Architecture — the real strengths
+Auth (api/auth.py) is legitimately solid: bcrypt with cost 12, short-lived access token + httpOnly refresh cookie, RBAC via a clean require_role() dependency factory, audit logging that never crashes the request on failure. This is production-shaped code, not hackathon-shaped.
+ml/nlp/extractor.py is the standout piece: constrained-schema Gemini extraction with Pydantic validation, a 3-attempt retry loop that feeds the validation error back to the model, explicit ConfigurationError/GeminiAPIError/ExtractionValidationError — no silent mock fallback. This is exactly the kind of rigor that impresses judges who actually read code.
+ml/entity_resolution/resolver.py — two-stage lexical (RapidFuzz) + graph-proximity matching with clear confidence thresholds (auto-merge ≥0.85, review queue 0.50–0.85, create-new below) is a genuinely good design for the entity-resolution problem, and it's documented against a named spec.
+Postgres-as-system-of-record + Neo4j-as-graph split, with Case-scoped isolation on every entity, is the right call for a multi-tenant investigation tool.
+Test suite has real integration tests (auth flow, ingestion flow, outbox sync, review queue) plus a --cov-fail-under=70 gate — that's more testing discipline than most SIH teams bring.
+The one inconsistency that could hurt you in Q&A
+
+backend/api/routers/ai.py (the chat assistant) doesn't match the rigor of the rest of the pipeline. Look closely and:
+
+The extracted_entities and citations returned to the frontend are hardcoded literals ("Rajesh Kumar", "Shadow Ring Syndicate", Swiss account #9876...) — they're returned unconditionally, regardless of what the LLM actually said or what the Neo4j RAG query actually returned.
+Even the "fallback context" injected into the Gemini prompt when Neo4j is unreachable is the same canned narrative.
+This is fine as seed/demo data (and I can see it's consistently used across seed.py, GeospatialExplorer, NetworkExplorer, ReviewQueue — so it reads as an intentional demo dataset). But in ai.py specifically, it's presented as if it were extracted/cited from the live query, which it isn't. If a judge asks "is this analysis actually coming from the graph, or is it scripted?", the honest answer right now is "scripted" — and that's a bad moment to discover live. I'd either (a) make entities/citations actually derive from _fetch_graph_context's query results, or (b) at minimum rename this to something like _demo_entities and be upfront in your pitch that it's illustrative pending full graph-citation wiring.
+Smaller things worth cleaning up
+Naming leftover: main.py, config.py, and log messages all say "VEILLE" (title, logger name, default DB user/password VEILLE/VEILLE_db, admin@VEILLE.gov.in) while everything else (docker-compose, ML modules, tests) says "CRIMENET". Looks like a rename that didn't fully propagate — worth a global find/replace before you present, since a judge spotting "VEILLE" in your API docs after you've pitched "CRIMENET" invites an awkward question about where the code actually came from.
+Default admin password is admin123 and the JWT secret defaults to the placeholder string CHANGE_ME_USE_A_LONG_RANDOM_STRING... — fine as defaults, but make sure your actual demo .env overrides both, and mention in your docs that these are dev-only.
+docker-compose.yml only brings up infra (Postgres, Neo4j, Redis, MinIO, Zookeeper+Kafka) — 6 containers — but not the FastAPI app, Celery workers, or frontend. That's a lot of infra for judges/mentors to spin up manually during a live demo. Worth either adding backend/worker/frontend services to the compose file, or having a one-command make demo / start script ready so you're not manually juggling 3 terminals when it's your turn to present.
+Kafka+Zookeeper for CDR streaming is architecturally impressive but heavy — worth asking whether you'll actually demo streaming ingestion live, or whether a simpler batch path would be less risky to run on unfamiliar hardware at the venue.
+Mixed .jsx/.tsx in frontend/src/components (some components typed, some not) — not a bug, but inconsistent; if you have time, finishing the TS migration would look more polished under scrutiny.
+My priority order if time is limited before submission
+Rotate the leaked Gemini key + add .gitignore (5 min, non-negotiable)
+Fix VEILLE→CRIMENET naming in main.py/config.py (10 min, avoids an awkward judge question)
+Either wire real entities/citations into ai.py or relabel them as demo output (protects you in Q&A)
+Add backend/worker/frontend to docker-compose or a start script (de-risks the live demo)
+
+Want me to actually implement any of these — e.g., patch the .gitignore + rename pass, or wire _fetch_graph_context's results into the entity/citation response in ai.py?

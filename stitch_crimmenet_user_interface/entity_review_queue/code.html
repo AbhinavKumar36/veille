@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CRIMENET - Review Queue</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-fixed-dim": "#00daf3",
+                        "tertiary-fixed": "#e8deff",
+                        "on-primary-container": "#00626e",
+                        "secondary": "#bdc2ff",
+                        "inverse-on-surface": "#2f3035",
+                        "primary-fixed": "#9cf0ff",
+                        "stroke-subtle": "rgba(255, 255, 255, 0.08)",
+                        "secondary-container": "#343d96",
+                        "data-node-person": "#00E5FF",
+                        "on-tertiary-container": "#622be5",
+                        "tertiary": "#f1e9ff",
+                        "primary": "#c3f5ff",
+                        "primary-container": "#00e5ff",
+                        "inverse-surface": "#e2e2e8",
+                        "secondary-fixed": "#e0e0ff",
+                        "on-surface": "#e2e2e8",
+                        "on-secondary-fixed-variant": "#343d96",
+                        "tertiary-container": "#d6c9ff",
+                        "on-tertiary-fixed-variant": "#4f00d0",
+                        "on-secondary": "#1b247f",
+                        "outline": "#849396",
+                        "on-background": "#e2e2e8",
+                        "on-primary": "#00363d",
+                        "on-error-container": "#ffdad6",
+                        "surface-container-high": "#282a2e",
+                        "surface-variant": "#333539",
+                        "surface": "#111318",
+                        "status-success": "#00E676",
+                        "background": "#111318",
+                        "on-tertiary": "#370096",
+                        "status-critical": "#FF3D00",
+                        "outline-variant": "#3b494c",
+                        "surface-card": "#0D1117",
+                        "surface-bright": "#37393e",
+                        "error-container": "#93000a",
+                        "on-secondary-fixed": "#000767",
+                        "data-node-event": "#FF4081",
+                        "surface-dim": "#111318",
+                        "tertiary-fixed-dim": "#cdbdff",
+                        "inverse-primary": "#006875",
+                        "status-warning": "#FFB300",
+                        "on-tertiary-fixed": "#20005f",
+                        "on-surface-variant": "#bac9cc",
+                        "on-primary-fixed": "#001f24",
+                        "surface-container-low": "#1a1c20",
+                        "surface-tint": "#00daf3",
+                        "on-secondary-container": "#a8afff",
+                        "on-primary-fixed-variant": "#004f58",
+                        "surface-container": "#1e2024",
+                        "on-error": "#690005",
+                        "surface-elevated": "#161B22",
+                        "surface-container-lowest": "#0c0e12",
+                        "surface-container-highest": "#333539",
+                        "secondary-fixed-dim": "#bdc2ff",
+                        "error": "#ffb4ab"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "sidebar-width": "280px",
+                        "margin-desktop": "32px",
+                        "gutter": "16px",
+                        "margin-mobile": "16px",
+                        "inspector-width": "400px",
+                        "unit": "4px"
+                    },
+                    "fontFamily": {
+                        "label-caps": ["JetBrains Mono"],
+                        "headline-md": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "data-code": ["JetBrains Mono"]
+                    },
+                    "fontSize": {
+                        "label-caps": ["11px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "data-code": ["13px", { "lineHeight": "18px", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { background-color: #0A0C10; } /* Fallback matching design doc Level 0 */
+    </style>
+</head>
+<body class="bg-background text-on-surface h-screen overflow-hidden flex selection:bg-primary-fixed-dim selection:text-on-primary-fixed">
+<!-- JSON: SideNavBar -->
+<nav class="bg-surface dark:bg-surface fixed left-0 top-0 h-full w-[280px] border-r border-stroke-subtle flex flex-col h-full py-4 z-40">
+<div class="px-6 mb-8">
+<div class="font-headline-sm text-headline-sm font-bold text-primary-fixed-dim tracking-tighter">CRIMENET</div>
+<div class="font-label-caps text-label-caps text-on-surface-variant mt-1 tracking-widest opacity-70">Intelligence Fusion</div>
+</div>
+<div class="flex flex-col gap-1 px-4 flex-1">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors duration-200 ease-in-out font-label-caps text-label-caps" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+                Dashboard
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors duration-200 ease-in-out font-label-caps text-label-caps" href="#">
+<span class="material-symbols-outlined" data-icon="hub">hub</span>
+                Network Explorer
+            </a>
+<!-- Active State -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-primary-fixed-dim bg-primary-container/10 border-r-2 border-primary-fixed-dim transition-colors duration-200 ease-in-out font-label-caps text-label-caps" href="#">
+<span class="material-symbols-outlined" data-icon="rule" data-weight="fill" style="font-variation-settings: 'FILL' 1;">rule</span>
+                Review Queue
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors duration-200 ease-in-out font-label-caps text-label-caps" href="#">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+                Evidence Library
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors duration-200 ease-in-out font-label-caps text-label-caps" href="#">
+<span class="material-symbols-outlined" data-icon="history_edu">history_edu</span>
+                Audit Logs
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors duration-200 ease-in-out font-label-caps text-label-caps mt-auto" href="#">
+<span class="material-symbols-outlined" data-icon="folder_shared">folder_shared</span>
+                Case Selector
+            </a>
+</div>
+<div class="mt-4 px-6 pt-4 border-t border-stroke-subtle flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-container-high overflow-hidden border border-stroke-subtle">
+<img class="w-full h-full object-cover" data-alt="A clinical, high-contrast digital avatar of a corporate investigator in dark mode styling, subtle blue neon accents, minimalist vector art style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDglMSsROG9BQ-373ywxiD0U4e1LYSeLfHih6KtkTBlPjYG3N-Yxu8Z565KBy0LZLKbERRW_wkTMlGLnPGOBvQeXajJpNf-xkKFbpFbks-K9NAG3aRnmJwxiQ8VQriWurBPMsFbRz1imYMr7v2ZSnyPIoMmTGDGZPO6kKKIaE5w8X3WcGuT7jrF4o1fFpljqUhshCl9ol2abkoYmh7aHhz60kmbDdsfuAUzLXi3uvrgd5KAx9gY4WAL"/>
+</div>
+<div class="font-label-caps text-label-caps text-on-surface-variant">Inv. ID: 4920</div>
+</div>
+</nav>
+<!-- JSON: TopAppBar -->
+<header class="bg-surface dark:bg-surface fixed top-0 right-0 w-[calc(100%-280px)] h-16 border-b border-stroke-subtle flex items-center justify-between px-margin-desktop z-30">
+<div class="flex items-center gap-4">
+<div class="font-headline-sm text-headline-sm font-bold text-primary-fixed-dim">CRIMENET</div>
+<div class="h-4 w-px bg-stroke-subtle mx-2"></div>
+<a class="text-primary-fixed-dim font-bold font-body-md text-body-md transition-all duration-150" href="#">Active Case: ALPHA-7</a>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2 px-3 py-1 bg-surface-container rounded border border-stroke-subtle">
+<span class="material-symbols-outlined text-status-critical text-[16px]" data-icon="warning">warning</span>
+<span class="font-label-caps text-label-caps text-status-critical">Priority: Critical</span>
+</div>
+<div class="flex items-center gap-3">
+<button class="text-on-surface-variant hover:text-primary-fixed transition-all duration-150 flex items-center justify-center w-8 h-8 rounded-full hover:bg-surface-container-high">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary-fixed transition-all duration-150 flex items-center justify-center w-8 h-8 rounded-full hover:bg-surface-container-high">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Main Workspace -->
+<main class="ml-[280px] mt-16 w-[calc(100%-280px)] h-[calc(100vh-64px-32px)] overflow-y-auto bg-background p-margin-desktop pb-24">
+<!-- Page Header -->
+<div class="mb-8 flex items-end justify-between border-b border-stroke-subtle pb-4">
+<div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface mb-2">Review Queue</h1>
+<p class="font-data-code text-data-code text-on-surface-variant flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-status-warning animate-pulse"></span>
+                    14 Pending Resolutions
+                </p>
+</div>
+<div class="flex gap-2">
+<button class="px-4 py-2 bg-surface-container border border-stroke-subtle rounded-lg font-label-caps text-label-caps hover:bg-surface-bright flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]" data-icon="filter_list">filter_list</span>
+                    Filter
+                </button>
+<button class="px-4 py-2 bg-surface-container border border-stroke-subtle rounded-lg font-label-caps text-label-caps hover:bg-surface-bright flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]" data-icon="sort">sort</span>
+                    Sort by Confidence
+                </button>
+</div>
+</div>
+<!-- The Review Card (Ambiguous Match) -->
+<div class="bg-surface-container rounded-xl border border-stroke-subtle flex flex-col mb-8 overflow-hidden">
+<!-- Card Header -->
+<div class="bg-surface px-6 py-4 border-b border-stroke-subtle flex justify-between items-center">
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2 bg-status-warning/10 text-status-warning px-3 py-1 rounded-full border border-status-warning/20">
+<span class="material-symbols-outlined text-[16px]" data-icon="join_inner">join_inner</span>
+<span class="font-label-caps text-label-caps">Ambiguous Identity Match</span>
+</div>
+<span class="font-data-code text-data-code text-on-surface-variant">SYS_REF: AMB-992-K</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="font-label-caps text-label-caps text-on-surface-variant">System Confidence:</span>
+<div class="flex items-center gap-2">
+<!-- 0.72 > 0.6, so it's technically ok, but we use a distinct color for this state to show it needs review -->
+<div class="w-32 h-2 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-primary-fixed-dim w-[72%]"></div>
+</div>
+<span class="font-data-code text-data-code text-primary-fixed-dim font-bold">0.72</span>
+</div>
+</div>
+</div>
+<!-- Split View Content -->
+<div class="grid grid-cols-2 divide-x divide-stroke-subtle">
+<!-- Entity A -->
+<div class="p-6">
+<div class="flex justify-between items-center mb-6">
+<span class="font-label-caps text-label-caps text-on-surface-variant">Entity A (Source: VITAL_REC)</span>
+<span class="font-data-code text-data-code bg-surface px-2 py-1 rounded border border-stroke-subtle">ID: E-4482-1</span>
+</div>
+<div class="space-y-4">
+<!-- Data Row: Name (Difference) -->
+<div>
+<div class="font-label-caps text-label-caps text-on-surface-variant mb-1">Full Name</div>
+<div class="font-body-lg text-body-lg text-on-surface bg-surface-container-high/50 p-2 rounded border border-status-warning/30 flex justify-between items-center">
+                                Rajesh K.
+                                <span class="material-symbols-outlined text-status-warning text-[16px]" data-icon="warning">warning</span>
+</div>
+</div>
+<!-- Data Row: Phone (Match) -->
+<div>
+<div class="font-label-caps text-label-caps text-on-surface-variant mb-1">Primary Phone</div>
+<div class="font-data-code text-data-code text-on-surface bg-primary-fixed-dim/10 p-2 rounded border border-primary-fixed-dim/30 flex justify-between items-center">
+                                +1 (555) 019-8372
+                                <span class="material-symbols-outlined text-primary-fixed-dim text-[16px]" data-icon="check_circle" data-weight="fill">check_circle</span>
+</div>
+</div>
+<!-- Data Row: Location (Fuzzy) -->
+<div>
+<div class="font-label-caps text-label-caps text-on-surface-variant mb-1">Last Known Address</div>
+<div class="font-body-md text-body-md text-on-surface bg-surface p-2 rounded border border-stroke-subtle flex justify-between items-center">
+                                742 Evergreen Terrace, Sector 4
+                                <span class="material-symbols-outlined text-on-surface-variant text-[16px]" data-icon="compare_arrows">compare_arrows</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Entity B -->
+<div class="p-6 bg-surface/30">
+<div class="flex justify-between items-center mb-6">
+<span class="font-label-caps text-label-caps text-on-surface-variant">Entity B (Source: FIN_TRANS)</span>
+<span class="font-data-code text-data-code bg-surface px-2 py-1 rounded border border-stroke-subtle">ID: F-9901-X</span>
+</div>
+<div class="space-y-4">
+<!-- Data Row: Name (Difference) -->
+<div>
+<div class="font-label-caps text-label-caps text-on-surface-variant mb-1">Full Name</div>
+<div class="font-body-lg text-body-lg text-on-surface bg-surface-container-high/50 p-2 rounded border border-status-warning/30 flex justify-between items-center">
+                                Rajesh Kumar
+                                <span class="material-symbols-outlined text-status-warning text-[16px]" data-icon="warning">warning</span>
+</div>
+</div>
+<!-- Data Row: Phone (Match) -->
+<div>
+<div class="font-label-caps text-label-caps text-on-surface-variant mb-1">Primary Phone</div>
+<div class="font-data-code text-data-code text-on-surface bg-primary-fixed-dim/10 p-2 rounded border border-primary-fixed-dim/30 flex justify-between items-center">
+                                +1 (555) 019-8372
+                                <span class="material-symbols-outlined text-primary-fixed-dim text-[16px]" data-icon="check_circle" data-weight="fill">check_circle</span>
+</div>
+</div>
+<!-- Data Row: Location (Fuzzy) -->
+<div>
+<div class="font-label-caps text-label-caps text-on-surface-variant mb-1">Billing Address</div>
+<div class="font-body-md text-body-md text-on-surface bg-surface p-2 rounded border border-stroke-subtle flex justify-between items-center">
+                                742 Evergreen Terr., Sec 4
+                                <span class="material-symbols-outlined text-on-surface-variant text-[16px]" data-icon="compare_arrows">compare_arrows</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Card Actions -->
+<div class="bg-surface px-6 py-4 border-t border-stroke-subtle flex justify-between items-center">
+<button class="font-label-caps text-label-caps text-on-surface-variant hover:text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]" data-icon="info">info</span>
+                    View Full Provenance Logs
+                </button>
+<div class="flex gap-4">
+<button class="px-6 py-2 border border-stroke-subtle bg-transparent text-on-surface font-label-caps text-label-caps rounded hover:bg-surface-bright transition-colors">
+                        KEEP SEPARATE
+                    </button>
+<button class="px-6 py-2 bg-primary-fixed-dim text-[#000000] font-label-caps text-label-caps rounded font-bold hover:bg-primary transition-colors flex items-center gap-2">
+                        MERGE ENTITIES
+                        <span class="material-symbols-outlined text-[18px]" data-icon="merge">merge</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+<!-- JSON: Footer -->
+<footer class="bg-surface-container-lowest dark:bg-surface-container-lowest fixed bottom-0 right-0 w-[calc(100%-280px)] h-8 border-t border-stroke-subtle flex items-center justify-between px-4 z-30 cursor-default">
+<div class="font-data-code text-data-code text-status-success flex items-center gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-status-success"></span>
+            SYSTEM STATUS: NOMINAL | SYNC ACTIVE
+        </div>
+<div class="flex gap-4">
+<span class="font-data-code text-data-code text-on-surface-variant">v2.4.1-STABLE</span>
+<span class="font-data-code text-data-code text-on-surface-variant">Latency: 24ms</span>
+</div>
+</footer>
+</body></html>

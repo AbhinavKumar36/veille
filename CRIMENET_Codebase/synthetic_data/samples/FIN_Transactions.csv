@@ -1,0 +1,3 @@
+account_source,account_target,amount,currency,date
+ACCT_777,ACCT_888,50000,INR,2023-10-13
+ACCT_888,ACCT_999,45000,INR,2023-10-15

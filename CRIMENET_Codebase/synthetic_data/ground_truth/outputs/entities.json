@@ -1,0 +1,340 @@
+[
+  {
+    "id": "person_1",
+    "type": "Person",
+    "name": "Amit Kumar",
+    "aliases": [
+      "Amiu"
+    ],
+    "dob": "1993-05-08"
+  },
+  {
+    "id": "person_2",
+    "type": "Person",
+    "name": "Ramesh Singh",
+    "aliases": [
+      "Ramu"
+    ],
+    "dob": "1993-02-22"
+  },
+  {
+    "id": "person_3",
+    "type": "Person",
+    "name": "Prakash Kumar",
+    "aliases": [
+      "Prau"
+    ],
+    "dob": "1988-07-02"
+  },
+  {
+    "id": "person_4",
+    "type": "Person",
+    "name": "Rajesh Kumar",
+    "aliases": [
+      "Raju"
+    ],
+    "dob": "1976-04-17"
+  },
+  {
+    "id": "person_5",
+    "type": "Person",
+    "name": "Sanjay Kumar",
+    "aliases": [
+      "Sanu"
+    ],
+    "dob": "1987-04-23"
+  },
+  {
+    "id": "person_6",
+    "type": "Person",
+    "name": "Prakash Verma",
+    "aliases": [
+      "Prau"
+    ],
+    "dob": "1977-08-19"
+  },
+  {
+    "id": "person_7",
+    "type": "Person",
+    "name": "Deepak Kumar",
+    "aliases": [
+      "Deeu"
+    ],
+    "dob": "1994-03-23"
+  },
+  {
+    "id": "person_8",
+    "type": "Person",
+    "name": "Anil Sharma",
+    "aliases": [
+      "Aniu"
+    ],
+    "dob": "1978-03-07"
+  },
+  {
+    "id": "person_9",
+    "type": "Person",
+    "name": "Vikram Kumar",
+    "aliases": [
+      "Viku"
+    ],
+    "dob": "1972-07-04"
+  },
+  {
+    "id": "person_10",
+    "type": "Person",
+    "name": "Vikram Sharma",
+    "aliases": [
+      "Viku"
+    ],
+    "dob": "1989-05-26"
+  },
+  {
+    "id": "person_11",
+    "type": "Person",
+    "name": "Mohammed Ansari",
+    "aliases": [
+      "Mohu"
+    ],
+    "dob": "1987-02-13"
+  },
+  {
+    "id": "person_12",
+    "type": "Person",
+    "name": "Abdul Qureshi",
+    "aliases": [
+      "Abdu"
+    ],
+    "dob": "1979-11-20"
+  },
+  {
+    "id": "person_13",
+    "type": "Person",
+    "name": "Zayed Qureshi",
+    "aliases": [
+      "Zayu"
+    ],
+    "dob": "1976-12-03"
+  },
+  {
+    "id": "person_14",
+    "type": "Person",
+    "name": "Mohammed Sheikh",
+    "aliases": [
+      "Mohu"
+    ],
+    "dob": "1994-05-03"
+  },
+  {
+    "id": "person_15",
+    "type": "Person",
+    "name": "Imran Khan",
+    "aliases": [
+      "Imru"
+    ],
+    "dob": "1982-05-15"
+  },
+  {
+    "id": "person_16",
+    "type": "Person",
+    "name": "Zayed Sheikh",
+    "aliases": [
+      "Zayu"
+    ],
+    "dob": "1981-06-07"
+  },
+  {
+    "id": "person_17",
+    "type": "Person",
+    "name": "Farooq Khan",
+    "aliases": [
+      "Faru"
+    ],
+    "dob": "1989-11-06"
+  },
+  {
+    "id": "person_18",
+    "type": "Person",
+    "name": "Ali Sheikh",
+    "aliases": [
+      "Aliu"
+    ],
+    "dob": "1975-08-13"
+  },
+  {
+    "id": "person_19",
+    "type": "Person",
+    "name": "Farooq Qureshi",
+    "aliases": [
+      "Faru"
+    ],
+    "dob": "1977-11-11"
+  },
+  {
+    "id": "person_20",
+    "type": "Person",
+    "name": "Mohammed Sheikh",
+    "aliases": [
+      "Mohu"
+    ],
+    "dob": "1996-01-26"
+  },
+  {
+    "id": "person_21",
+    "type": "Person",
+    "name": "Manish CA",
+    "aliases": [
+      "The Fixer"
+    ],
+    "dob": "1980-08-15"
+  },
+  {
+    "id": "phone_1",
+    "type": "Phone",
+    "number": "+91-9338715135"
+  },
+  {
+    "id": "phone_2",
+    "type": "Phone",
+    "number": "+91-9430747414"
+  },
+  {
+    "id": "phone_3",
+    "type": "Phone",
+    "number": "+91-9287484583"
+  },
+  {
+    "id": "phone_4",
+    "type": "Phone",
+    "number": "+91-9071069472"
+  },
+  {
+    "id": "phone_5",
+    "type": "Phone",
+    "number": "+91-9226541099"
+  },
+  {
+    "id": "phone_6",
+    "type": "Phone",
+    "number": "+91-9980472440"
+  },
+  {
+    "id": "phone_7",
+    "type": "Phone",
+    "number": "+91-9609004943"
+  },
+  {
+    "id": "phone_8",
+    "type": "Phone",
+    "number": "+91-9940992571"
+  },
+  {
+    "id": "phone_9",
+    "type": "Phone",
+    "number": "+91-9770854579"
+  },
+  {
+    "id": "phone_10",
+    "type": "Phone",
+    "number": "+91-9337882805"
+  },
+  {
+    "id": "phone_11",
+    "type": "Phone",
+    "number": "+91-9228306011"
+  },
+  {
+    "id": "loc_1",
+    "type": "Location",
+    "address": "Sector 32, Block D, Plot 83"
+  },
+  {
+    "id": "loc_2",
+    "type": "Location",
+    "address": "Sector 30, Block B, Plot 34"
+  },
+  {
+    "id": "loc_3",
+    "type": "Location",
+    "address": "Sector 9, Block B, Plot 96"
+  },
+  {
+    "id": "loc_4",
+    "type": "Location",
+    "address": "Sector 36, Block E, Plot 34"
+  },
+  {
+    "id": "loc_5",
+    "type": "Location",
+    "address": "Sector 48, Block E, Plot 55"
+  },
+  {
+    "id": "loc_6",
+    "type": "Location",
+    "address": "Sector 38, Block D, Plot 47"
+  },
+  {
+    "id": "veh_1",
+    "type": "Vehicle",
+    "plate": "DL-4C-3266"
+  },
+  {
+    "id": "veh_2",
+    "type": "Vehicle",
+    "plate": "DL-9C-9085"
+  },
+  {
+    "id": "veh_3",
+    "type": "Vehicle",
+    "plate": "DL-2C-1771"
+  },
+  {
+    "id": "veh_4",
+    "type": "Vehicle",
+    "plate": "DL-2C-3504"
+  },
+  {
+    "id": "veh_5",
+    "type": "Vehicle",
+    "plate": "DL-3C-7916"
+  },
+  {
+    "id": "org_1",
+    "type": "Organization",
+    "name": "Shell Corp 1 Pvt Ltd"
+  },
+  {
+    "id": "org_2",
+    "type": "Organization",
+    "name": "Shell Corp 2 Pvt Ltd"
+  },
+  {
+    "id": "evt_1",
+    "type": "Event",
+    "name": "Incident 1",
+    "date": "2026-04-20"
+  },
+  {
+    "id": "evt_2",
+    "type": "Event",
+    "name": "Incident 2",
+    "date": "2026-04-03"
+  },
+  {
+    "id": "evt_3",
+    "type": "Event",
+    "name": "Incident 3",
+    "date": "2026-04-13"
+  },
+  {
+    "id": "evt_4",
+    "type": "Event",
+    "name": "Incident 4",
+    "date": "2026-04-13"
+  },
+  {
+    "id": "phone_99",
+    "type": "Phone",
+    "number": "+91-9150519597"
+  }
+]

@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CRIMENET Network Explorer</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-fixed-dim": "#00daf3",
+                        "tertiary-fixed": "#e8deff",
+                        "on-primary-container": "#00626e",
+                        "secondary": "#bdc2ff",
+                        "inverse-on-surface": "#2f3035",
+                        "primary-fixed": "#9cf0ff",
+                        "stroke-subtle": "rgba(255, 255, 255, 0.08)",
+                        "secondary-container": "#343d96",
+                        "data-node-person": "#00E5FF",
+                        "on-tertiary-container": "#622be5",
+                        "tertiary": "#f1e9ff",
+                        "primary": "#c3f5ff",
+                        "primary-container": "#00e5ff",
+                        "inverse-surface": "#e2e2e8",
+                        "secondary-fixed": "#e0e0ff",
+                        "on-surface": "#e2e2e8",
+                        "on-secondary-fixed-variant": "#343d96",
+                        "tertiary-container": "#d6c9ff",
+                        "on-tertiary-fixed-variant": "#4f00d0",
+                        "on-secondary": "#1b247f",
+                        "outline": "#849396",
+                        "on-background": "#e2e2e8",
+                        "on-primary": "#00363d",
+                        "on-error-container": "#ffdad6",
+                        "surface-container-high": "#282a2e",
+                        "surface-variant": "#333539",
+                        "surface": "#111318",
+                        "status-success": "#00E676",
+                        "background": "#111318",
+                        "on-tertiary": "#370096",
+                        "status-critical": "#FF3D00",
+                        "outline-variant": "#3b494c",
+                        "surface-card": "#0D1117",
+                        "surface-bright": "#37393e",
+                        "error-container": "#93000a",
+                        "on-secondary-fixed": "#000767",
+                        "data-node-event": "#FF4081",
+                        "surface-dim": "#111318",
+                        "tertiary-fixed-dim": "#cdbdff",
+                        "inverse-primary": "#006875",
+                        "status-warning": "#FFB300",
+                        "on-tertiary-fixed": "#20005f",
+                        "on-surface-variant": "#bac9cc",
+                        "on-primary-fixed": "#001f24",
+                        "surface-container-low": "#1a1c20",
+                        "surface-tint": "#00daf3",
+                        "on-secondary-container": "#a8afff",
+                        "on-primary-fixed-variant": "#004f58",
+                        "surface-container": "#1e2024",
+                        "on-error": "#690005",
+                        "surface-elevated": "#161B22",
+                        "surface-container-lowest": "#0c0e12",
+                        "surface-container-highest": "#333539",
+                        "secondary-fixed-dim": "#bdc2ff",
+                        "error": "#ffb4ab"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "sidebar-width": "280px",
+                        "margin-desktop": "32px",
+                        "gutter": "16px",
+                        "margin-mobile": "16px",
+                        "inspector-width": "400px",
+                        "unit": "4px"
+                    },
+                    "fontFamily": {
+                        "label-caps": ["JetBrains Mono"],
+                        "headline-md": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "data-code": ["JetBrains Mono"]
+                    },
+                    "fontSize": {
+                        "label-caps": ["11px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "data-code": ["13px", { "lineHeight": "18px", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { background-color: #0A0C10; }
+        .node-glow { filter: drop-shadow(0 0 16px rgba(0, 229, 255, 0.6)); }
+        .node-event-glow { filter: drop-shadow(0 0 12px rgba(255, 64, 129, 0.4)); }
+        .grid-bg { 
+            background-size: 40px 40px; 
+            background-image: 
+                linear-gradient(to right, rgba(0, 229, 255, 0.05) 1px, transparent 1px), 
+                linear-gradient(to bottom, rgba(0, 229, 255, 0.05) 1px, transparent 1px); 
+        }
+        .grid-bg::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: radial-gradient(circle at center, transparent 0%, #0A0C10 100%);
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body-md overflow-hidden selection:bg-primary-fixed-dim selection:text-background h-screen w-screen relative">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-surface border-b border-stroke-subtle flat no shadows flex items-center justify-between px-margin-desktop fixed top-0 right-0 w-[calc(100%-280px)] h-16 z-40 transition-all duration-150">
+<div class="flex items-center gap-6">
+<span class="font-headline-sm text-headline-sm font-bold text-primary-fixed-dim">CRIMENET</span>
+<span class="text-primary-fixed-dim font-bold">Active Case: ALPHA-7</span>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-4">
+<span class="text-status-critical font-label-caps text-label-caps border border-status-critical px-2 py-1 rounded">Priority: Critical</span>
+<button class="text-on-surface-variant hover:text-primary-fixed transition-colors"><span class="material-symbols-outlined" data-icon="notifications">notifications</span></button>
+<button class="text-on-surface-variant hover:text-primary-fixed transition-colors"><span class="material-symbols-outlined" data-icon="settings">settings</span></button>
+</div>
+<img alt="Investigator Profile" class="w-8 h-8 rounded-full border border-stroke-subtle object-cover" data-alt="A small, circular avatar portrait of a professional intelligence analyst in a dimly lit, high-tech command center environment. Cool cyan lighting highlights sharp features. Cyberpunk corporate aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAY92jqh137hqviRZ2kmiZDKWk5jy8UBqPugtRjNOKAH6UB6q_S8pYXgrjw-Ekockr55x5aRGVoUmRkfC-jDG0pMsc8EL_Q7Aot7xmQoe2dbzzqCSdF1GNyjiwbB2o2HurXdyke4h_C8ocniMps9IQvyCIt2qLY8w1USGlKUzMRR7Pd69RR8N5AnxWPzX4LGx71N15vo0al6QATjadsIdyt6pvZe4I2x9vpaV_mnS7CcYnTuEVOYgW1"/>
+</div>
+</header>
+<!-- SideNavBar -->
+<nav class="bg-surface dark:bg-surface border-r border-stroke-subtle flat no shadows fixed left-0 top-0 h-full w-[280px] flex flex-col h-full py-4 z-50">
+<div class="px-6 mb-8 mt-2">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center border border-stroke-subtle">
+<img alt="Investigator Avatar" class="w-full h-full rounded-full object-cover" data-alt="A small, circular avatar portrait of a professional intelligence analyst in a dimly lit, high-tech command center environment. Cool cyan lighting highlights sharp features. Cyberpunk corporate aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuComoL-U8KKHzK9bN1k-Hi7TB9Ovv2QlpFBeSHwFM--3cAr936M08C4kZEIoLQCUNvX5aTvYAtQzObrsotri-LtRju4UbBVVSEfi1XjfTJJTvOSB-HgAqnKDEdJ-grWrm9Dg3QoNnUbFluWGh2S_yGZh6eS32K3Gh7nHWL6Kpf2-eD5DraOZTMnjXrBK4dJTpIkEhBXF7HuAg_-8Hd0_7IIahQeWo9qYsLdJxpFHQ7qioV307LmIUh9"/>
+</div>
+<div>
+<h1 class="font-headline-sm text-headline-sm font-bold text-primary-fixed-dim tracking-tighter">CRIMENET</h1>
+<p class="font-label-caps text-label-caps text-on-surface-variant">Intelligence Fusion</p>
+</div>
+</div>
+</div>
+<ul class="flex-1 px-4 space-y-1">
+<li><a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors duration-200 ease-in-out font-label-caps text-label-caps" href="#"><span class="material-symbols-outlined text-[18px]">dashboard</span> Dashboard</a></li>
+<li><a class="flex items-center gap-3 px-3 py-2 rounded text-primary-fixed-dim bg-primary-container/10 border-r-2 border-primary-fixed-dim font-label-caps text-label-caps" href="#"><span class="material-symbols-outlined text-[18px]">hub</span> Network Explorer</a></li>
+<li><a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors duration-200 ease-in-out font-label-caps text-label-caps" href="#"><span class="material-symbols-outlined text-[18px]">rule</span> Review Queue</a></li>
+<li><a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors duration-200 ease-in-out font-label-caps text-label-caps" href="#"><span class="material-symbols-outlined text-[18px]">inventory_2</span> Evidence Library</a></li>
+<li><a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors duration-200 ease-in-out font-label-caps text-label-caps" href="#"><span class="material-symbols-outlined text-[18px]">history_edu</span> Audit Logs</a></li>
+<li><a class="flex items-center gap-3 px-3 py-2 rounded text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors duration-200 ease-in-out font-label-caps text-label-caps" href="#"><span class="material-symbols-outlined text-[18px]">folder_shared</span> Case Selector</a></li>
+</ul>
+</nav>
+<!-- Main Workspace (Network Graph) -->
+<main class="ml-[280px] mt-16 h-[calc(100vh-64px-32px)] w-[calc(100%-280px-400px)] relative grid-bg overflow-hidden cursor-crosshair">
+<!-- Controls Overlay Top Right (Network Stats) -->
+<div class="absolute top-4 right-4 z-10 flex flex-col gap-2 bg-surface-container/80 backdrop-blur-md border border-stroke-subtle rounded p-3">
+<h4 class="font-label-caps text-label-caps text-on-surface-variant mb-1">NETWORK STATS</h4>
+<div class="flex justify-between items-center gap-6">
+<span class="font-data-code text-data-code text-on-surface">Nodes</span>
+<span class="font-data-code text-data-code text-primary-fixed-dim">1,204</span>
+</div>
+<div class="flex justify-between items-center gap-6">
+<span class="font-data-code text-data-code text-on-surface">Edges</span>
+<span class="font-data-code text-data-code text-primary-fixed-dim">3,892</span>
+</div>
+</div>
+<!-- Legend -->
+<div class="absolute bottom-4 left-4 z-10 bg-surface-container/80 backdrop-blur-md border border-stroke-subtle rounded p-4">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant mb-3">NODE TYPES</h3>
+<ul class="space-y-2">
+<li class="flex items-center gap-2 font-data-code text-data-code text-on-surface"><span class="w-3 h-3 rounded-full bg-data-node-person node-glow shadow-[0_0_8px_#00E5FF]"></span> Person</li>
+<li class="flex items-center gap-2 font-data-code text-data-code text-on-surface"><span class="w-3 h-3 rounded bg-on-tertiary-container"></span> Phone</li>
+<li class="flex items-center gap-2 font-data-code text-data-code text-on-surface"><span class="w-3 h-3 rotate-45 bg-data-node-event node-event-glow shadow-[0_0_8px_#FF4081]"></span> Event</li>
+</ul>
+</div>
+<!-- Floating Control Deck -->
+<div class="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 bg-surface-container/80 backdrop-blur-md border border-stroke-subtle rounded flex items-center p-1 gap-1">
+<button class="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:text-primary-fixed hover:bg-surface-bright rounded transition-colors" title="Zoom In"><span class="material-symbols-outlined text-[20px]">add</span></button>
+<button class="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:text-primary-fixed hover:bg-surface-bright rounded transition-colors" title="Zoom Out"><span class="material-symbols-outlined text-[20px]">remove</span></button>
+<div class="w-[1px] h-6 bg-stroke-subtle mx-1"></div>
+<button class="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:text-primary-fixed hover:bg-surface-bright rounded transition-colors" title="Reset View"><span class="material-symbols-outlined text-[20px]">fit_screen</span></button>
+<div class="w-[1px] h-6 bg-stroke-subtle mx-1"></div>
+<button class="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:text-primary-fixed hover:bg-surface-bright rounded transition-colors" title="Filter"><span class="material-symbols-outlined text-[20px]">filter_alt</span></button>
+<div class="w-[1px] h-6 bg-stroke-subtle mx-1"></div>
+<div class="flex bg-surface-elevated rounded overflow-hidden p-0.5">
+<button class="px-3 py-1.5 flex items-center justify-center text-primary-fixed bg-surface-bright rounded text-label-caps font-label-caps" title="Radial Layout">RADIAL</button>
+<button class="px-3 py-1.5 flex items-center justify-center text-on-surface-variant hover:text-primary-fixed rounded text-label-caps font-label-caps" title="Force Layout">FORCE</button>
+<button class="px-3 py-1.5 flex items-center justify-center text-on-surface-variant hover:text-primary-fixed rounded text-label-caps font-label-caps" title="Hierarchy Layout">TREE</button>
+</div>
+</div>
+<!-- Simulated Graph Nodes & Edges (Static representation for layout) -->
+<div class="absolute inset-0 pointer-events-none">
+<!-- Edges -->
+<svg class="w-full h-full">
+<!-- Background Noise Edges -->
+<line stroke="rgba(255, 255, 255, 0.03)" stroke-width="1" x1="10%" x2="25%" y1="20%" y2="15%"></line>
+<line stroke="rgba(255, 255, 255, 0.03)" stroke-width="1" x1="25%" x2="40%" y1="15%" y2="30%"></line>
+<line stroke="rgba(255, 255, 255, 0.03)" stroke-width="1" x1="80%" x2="90%" y1="40%" y2="60%"></line>
+<line stroke="rgba(255, 255, 255, 0.03)" stroke-width="1" x1="75%" x2="85%" y1="80%" y2="90%"></line>
+<line stroke="rgba(255, 255, 255, 0.03)" stroke-width="1" x1="15%" x2="30%" y1="80%" y2="70%"></line>
+<!-- Defensible lines with stroke-subtle, high confidence bridge highlighted -->
+<line stroke="rgba(255, 255, 255, 0.15)" stroke-width="2" x1="30%" x2="50%" y1="40%" y2="50%"></line>
+<line stroke="rgba(255, 255, 255, 0.15)" stroke-width="2" x1="70%" x2="50%" y1="30%" y2="50%"></line>
+<line class="opacity-80" stroke="#00E5FF" stroke-dasharray="4 4" stroke-width="3" x1="50%" x2="60%" y1="50%" y2="70%"></line> <!-- High priority bridge to Event -->
+</svg>
+<!-- Nodes -->
+<!-- Background Noise Nodes -->
+<div class="absolute left-[10%] top-[20%] w-2 h-2 rounded-full bg-stroke-subtle"></div>
+<div class="absolute left-[25%] top-[15%] w-2 h-2 rounded bg-stroke-subtle"></div>
+<div class="absolute left-[40%] top-[30%] w-2 h-2 rounded-full bg-stroke-subtle"></div>
+<div class="absolute left-[80%] top-[40%] w-2 h-2 rotate-45 bg-stroke-subtle"></div>
+<div class="absolute left-[90%] top-[60%] w-2 h-2 rounded-full bg-stroke-subtle"></div>
+<div class="absolute left-[75%] top-[80%] w-2 h-2 rounded bg-stroke-subtle"></div>
+<div class="absolute left-[85%] top-[90%] w-2 h-2 rounded-full bg-stroke-subtle"></div>
+<div class="absolute left-[15%] top-[80%] w-2 h-2 rotate-45 bg-stroke-subtle"></div>
+<div class="absolute left-[30%] top-[70%] w-2 h-2 rounded-full bg-stroke-subtle"></div>
+<!-- Phone Node -->
+<div class="absolute left-[30%] top-[40%] -translate-x-1/2 -translate-y-1/2 pointer-events-auto">
+<div class="w-10 h-10 bg-surface-card border border-on-tertiary-container rounded flex items-center justify-center hover:border-primary-fixed transition-colors group cursor-pointer shadow-lg shadow-black/50">
+<span class="material-symbols-outlined text-on-tertiary-container text-[20px]">smartphone</span>
+</div>
+<div class="absolute top-full left-1/2 -translate-x-1/2 mt-1 text-center opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+<span class="bg-surface-elevated border border-stroke-subtle px-2 py-1 rounded font-data-code text-data-code text-on-surface">+1-555-0192</span>
+</div>
+</div>
+<!-- Person Node 2 -->
+<div class="absolute left-[70%] top-[30%] -translate-x-1/2 -translate-y-1/2 pointer-events-auto">
+<div class="w-12 h-12 bg-surface-card border border-stroke-subtle rounded-full flex items-center justify-center hover:border-primary-fixed transition-colors group cursor-pointer shadow-lg shadow-black/50">
+<span class="material-symbols-outlined text-on-surface-variant text-[24px]">person</span>
+</div>
+<div class="absolute top-full left-1/2 -translate-x-1/2 mt-1 text-center opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+<span class="bg-surface-elevated border border-stroke-subtle px-2 py-1 rounded font-data-code text-data-code text-on-surface">UNKNOWN_MALE</span>
+</div>
+</div>
+<!-- Event Node -->
+<div class="absolute left-[60%] top-[70%] -translate-x-1/2 -translate-y-1/2 pointer-events-auto">
+<div class="w-14 h-14 bg-surface-card border-2 border-data-node-event rotate-45 flex items-center justify-center node-event-glow cursor-pointer group shadow-lg shadow-black/50">
+<span class="material-symbols-outlined text-data-node-event text-[24px] -rotate-45">warning</span>
+</div>
+<div class="absolute top-[120%] left-1/2 -translate-x-1/2 mt-1 text-center opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20">
+<span class="bg-surface-elevated border border-stroke-subtle px-2 py-1 rounded font-data-code text-data-code text-data-node-event">TRANSACTION_FLG</span>
+</div>
+</div>
+<!-- Selected Node (Rajesh Kumar) -->
+<div class="absolute left-[50%] top-[50%] -translate-x-1/2 -translate-y-1/2 pointer-events-auto z-20">
+<div class="absolute -top-6 left-1/2 -translate-x-1/2 font-label-caps text-label-caps text-primary-fixed-dim bg-primary-container/20 border border-primary-fixed-dim/50 px-2 py-0.5 rounded whitespace-nowrap flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-primary-fixed-dim animate-pulse"></span> ACTIVE TARGET
+</div>
+<div class="w-20 h-20 bg-surface-card border-2 border-data-node-person rounded-full flex items-center justify-center node-glow cursor-pointer relative shadow-xl shadow-primary-fixed-dim/20">
+<img alt="Rajesh Kumar Portrait" class="w-full h-full rounded-full object-cover p-1" data-alt="A mugshot style portrait of a South Asian male, late 30s, serious expression. Clinical, high-contrast, desaturated lighting typical of a database file." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBcXeoZV-xvT3C_k2lHQK80YWxVgzp3bxhtS8rxGfzoTJJqiTwddD4AfF8ilDVgnl3snqatk2AYXj2EEegXRFdsGf4-v1SQirJjxfXHPaf6WJKMCQUQnqfktpX5OXVqz4gVrCSedEdUVfUbCcOl4i5gGwu_5a4n5YLpIbo2nGpHNhJYzWYA0PiBGET0gQEzUDOcQqahCQmfRDZfZ0_tVm1WBM2ojAXLi0q53Yy2sd62yK8r3IfZavXA"/>
+<!-- Blast radius effect base -->
+<div class="absolute -inset-4 border border-primary-fixed-dim rounded-full animate-[ping_3s_cubic-bezier(0,0,0.2,1)_infinite] opacity-30"></div>
+<div class="absolute -inset-8 border border-primary-fixed-dim rounded-full animate-[ping_3s_cubic-bezier(0,0,0.2,1)_infinite_1s] opacity-20"></div>
+</div>
+<div class="absolute top-full left-1/2 -translate-x-1/2 mt-2 text-center whitespace-nowrap">
+<span class="bg-primary-container/20 border border-primary-fixed-dim px-3 py-1 rounded font-data-code text-data-code text-primary-fixed-dim shadow-[0_0_10px_rgba(0,218,243,0.3)]">882-XQ</span>
+</div>
+</div>
+</div>
+</main>
+<!-- NavigationDrawer (Intelligence Inspector) -->
+<aside class="bg-surface-container dark:bg-surface-container border-l border-stroke-subtle shadow-2xl fixed right-0 top-16 h-[calc(100%-64px)] w-[400px] flex flex-col h-full z-50 slide-in-right transition-transform duration-300">
+<!-- Inspector Header -->
+<div class="p-6 border-b border-stroke-subtle flex items-start justify-between bg-surface-container-high/50">
+<div>
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-1">Intelligence Inspector</p>
+<h2 class="font-headline-md text-headline-md text-on-surface font-bold text-white">Rajesh Kumar</h2>
+<p class="font-data-code text-data-code text-primary-fixed-dim mt-1">Entity ID: 882-XQ</p>
+</div>
+<button class="text-on-surface-variant hover:text-primary-fixed transition-colors"><span class="material-symbols-outlined text-[20px]">close</span></button>
+</div>
+<!-- Inspector Tabs -->
+<div class="flex border-b border-stroke-subtle bg-surface-container-low">
+<button class="flex-1 py-3 px-2 flex flex-col items-center gap-1 text-primary-fixed-dim border-b-2 border-primary-fixed-dim hover:bg-surface-bright transition-colors font-label-caps text-label-caps">
+<span class="material-symbols-outlined text-[18px]">fingerprint</span> Details
+            </button>
+<button class="flex-1 py-3 px-2 flex flex-col items-center gap-1 text-on-surface-variant hover:bg-surface-bright transition-colors font-label-caps text-label-caps">
+<span class="material-symbols-outlined text-[18px]">account_tree</span> Provenance
+            </button>
+<button class="flex-1 py-3 px-2 flex flex-col items-center gap-1 text-on-surface-variant hover:bg-surface-bright transition-colors font-label-caps text-label-caps">
+<span class="material-symbols-outlined text-[18px]">link</span> Links
+            </button>
+<button class="flex-1 py-3 px-2 flex flex-col items-center gap-1 text-on-surface-variant hover:bg-surface-bright transition-colors font-label-caps text-label-caps">
+<span class="material-symbols-outlined text-[18px]">assignment</span> Activity
+            </button>
+</div>
+<!-- Inspector Content Canvas -->
+<div class="flex-1 overflow-y-auto p-6 space-y-6">
+<!-- Confidence Model Widget -->
+<div class="bg-surface-card border border-stroke-subtle rounded p-4 shadow-sm">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant mb-4 flex items-center gap-2"><span class="material-symbols-outlined text-[16px]">analytics</span> CONFIDENCE MODEL</h3>
+<div class="grid grid-cols-2 gap-4">
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="font-body-sm text-body-sm text-on-surface">Relationship</span>
+<span class="font-data-code text-data-code text-status-success">0.85</span>
+</div>
+<div class="w-full h-1.5 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-status-success w-[85%] rounded-full shadow-[0_0_8px_#00E676]"></div>
+</div>
+</div>
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="font-body-sm text-body-sm text-on-surface">Significance</span>
+<span class="font-data-code text-data-code text-status-warning">0.92</span>
+</div>
+<div class="w-full h-1.5 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-status-warning w-[92%] rounded-full shadow-[0_0_8px_#FFB300]"></div>
+</div>
+</div>
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="font-body-sm text-body-sm text-on-surface">Data Integrity</span>
+<span class="font-data-code text-data-code text-primary-fixed-dim">0.98</span>
+</div>
+<div class="w-full h-1.5 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-primary-fixed-dim w-[98%] rounded-full shadow-[0_0_8px_#00daf3]"></div>
+</div>
+</div>
+<div>
+<div class="flex items-center justify-between mb-2">
+<span class="font-body-sm text-body-sm text-on-surface">Risk Score</span>
+<span class="font-data-code text-data-code text-status-critical">0.88</span>
+</div>
+<div class="w-full h-1.5 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-status-critical w-[88%] rounded-full shadow-[0_0_8px_#FF3D00]"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Key Identifiers -->
+<div class="bg-surface-card border border-stroke-subtle rounded p-4 shadow-sm">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant mb-4 flex items-center gap-2"><span class="material-symbols-outlined text-[16px]">badge</span> IDENTIFIERS</h3>
+<dl class="space-y-3">
+<div class="flex justify-between border-b border-stroke-subtle pb-2">
+<dt class="font-body-sm text-body-sm text-on-surface-variant">Primary Alias</dt>
+<dd class="font-data-code text-data-code text-white">"R-KAY"</dd>
+</div>
+<div class="flex justify-between border-b border-stroke-subtle pb-2">
+<dt class="font-body-sm text-body-sm text-on-surface-variant">Last Known IP</dt>
+<dd class="font-data-code text-data-code text-primary-fixed-dim hover:underline cursor-pointer">192.168.1.44</dd>
+</div>
+<div class="flex justify-between border-b border-stroke-subtle pb-2">
+<dt class="font-body-sm text-body-sm text-on-surface-variant">Associated MAC</dt>
+<dd class="font-data-code text-data-code text-white">00:1A:2B:3C:4D:5E</dd>
+</div>
+<div class="flex justify-between border-b border-stroke-subtle pb-2">
+<dt class="font-body-sm text-body-sm text-on-surface-variant">Known Wallets</dt>
+<dd class="font-data-code text-data-code text-white">2 (BTC, ETH)</dd>
+</div>
+<div class="flex justify-between items-center pt-1">
+<dt class="font-body-sm text-body-sm text-on-surface-variant">Risk Tier</dt>
+<dd class="font-label-caps text-label-caps text-status-critical border border-status-critical bg-status-critical/10 px-2.5 py-1 rounded shadow-[0_0_12px_rgba(255,61,0,0.4)]">TIER 1</dd>
+</div>
+</dl>
+</div>
+<!-- Action Buttons -->
+<div class="flex gap-3 pt-4">
+<button class="flex-1 bg-primary-fixed-dim text-background font-label-caps text-label-caps py-2 rounded hover:bg-primary-fixed transition-colors flex items-center justify-center gap-2 font-bold">
+<span class="material-symbols-outlined text-[16px]">merge_type</span> MERGE
+                 </button>
+<button class="flex-1 border border-stroke-subtle text-on-surface font-label-caps text-label-caps py-2 rounded hover:bg-surface-container-high transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[16px]">flag</span> FLAG
+                 </button>
+</div>
+</div>
+</aside>
+<!-- Footer -->
+<footer class="bg-surface-container-lowest dark:bg-surface-container-lowest border-t border-stroke-subtle flat no shadows fixed bottom-0 right-0 w-[calc(100%-280px)] h-8 flex items-center justify-between px-4 z-40">
+<span class="font-data-code text-data-code text-status-success flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-status-success animate-pulse"></span> SYSTEM STATUS: NOMINAL | SYNC ACTIVE</span>
+<div class="flex items-center gap-4">
+<span class="font-data-code text-data-code text-on-surface-variant cursor-default">v2.4.1-STABLE</span>
+<span class="font-data-code text-data-code text-on-surface-variant cursor-default">Latency: 24ms</span>
+</div>
+</footer>
+</body></html>

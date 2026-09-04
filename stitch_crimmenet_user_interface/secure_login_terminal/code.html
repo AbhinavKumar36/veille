@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CRIMENET - Authentication</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-fixed-dim": "#bdc2ff",
+                        "secondary": "#bdc2ff",
+                        "on-surface-variant": "#bac9cc",
+                        "outline-variant": "#3b494c",
+                        "on-error": "#690005",
+                        "on-tertiary-fixed": "#20005f",
+                        "surface-variant": "#333539",
+                        "primary-container": "#00e5ff",
+                        "on-secondary": "#1b247f",
+                        "on-primary-fixed": "#001f24",
+                        "surface-container-highest": "#333539",
+                        "tertiary": "#f1e9ff",
+                        "tertiary-fixed-dim": "#cdbdff",
+                        "tertiary-fixed": "#e8deff",
+                        "on-secondary-fixed": "#000767",
+                        "on-background": "#e2e2e8",
+                        "secondary-container": "#343d96",
+                        "error": "#ffb4ab",
+                        "on-surface": "#e2e2e8",
+                        "surface-container": "#1e2024",
+                        "on-secondary-fixed-variant": "#343d96",
+                        "on-primary-fixed-variant": "#004f58",
+                        "surface-card": "#0D1117",
+                        "data-node-person": "#00E5FF",
+                        "on-primary": "#00363d",
+                        "surface-elevated": "#161B22",
+                        "secondary-fixed": "#e0e0ff",
+                        "surface-container-high": "#282a2e",
+                        "primary-fixed-dim": "#00daf3",
+                        "inverse-on-surface": "#2f3035",
+                        "inverse-surface": "#e2e2e8",
+                        "surface-container-low": "#1a1c20",
+                        "on-tertiary-container": "#622be5",
+                        "surface": "#111318",
+                        "surface-container-lowest": "#0c0e12",
+                        "surface-bright": "#37393e",
+                        "on-primary-container": "#00626e",
+                        "surface-dim": "#111318",
+                        "background": "#111318",
+                        "status-warning": "#FFB300",
+                        "surface-tint": "#00daf3",
+                        "on-tertiary-fixed-variant": "#4f00d0",
+                        "status-critical": "#FF3D00",
+                        "status-success": "#00E676",
+                        "error-container": "#93000a",
+                        "on-secondary-container": "#a8afff",
+                        "on-tertiary": "#370096",
+                        "primary-fixed": "#9cf0ff",
+                        "tertiary-container": "#d6c9ff",
+                        "primary": "#c3f5ff",
+                        "stroke-subtle": "rgba(255, 255, 255, 0.08)",
+                        "data-node-event": "#FF4081",
+                        "inverse-primary": "#006875",
+                        "outline": "#849396",
+                        "on-error-container": "#ffdad6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "inspector-width": "400px",
+                        "sidebar-width": "280px",
+                        "margin-mobile": "16px",
+                        "gutter": "16px",
+                        "margin-desktop": "32px"
+                    },
+                    "fontFamily": {
+                        "body-sm": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-sm": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "label-caps": ["JetBrains Mono"],
+                        "data-code": ["JetBrains Mono"]
+                    },
+                    "fontSize": {
+                        "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-caps": ["11px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "data-code": ["13px", { "lineHeight": "18px", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: theme('colors.background');
+            color: theme('colors.on-surface');
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Subtle grid background */
+        .bg-grid {
+            position: absolute;
+            inset: 0;
+            background-image: 
+                linear-gradient(to right, theme('colors.stroke-subtle') 1px, transparent 1px),
+                linear-gradient(to bottom, theme('colors.stroke-subtle') 1px, transparent 1px);
+            background-size: 40px 40px;
+            opacity: 0.3;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* Terminal styling */
+        .terminal-glow {
+            box-shadow: 0 0 30px rgba(0, 229, 255, 0.1);
+        }
+
+        .input-glow:focus {
+            box-shadow: 0 0 10px rgba(0, 229, 255, 0.2);
+            border-color: theme('colors.primary-container');
+        }
+    </style>
+</head>
+<body>
+<!-- Background Layer -->
+<div class="bg-grid"></div>
+<div class="absolute inset-0 bg-gradient-to-b from-surface/20 to-background z-0 pointer-events-none"></div>
+<!-- Main Login Card -->
+<main class="relative z-10 w-full max-w-[440px] px-margin-mobile md:px-0">
+<!-- Header / Logo Area -->
+<div class="text-center mb-8">
+<h1 class="font-headline-lg text-headline-lg text-primary tracking-tighter flex items-center justify-center gap-3">
+<span class="material-symbols-outlined text-[32px]" style="font-variation-settings: 'FILL' 1;">security</span>
+                CRIMENET
+            </h1>
+<p class="font-label-caps text-label-caps text-status-critical mt-2 uppercase tracking-widest border border-status-critical/30 inline-block px-3 py-1 bg-status-critical/10 rounded-sm">
+                Restricted Access
+            </p>
+</div>
+<!-- Login Container -->
+<div class="bg-surface-elevated border border-stroke-subtle rounded-lg p-8 terminal-glow backdrop-blur-md">
+<form action="#" class="space-y-6" method="POST">
+<!-- Agency ID -->
+<div class="space-y-2">
+<label class="font-label-caps text-label-caps text-on-surface-variant flex items-center gap-2" for="agency_id">
+<span class="material-symbols-outlined text-[16px]">badge</span>
+                        Agency ID
+                    </label>
+<input class="w-full bg-surface-container border border-stroke-subtle rounded font-data-code text-data-code text-primary px-4 py-3 focus:outline-none input-glow transition-all placeholder:text-on-surface-variant/50" id="agency_id" name="agency_id" placeholder="AGY-XXX-XXXX" required="" type="text"/>
+</div>
+<!-- Investigator Credentials -->
+<div class="space-y-2">
+<label class="font-label-caps text-label-caps text-on-surface-variant flex items-center gap-2" for="credentials">
+<span class="material-symbols-outlined text-[16px]">password</span>
+                        Passcode
+                    </label>
+<input class="w-full bg-surface-container border border-stroke-subtle rounded font-data-code text-data-code text-primary px-4 py-3 focus:outline-none input-glow transition-all placeholder:text-on-surface-variant/50" id="credentials" name="credentials" placeholder="••••••••" required="" type="password"/>
+</div>
+<!-- Biometric / Token Prompt (Simulated) -->
+<div class="space-y-2">
+<label class="font-label-caps text-label-caps text-on-surface-variant flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">fingerprint</span>
+                        Security Token
+                    </label>
+<div class="flex items-center gap-3 bg-surface-container border border-stroke-subtle rounded px-4 py-3 cursor-not-allowed opacity-70">
+<span class="material-symbols-outlined text-status-warning animate-pulse">sensors</span>
+<span class="font-data-code text-data-code text-on-surface-variant">Awaiting physical key insertion...</span>
+</div>
+</div>
+<!-- Action Button -->
+<button class="w-full bg-primary-container text-on-primary-container font-label-caps text-label-caps py-4 rounded font-bold hover:bg-primary-fixed transition-colors flex justify-center items-center gap-2 mt-8" type="submit">
+                    AUTHENTICATE
+                    <span class="material-symbols-outlined text-[18px]">login</span>
+</button>
+</form>
+</div>
+<!-- Clearance Level Indicator -->
+<div class="mt-8 text-center flex flex-col items-center gap-2">
+<div class="flex items-center gap-2 text-on-surface-variant">
+<span class="material-symbols-outlined text-[14px]">admin_panel_settings</span>
+<span class="font-body-sm text-body-sm">Required Clearance:</span>
+<span class="font-data-code text-data-code text-status-warning ml-1">LEVEL 5</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant/50 max-w-xs text-center">
+                Unauthorized access attempts are logged and reported to Unit 77 Intelligence.
+            </p>
+</div>
+</main>
+<!-- Footer Information -->
+<footer class="absolute bottom-0 w-full p-4 text-center z-10 border-t border-stroke-subtle bg-surface-container-lowest/80 backdrop-blur-sm">
+<p class="font-data-code text-data-code text-status-success flex items-center justify-center gap-3 opacity-70 hover:opacity-100 transition-opacity cursor-default">
+<span>© 2024 CRIMENET COMMAND</span>
+<span class="text-stroke-subtle">•</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">lock</span> ENCRYPTION: AES-256</span>
+<span class="text-stroke-subtle">•</span>
+<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-status-success animate-pulse"></span> SYSTEM: OPTIMAL</span>
+</p>
+</footer>
+</body></html>

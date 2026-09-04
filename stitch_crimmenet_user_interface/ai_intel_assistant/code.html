@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CRIMENET - RAG Assistant</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed": "#e8deff",
+                        "surface-variant": "#333539",
+                        "surface": "#111318",
+                        "on-primary": "#00363d",
+                        "surface-dim": "#111318",
+                        "status-warning": "#FFB300",
+                        "primary": "#c3f5ff",
+                        "surface-tint": "#00daf3",
+                        "on-error": "#690005",
+                        "secondary-fixed-dim": "#bdc2ff",
+                        "on-primary-fixed": "#001f24",
+                        "outline-variant": "#3b494c",
+                        "surface-card": "#0D1117",
+                        "error-container": "#93000a",
+                        "surface-elevated": "#161B22",
+                        "on-primary-container": "#00626e",
+                        "primary-container": "#00e5ff",
+                        "background": "#111318",
+                        "surface-container-low": "#1a1c20",
+                        "on-secondary": "#1b247f",
+                        "outline": "#849396",
+                        "tertiary-container": "#d6c9ff",
+                        "on-secondary-fixed": "#000767",
+                        "surface-container": "#1e2024",
+                        "on-background": "#e2e2e8",
+                        "primary-fixed": "#9cf0ff",
+                        "inverse-surface": "#e2e2e8",
+                        "primary-fixed-dim": "#00daf3",
+                        "on-tertiary": "#370096",
+                        "inverse-on-surface": "#2f3035",
+                        "on-primary-fixed-variant": "#004f58",
+                        "on-secondary-fixed-variant": "#343d96",
+                        "surface-container-lowest": "#0c0e12",
+                        "surface-bright": "#37393e",
+                        "data-node-person": "#00E5FF",
+                        "tertiary": "#f1e9ff",
+                        "stroke-subtle": "rgba(255, 255, 255, 0.08)",
+                        "surface-container-high": "#282a2e",
+                        "secondary": "#bdc2ff",
+                        "secondary-fixed": "#e0e0ff",
+                        "status-critical": "#FF3D00",
+                        "on-tertiary-fixed-variant": "#4f00d0",
+                        "error": "#ffb4ab",
+                        "tertiary-fixed-dim": "#cdbdff",
+                        "status-success": "#00E676",
+                        "surface-container-highest": "#333539",
+                        "on-surface": "#e2e2e8",
+                        "on-tertiary-container": "#622be5",
+                        "inverse-primary": "#006875",
+                        "on-error-container": "#ffdad6",
+                        "on-surface-variant": "#bac9cc",
+                        "on-tertiary-fixed": "#20005f",
+                        "on-secondary-container": "#a8afff",
+                        "data-node-event": "#FF4081",
+                        "secondary-container": "#343d96"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "inspector-width": "400px",
+                        "margin-mobile": "16px",
+                        "margin-desktop": "32px",
+                        "sidebar-width": "280px",
+                        "gutter": "16px",
+                        "unit": "4px"
+                    },
+                    "fontFamily": {
+                        "headline-sm": ["Inter"],
+                        "label-caps": ["JetBrains Mono"],
+                        "headline-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "body-md": ["Inter"],
+                        "data-code": ["JetBrains Mono"]
+                    },
+                    "fontSize": {
+                        "headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+                        "label-caps": ["11px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "data-code": ["13px", { "lineHeight": "18px", "fontWeight": "500" }]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.filled {
+            font-variation-settings: 'FILL' 1;
+        }
+        
+        /* Custom scrollbar for deep clinical feel */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0A0C10; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #282a2e; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #37393e; 
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface h-screen w-screen overflow-hidden flex font-body-md">
+<!-- Main Workspace (Fluid Center) -->
+<main class="flex-1 flex flex-col h-full bg-background relative pt-16">
+<!-- Chat Feed Area -->
+<div class="flex-1 overflow-y-auto p-margin-desktop space-y-6 pb-32">
+<!-- System Initial Message -->
+<div class="flex items-start gap-4 max-w-4xl mx-auto w-full">
+<div class="w-10 h-10 rounded bg-primary-container/10 border border-primary-fixed-dim flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-primary-fixed-dim">smart_toy</span>
+</div>
+<div class="flex-1 space-y-2">
+<div class="flex items-center gap-2">
+<span class="font-label-caps text-label-caps text-primary-fixed-dim">RAG ASSISTANT</span>
+<span class="font-data-code text-data-code text-on-surface-variant text-[10px]">14:02:45Z</span>
+</div>
+<div class="bg-surface-container border border-stroke-subtle rounded-lg p-4 font-body-md text-on-surface">
+<p>System initialized. Semantic index loaded with 14,289 active case documents. Query intelligence ready.</p>
+</div>
+</div>
+</div>
+<!-- User Query -->
+<div class="flex items-start gap-4 max-w-4xl mx-auto w-full flex-row-reverse">
+<div class="w-10 h-10 rounded bg-surface-container-high border border-stroke-subtle flex items-center justify-center shrink-0 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A clinical, high-contrast portrait of a field investigator in low light, sharp focus, technical aesthetic, muted colors with cyan accents, 8k resolution, cinematic lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCC8_twvfz671GB8ZeuJgvzpYEpRz_N6MhFv9j8JE63Iqr0L1mLm0O7r4ewxbU5XPlXwaKEeC7y_BIHm7TOryLjwZEyoqS-Mz5mIc2fJKeAnHn_7uMCHj0KVpS18Gvk8ykH3Q2zoF5MYEW8wtu9_LUcLfBvT1Sxr442BlOCWo6Y81p8KDTLTIFGXdQNiHNgB22sYAq8oFOqsOhtqe5TplBBOf32lWaOfzPj2MXvXZq9o3iliRPWfiq2"/>
+</div>
+<div class="flex-1 space-y-2 flex flex-col items-end">
+<div class="flex items-center gap-2">
+<span class="font-data-code text-data-code text-on-surface-variant text-[10px]">14:03:12Z</span>
+<span class="font-label-caps text-label-caps text-on-surface">INVESTIGATOR 882</span>
+</div>
+<div class="bg-surface-elevated border border-stroke-subtle rounded-lg p-4 font-body-md text-on-surface text-right">
+<p>Show me the connection between Alpha-7 and the money laundering cell.</p>
+</div>
+</div>
+</div>
+<!-- System Response -->
+<div class="flex items-start gap-4 max-w-4xl mx-auto w-full">
+<div class="w-10 h-10 rounded bg-primary-container/10 border border-primary-fixed-dim flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(0,218,243,0.1)]">
+<span class="material-symbols-outlined text-primary-fixed-dim filled">bolt</span>
+</div>
+<div class="flex-1 space-y-4">
+<div class="flex items-center gap-2">
+<span class="font-label-caps text-label-caps text-primary-fixed-dim">RAG ASSISTANT</span>
+<span class="font-data-code text-data-code text-on-surface-variant text-[10px]">14:03:18Z</span>
+</div>
+<div class="bg-surface-container border border-stroke-subtle rounded-lg p-5 font-body-md text-on-surface space-y-4">
+<p>Analysis of 43 source documents reveals a high-probability vector between <span class="text-data-node-person font-medium">Alpha-7 (Viktor Krov)</span> and the shell corporation network <span class="text-data-node-event font-medium">'Cypress Holdings'</span>.</p>
+<p>The primary linkage occurs through a series of staggered offshore transfers originating from accounts managed by <span class="text-data-node-person font-medium">Elena Rostova</span>, an identified associate of Alpha-7.</p>
+<!-- Evidence Citations Block -->
+<div class="mt-4 pt-4 border-t border-stroke-subtle">
+<h4 class="font-label-caps text-label-caps text-on-surface-variant mb-3">EVIDENCE CITATIONS</h4>
+<div class="space-y-2">
+<a class="flex items-center gap-3 p-2 rounded bg-surface-container-low hover:bg-surface-bright border border-stroke-subtle transition-colors group" href="#">
+<span class="material-symbols-outlined text-primary-fixed-dim text-sm">description</span>
+<span class="font-data-code text-data-code text-primary-fixed-dim group-hover:text-primary-fixed">DOC-2023-884-A</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant flex-1 truncate">Wire Transfer Intercept - Cayman Islands</span>
+<span class="font-data-code text-data-code text-status-success text-xs">98% CONFIDENCE</span>
+</a>
+<a class="flex items-center gap-3 p-2 rounded bg-surface-container-low hover:bg-surface-bright border border-stroke-subtle transition-colors group" href="#">
+<span class="material-symbols-outlined text-primary-fixed-dim text-sm">description</span>
+<span class="font-data-code text-data-code text-primary-fixed-dim group-hover:text-primary-fixed">SURV-24-LOG-9</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant flex-1 truncate">Physical Surveillance Report: Rostova Meeting</span>
+<span class="font-data-code text-data-code text-status-warning text-xs">82% CONFIDENCE</span>
+</a>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Chat Input Area -->
+<div class="absolute bottom-8 left-0 right-0 px-margin-desktop">
+<div class="max-w-4xl mx-auto w-full relative">
+<div class="absolute -top-10 left-0 flex gap-2">
+<button class="bg-surface-container border border-stroke-subtle rounded px-3 py-1 font-label-caps text-label-caps text-on-surface-variant hover:text-primary-fixed-dim hover:border-primary-fixed-dim/50 transition-all flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">add_circle</span> ADD CONTEXT
+                    </button>
+<button class="bg-surface-container border border-stroke-subtle rounded px-3 py-1 font-label-caps text-label-caps text-on-surface-variant hover:text-primary-fixed-dim hover:border-primary-fixed-dim/50 transition-all flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">tune</span> PARAMETERS
+                    </button>
+</div>
+<div class="bg-surface-elevated border border-stroke-subtle rounded-lg shadow-xl flex items-end p-2 focus-within:border-primary-fixed-dim/50 transition-colors">
+<textarea class="flex-1 bg-transparent border-none focus:ring-0 resize-none max-h-32 min-h-[44px] py-3 px-4 font-body-md text-on-surface placeholder:text-on-surface-variant/50" placeholder="Query intelligence database..." rows="1"></textarea>
+<button class="p-3 rounded bg-primary-fixed-dim text-on-primary-fixed hover:bg-primary-fixed transition-colors flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined filled">send</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+<!-- Contextual Entities Sidebar -->
+<aside class="w-inspector-width bg-surface-container border-l border-stroke-subtle h-full flex flex-col pt-16">
+<div class="p-4 border-b border-stroke-subtle flex items-center justify-between bg-surface-container-high/50">
+<div>
+<h2 class="font-headline-sm text-headline-sm text-primary-fixed-dim">Contextual Entities</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Extracted from current session</p>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant">hub</span>
+</div>
+<div class="flex-1 overflow-y-auto p-4 space-y-4">
+<!-- Entity Card: Person -->
+<div class="bg-surface-elevated border border-stroke-subtle rounded-lg p-3 hover:border-data-node-person/50 transition-colors cursor-pointer group">
+<div class="flex items-center gap-3 mb-2">
+<div class="w-8 h-8 rounded-full bg-data-node-person/10 flex items-center justify-center text-data-node-person border border-data-node-person/30 group-hover:shadow-[0_0_10px_rgba(0,229,255,0.2)] transition-shadow">
+<span class="material-symbols-outlined text-sm">person</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="font-data-code text-data-code text-on-surface truncate">Viktor Krov (Alpha-7)</div>
+<div class="font-label-caps text-label-caps text-data-node-person">PERSON OF INTEREST</div>
+</div>
+</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant line-clamp-2">Suspected leader of syndicate operations in Eastern sector. Multiple alias references.</div>
+<div class="mt-2 flex gap-2">
+<span class="bg-surface-container-high px-2 py-0.5 rounded text-[10px] font-data-code text-on-surface border border-stroke-subtle">ID: 882-XQ</span>
+</div>
+</div>
+<!-- Entity Card: Organization -->
+<div class="bg-surface-elevated border border-stroke-subtle rounded-lg p-3 hover:border-data-node-event/50 transition-colors cursor-pointer group">
+<div class="flex items-center gap-3 mb-2">
+<div class="w-8 h-8 rounded bg-data-node-event/10 flex items-center justify-center text-data-node-event border border-data-node-event/30 group-hover:shadow-[0_0_10px_rgba(255,64,129,0.2)] transition-shadow">
+<span class="material-symbols-outlined text-sm">domain</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="font-data-code text-data-code text-on-surface truncate">Cypress Holdings</div>
+<div class="font-label-caps text-label-caps text-data-node-event">SHELL CORPORATION</div>
+</div>
+</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant line-clamp-2">Registered in Cayman Islands. Primary vector for suspected money laundering operations.</div>
+<div class="mt-2 flex gap-2">
+<span class="bg-surface-container-high px-2 py-0.5 rounded text-[10px] font-data-code text-on-surface border border-stroke-subtle">ORG-9942</span>
+</div>
+</div>
+<!-- Entity Card: Person -->
+<div class="bg-surface-elevated border border-stroke-subtle rounded-lg p-3 hover:border-data-node-person/50 transition-colors cursor-pointer group">
+<div class="flex items-center gap-3 mb-2">
+<div class="w-8 h-8 rounded-full bg-data-node-person/10 flex items-center justify-center text-data-node-person border border-data-node-person/30 group-hover:shadow-[0_0_10px_rgba(0,229,255,0.2)] transition-shadow">
+<span class="material-symbols-outlined text-sm">person</span>
+</div>
+<div class="flex-1 min-w-0">
+<div class="font-data-code text-data-code text-on-surface truncate">Elena Rostova</div>
+<div class="font-label-caps text-label-caps text-data-node-person">ASSOCIATE</div>
+</div>
+</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant line-clamp-2">Financial manager. Key signatory on accounts linked to Cypress Holdings.</div>
+</div>
+</div>
+</aside>
+</body></html>

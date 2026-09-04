@@ -1,0 +1,1381 @@
+My overall verdict
+
+CRIMENET is now a serious prototype, but I would NOT submit this exact codebase as the final SIH implementation yet.
+
+I'd rate it roughly:
+
+Area	Current	Potential
+Overall architecture	8/10	9.5
+UI/UX	8.5/10	9.5
+Graph visualization	8.5/10	9.5
+NLP extraction	7/10	9
+Entity resolution	6/10	9
+Data ingestion	6.5/10	9
+Security / case isolation	4/10	9
+Evidence provenance	5/10	9.5
+AI assistant	4/10	9
+Production readiness	4/10	9
+SIH demo potential	9/10	—
+
+The important thing is that the foundation is good. I don't think we should throw it away or rewrite it.
+
+We should harden the core intelligence pipeline and remove the things that make it look like a demo/mock system.
+
+1. What you did really well
+
+The architecture is actually much better than a typical student project.
+
+You have:
+
+Evidence
+   ↓
+PostgreSQL
+   ↓
+Celery
+   ↓
+NLP / Structured Extraction
+   ↓
+Entity Resolution
+   ↓
+Review Queue
+   ↓
+Transactional Outbox
+   ↓
+Neo4j
+   ↓
+Graph Analytics
+   ↓
+AI / RAG
+   ↓
+Investigator UI
+
+That is the correct direction.
+
+Particularly good decisions
+✅ PostgreSQL + Neo4j separation
+
+You explicitly treat PostgreSQL as the system of record and Neo4j as the relationship/knowledge graph.
+
+That's a strong architecture.
+
+✅ Transactional outbox
+
+This is one of the best parts.
+
+Instead of:
+
+PostgreSQL → directly write Neo4j
+
+you have:
+
+PostgreSQL
+   ↓
+OutboxEvent
+   ↓
+Celery
+   ↓
+Neo4j
+
+That gives you eventual consistency and makes failures recoverable.
+
+Keep this.
+
+✅ Async processing
+
+The ingestion pipeline doesn't block the API while Gemini/entity extraction is running.
+
+That's exactly what we want:
+
+Upload
+  ↓
+202 Accepted
+  ↓
+Celery Job
+  ↓
+Processing
+  ↓
+Completed
+
+Very good for the final demo.
+
+✅ Human-in-the-loop entity resolution
+
+The idea:
+
+confidence >= 0.85
+        ↓
+   AUTO MERGE
+
+0.50 - 0.85
+        ↓
+ REVIEW QUEUE
+
+< 0.50
+        ↓
+ CREATE NEW
+
+is excellent conceptually.
+
+This is much better than blindly letting an LLM merge entities.
+
+✅ Case isolation is clearly considered
+
+I can see that you've intentionally tried to enforce:
+
+Case A
+   ↓
+Evidence A
+   ↓
+Graph A
+
+Case B
+   ↓
+Evidence B
+   ↓
+Graph B
+
+That's extremely important for this kind of system.
+
+Unfortunately, there are still some serious holes in that isolation, which I'll get to below.
+
+2. Biggest problem: the project still contains demo/fallback intelligence
+
+This is probably my #1 recommendation.
+
+There are fallback datasets scattered throughout the project.
+
+For example:
+
+Rajesh Kumar
+Vikram Malhotra
+Shadow Ring Syndicate
+Swiss Account #9876
+Black Fortuner MH02DX9912
+Safehouse Alpha
+Port Terminal 4
+
+appear inside frontend/backend fallback logic.
+
+For example the AI has:
+
+Active Case Intelligence (Fallback Context)
+
+and then provides predetermined intelligence.
+
+The Network Explorer has:
+
+DEFAULT_FALLBACK_GRAPH
+
+The geospatial explorer has:
+
+FALLBACK_LOCATIONS
+
+The review queue has:
+
+rev-01
+rev-02
+rev-03
+
+The dashboard also has fallback cases.
+
+Why this is dangerous
+
+During development, this is useful.
+
+During the SIH demo, it creates a serious credibility problem.
+
+Imagine a judge asks:
+
+"Show me what happens when I upload a completely new FIR."
+
+And your system still shows:
+
+Rajesh Kumar → Vikram → Shadow Ring → Swiss Account
+
+That immediately makes the system look simulated.
+
+My recommendation
+
+Keep fallback data only behind an explicit DEMO_MODE flag.
+
+For example:
+
+DEMO_MODE=false
+
+Then:
+
+if settings.DEMO_MODE:
+    return demo_data
+else:
+    raise HTTPException(...)
+
+Even better:
+
+Production mode
+No backend data
+     ↓
+Empty state
+     ↓
+"Upload evidence to begin analysis"
+Demo mode
+Preloaded synthetic investigation
+
+This gives us both:
+
+development convenience + professional credibility.
+
+3. 🚨 You have exposed a real Gemini API key
+
+This is the most urgent thing.
+
+The uploaded .env contains a Gemini API credential.
+
+I'm intentionally not reproducing the key here.
+
+You should treat that key as compromised immediately.
+
+Do this first
+Revoke/delete the exposed Gemini key.
+Generate a new key.
+Never put .env inside the repository/ZIP.
+Add:
+.env
+*.env
+Create:
+.env.example
+
+containing only:
+
+GEMINI_API_KEY=
+DATABASE_URL=
+NEO4J_PASSWORD=
+JWT_SECRET=
+...
+
+This is particularly important because your archive contains:
+
+backend/.env
+
+and also credentials in Docker configuration.
+
+4. 🚨 Authentication looks good conceptually but has a dangerous JWT default
+
+You have:
+
+JWT_SECRET = "CHANGE_ME_USE_A_LONG_RANDOM_STRING_AT_LEAST_64_CHARS"
+
+That's fine as a placeholder.
+
+But the application should refuse to start if production is using the placeholder.
+
+Something like:
+
+if settings.APP_ENV == "production":
+    if settings.JWT_SECRET.startswith("CHANGE_ME"):
+        raise RuntimeError("JWT_SECRET must be configured")
+
+Same idea for:
+
+ADMIN_PASSWORD
+NEO4J_PASSWORD
+MINIO_SECRET_KEY
+POSTGRES_PASSWORD
+5. 🚨 Evidence authorization needs fixing
+
+This is one of the biggest actual security issues I found.
+
+get_all_evidence() does:
+
+evidence_list = db.query(Evidence).all()
+
+That means an authenticated user can potentially receive evidence from all cases.
+
+The comment says:
+
+List all accessible evidence.
+
+But the query doesn't actually enforce accessibility.
+
+That's inconsistent with your case-isolation architecture.
+
+It should instead effectively be:
+
+INVESTIGATOR
+    ↓
+only evidence belonging to their cases
+
+SUPERVISOR
+    ↓
+all authorized cases
+
+ADMIN
+    ↓
+all
+
+The same access-control helper should be reused everywhere.
+
+6. 🚨 There is a serious case-ID fallback problem
+
+In the graph router:
+
+if not case:
+    case = db.query(Case).first()
+
+That's dangerous.
+
+If someone requests an invalid case ID, instead of:
+
+404 Case Not Found
+
+the system can effectively fall back to the first case.
+
+That's exactly the opposite of strict case isolation.
+
+Same pattern appears in evidence handling.
+
+Never do this
+if invalid_case:
+    return first_case
+
+Instead:
+
+raise HTTPException(
+    status_code=404,
+    detail="Case not found"
+)
+
+This should be fixed across the entire backend.
+
+7. 🚨 AI RAG isn't actually doing semantic retrieval yet
+
+This is probably the most important AI architecture improvement.
+
+You calculate:
+
+keywords = [ ... ]
+
+but then don't really use them.
+
+The query is effectively:
+
+MATCH (n)
+WHERE n.case_id = $case_id
+RETURN ...
+LIMIT 30
+
+So the AI gets essentially:
+
+"Here are the first 30 nodes."
+
+rather than:
+
+"Here are the graph facts relevant to the investigator's question."
+
+That's not true RAG yet.
+
+8. How I would redesign the AI layer
+
+Instead:
+
+User:
+"What accounts are connected to Rajesh?"
+             ↓
+Intent detection
+             ↓
+Entity extraction
+             ↓
+Graph traversal
+             ↓
+Relevant evidence retrieval
+             ↓
+Confidence filtering
+             ↓
+Gemini
+             ↓
+Cited answer
+
+For example:
+
+Question
+  │
+  ▼
+Identify "Rajesh Kumar"
+  │
+  ▼
+Neo4j
+  │
+  ├── OWNS → Phone
+  ├── ASSOCIATED_WITH → Organization
+  ├── COMMUNICATES_WITH → Vikram
+  └── PARTICIPATED_IN → Event
+  │
+  ▼
+PostgreSQL
+  │
+  ├── FIR
+  ├── CDR
+  └── Financial record
+  │
+  ▼
+Evidence bundle
+  │
+  ▼
+Gemini
+  │
+  ▼
+Answer + citations
+
+That would make VEILLE/CRIMENET much more impressive.
+
+9. Your AI response currently contains fabricated static citations
+
+This part concerns me.
+
+The AI endpoint always returns things like:
+
+Rajesh Kumar
+Vikram Malhotra
+Shadow Ring Syndicate
+Port Terminal 4
+
+and fixed citations such as:
+
+FIR-2024-098
+CDR-AUG-9811
+FIN-SWISS-45M
+
+even when the current graph doesn't necessarily contain those records.
+
+That violates the architecture you describe in the prompt:
+
+Always cite which evidence documents support each claim.
+
+We should change the contract.
+
+AI should only be able to cite:
+
+evidence_id
+filename
+page/row/section
+extraction confidence
+
+that actually exists in PostgreSQL.
+
+Something like:
+
+{
+  "claim": "Entity A communicated with Entity B",
+  "evidence": [
+    {
+      "evidence_id": "...",
+      "filename": "CDR_August.csv",
+      "row": 42
+    }
+  ]
+}
+
+This would be much stronger than normal chatbot RAG.
+
+10. Entity resolution is conceptually good but technically needs improvement
+
+This is the second major ML issue.
+
+You calculate:
+
+Lexical similarity
++
+Structural similarity
+
+Good.
+
+But your structural similarity compares:
+
+candidate neighbour IDs
+
+with:
+
+existing Neo4j neighbour IDs
+
+The candidate IDs come from the newly extracted document.
+
+Those IDs generally won't be canonical IDs from Neo4j.
+
+So:
+
+Phone_9876543210
+
+in the new document may be compared against:
+
+Phone_a73f...
+
+or some other canonical identifier.
+
+That makes the structural score much less meaningful than it appears.
+
+11. Better entity resolution
+
+I would make the resolver:
+
+Candidate entity
+      │
+      ├── Exact identifiers
+      │     ├── phone
+      │     ├── account
+      │     ├── vehicle plate
+      │     └── email
+      │
+      ├── Normalized lexical match
+      │     ├── name
+      │     └── aliases
+      │
+      ├── Attribute similarity
+      │     ├── DOB
+      │     ├── address
+      │     ├── organization
+      │     └── phone
+      │
+      ├── Graph similarity
+      │
+      └── Evidence provenance
+             ↓
+       Composite score
+             ↓
+    ┌────────┼────────┐
+    ▼        ▼        ▼
+ CREATE   REVIEW   MERGE
+
+This is significantly more defensible.
+
+12. Another serious issue: merge destroys relationship semantics
+
+Your review merge currently converts relationships into:
+
+ASSOCIATED_WITH
+
+when redirecting them.
+
+That's bad for a knowledge graph.
+
+Suppose:
+
+Rajesh ──OWNS──> Phone
+
+and we merge Rajesh A → Rajesh B.
+
+You should preserve:
+
+Rajesh B ──OWNS──> Phone
+
+not:
+
+Rajesh B ──ASSOCIATED_WITH──> Phone
+
+Otherwise you're destroying information.
+
+Preserve:
+OWNS
+COMMUNICATES_WITH
+LOCATED_AT
+PARTICIPATED_IN
+ASSOCIATED_WITH
+
+including their:
+
+confidence
+timestamp
+source evidence
+properties
+13. Outbox is good, but your idempotency mechanism isn't actually implemented
+
+You calculate:
+
+idemp_key = hashlib.sha256(...)
+
+but don't store it.
+
+So the code claims to have idempotency, but the database doesn't enforce it.
+
+That's an important distinction.
+
+Better
+
+Add:
+
+idempotency_key
+
+to OutboxEvent.
+
+Then:
+
+UNIQUE(idempotency_key)
+
+Now retries can't generate duplicate events.
+
+14. Neo4j schema has an architectural inconsistency
+
+You use:
+
+CREATE CONSTRAINT person_id
+...
+REQUIRE n.id IS UNIQUE
+
+but your graph operations use:
+
+MERGE (n:Person {id: $id, case_id: $case_id})
+
+Meaning you're logically saying:
+
+identity = id + case_id
+
+but your Neo4j constraint says:
+
+identity = id
+
+Those two models conflict.
+
+We need to decide what CRIMENET's identity model is.
+
+I recommend
+
+Canonical entity IDs should be globally unique.
+
+Then:
+
+entity_id
+case_id
+
+are separate concepts.
+
+That actually helps entity resolution across evidence while still controlling case access.
+
+15. The graph schema needs richer provenance
+
+Right now a relationship basically has:
+
+confidence
+properties
+source_evidence_id
+
+I'd expand it toward:
+
+confidence
+source_evidence_ids[]
+first_seen
+last_seen
+extraction_method
+analyst_verified
+verification_status
+created_at
+
+Then you can visually show:
+
+0.91 AI EXTRACTED
+0.98 ANALYST VERIFIED
+
+That is excellent for the SIH presentation.
+
+16. Evidence should become the center of the system
+
+Right now the architecture feels slightly:
+
+Document → Graph
+
+I'd make it:
+
+Evidence
+   ↓
+Claims
+   ↓
+Entities
+   ↓
+Relationships
+   ↓
+Graph
+
+This is a much stronger intelligence architecture.
+
+For example:
+
+FIR-001
+ │
+ ├── mentions → Rajesh Kumar
+ ├── mentions → MH02DX9912
+ └── mentions → Port Terminal 4
+
+CDR-004
+ │
+ ├── caller → Phone A
+ ├── receiver → Phone B
+ └── timestamp → 03:15
+
+FIN-002
+ │
+ ├── sender → Account A
+ └── receiver → Account B
+
+Then the graph isn't just saying:
+
+Rajesh → Port
+
+It can say:
+
+Rajesh
+  │
+  └── PARTICIPATED_IN
+          │
+          ▼
+     Event X
+          │
+          ▲
+          │
+      Evidence
+       FIR-001
+
+That's far more explainable.
+
+17. Your "Live Intercept Feed" should be renamed/repositioned
+
+CommunicationsIntercept.jsx is visually impressive.
+
+But right now it is entirely static.
+
+It says:
+
+RECORDING
+
+and:
+
+ACTIVE TRANSMISSION
+
+while the data is hardcoded.
+
+That's dangerous from a credibility standpoint.
+
+For the SIH version I'd either:
+
+Option A — actually connect it to a simulated streaming source
+Kafka
+ ↓
+CDR stream
+ ↓
+WebSocket
+ ↓
+UI
+
+or
+
+Option B — explicitly call it
+
+Simulated Communications Feed
+
+I strongly prefer A.
+
+And this is exactly where your existing Kafka infrastructure can become useful.
+
+18. Kafka is currently overkill unless we actually use it
+
+Your infrastructure contains:
+
+Kafka
+Zookeeper
+Redis
+Celery
+PostgreSQL
+Neo4j
+MinIO
+
+That's a lot.
+
+For a student project, judges may ask:
+
+"Why do you need Kafka AND Redis AND Celery?"
+
+We need a clear answer.
+
+I'd make the architecture:
+
+              ┌──────────────┐
+              │ Evidence API │
+              └──────┬───────┘
+                     │
+          ┌──────────▼──────────┐
+          │     PostgreSQL      │
+          │   System of Record  │
+          └──────────┬──────────┘
+                     │
+               Outbox Event
+                     │
+             ┌───────▼───────┐
+             │ Celery / Redis│
+             └───────┬───────┘
+                     │
+          ┌──────────▼──────────┐
+          │ Extraction Pipeline │
+          └──────────┬──────────┘
+                     │
+              Entity Resolution
+                     │
+             ┌───────▼───────┐
+             │    Neo4j       │
+             │ Knowledge Graph│
+             └───────┬───────┘
+                     │
+             ┌───────▼───────┐
+             │ Analytics/RAG │
+             └───────┬───────┘
+                     │
+                  React UI
+
+Then Kafka is specifically:
+
+REAL-TIME CDR STREAM
+        ↓
+      Kafka
+
+That gives Kafka a legitimate purpose.
+
+19. MinIO isn't actually being used yet
+
+The comments say:
+
+MinIO / S3 Object Storage
+
+but ingestion currently saves:
+
+backend/tmp/uploads
+
+locally.
+
+So the architecture documentation and implementation disagree.
+
+I'd fix this before final submission.
+
+Use:
+
+Upload
+ ↓
+SHA-256
+ ↓
+MinIO
+ ↓
+PostgreSQL metadata
+ ↓
+Celery
+
+Then PostgreSQL stores:
+
+object_key
+hash
+size
+filename
+case_id
+
+rather than relying on local filesystem paths.
+
+20. Geospatial module is visually good but needs real graph linkage
+
+Currently the map contains coordinates and a tactical route.
+
+Good UI.
+
+But the locations should come from:
+
+Location nodes
++
+Events
++
+Vehicle sightings
++
+Cell tower data
+
+rather than a predetermined Mumbai dataset.
+
+And importantly:
+
+Don't draw a simple chronological polyline as if it were a physical route.
+
+Instead show:
+
+Entity
+   ↓
+Event
+   ↓
+Location
+   ↓
+Timestamp
+
+Then allow:
+
+"Show movement of Person X between 18:00–23:00"
+
+That's much more defensible.
+
+21. The frontend is visually strong
+
+This is honestly one of the strongest parts.
+
+The:
+
+dark intelligence-center aesthetic
+network graph
+sticky-note entity cards
+evidence library
+review queue
+geospatial explorer
+system health
+audit logs
+AI assistant
+
+give CRIMENET a real product feel.
+
+I would not redesign the UI heavily.
+
+Instead, make the data underneath it real.
+
+22. But the frontend currently hides backend failures
+
+This pattern appears everywhere:
+
+.catch(() => {
+    setSomething(FALLBACK_DATA);
+})
+
+That's great during development.
+
+But for final:
+
+Backend unavailable
+       ↓
+❌ silently display fake intelligence
+
+is unacceptable.
+
+Instead:
+
+Backend unavailable
+       ↓
+┌──────────────────────────┐
+│ DATA SOURCE UNAVAILABLE  │
+│                          │
+│ Neo4j connection failed  │
+│ Retry                    │
+└──────────────────────────┘
+
+For the judge, this actually makes the product look more professional.
+
+23. CaseWorkspace.jsx is basically unfinished
+
+This file is currently:
+
+Case Workspace
+Select a case to begin analysis.
+
+I'd either:
+
+Remove it
+
+or turn it into the central case command center.
+
+Personally, I'd make it the most important page.
+
+Something like:
+
+CASE: 2026-ALPHA-09
+──────────────────────────────
+
+Evidence      Entities      Links      Alerts
+   47            183          421        12
+
+──────────────────────────────
+
+          CASE TIMELINE
+
+──────────────────────────────
+
+      KNOWLEDGE GRAPH
+
+──────────────────────────────
+
+ Evidence → Claims → Entities → Relationships
+
+──────────────────────────────
+
+ AI INVESTIGATIVE SUMMARY
+
+That could become the primary demo screen.
+
+24. Audit logging needs strengthening
+
+The architecture says:
+
+Immutable ledger
+
+but the database table itself isn't cryptographically tamper-evident.
+
+For SIH, we can make this significantly better.
+
+Add:
+
+previous_hash
+event_hash
+
+Then:
+
+Audit 001
+   ↓ hash
+Audit 002
+   ↓ hash
+Audit 003
+   ↓ hash
+Audit 004
+
+Now you can demonstrate:
+
+Tamper-evident audit trail
+
+That's a fantastic SIH feature.
+
+25. Add a proper investigation timeline
+
+This is one feature I strongly recommend.
+
+Every evidence item produces:
+
+timestamp
+entity
+event
+location
+relationship
+confidence
+source
+
+Then:
+
+18 Aug
+ │
+ ├── Phone A calls Phone B
+ │
+19 Aug
+ │
+ ├── Vehicle spotted at Location X
+ │
+20 Aug
+ │
+ ├── Financial transaction
+ │
+21 Aug
+ │
+ └── Meeting detected
+
+This gives investigators a chronological narrative rather than just a graph.
+
+26. Add "Why is this connection important?"
+
+This could become CRIMENET's killer feature.
+
+When clicking:
+
+Rajesh Kumar
+       │
+       └── COMMUNICATES_WITH
+               │
+               ▼
+         Vikram Malhotra
+
+show:
+
+WHY THIS LINK EXISTS
+
+Evidence:
+  CDR_AUG_2026.csv
+  Row 184
+
+Observed:
+  42 communications
+
+Time window:
+  01 Aug – 31 Aug 2026
+
+Confidence:
+  0.96
+
+Supporting evidence:
+  FIR-098
+  Financial Record #204
+
+This transforms the graph from:
+
+"Cool visualization"
+
+into:
+
+Explainable intelligence system.
+
+27. Your synthetic dataset work is actually valuable
+
+I would keep the synthetic data generator.
+
+But evolve it.
+
+Instead of only:
+
+FIR
+CDR
+FIN
+
+generate correlated datasets:
+
+FIR
+│
+├── Person
+├── Phone
+├── Vehicle
+└── Location
+
+CDR
+│
+├── Phone A
+└── Phone B
+
+Financial
+│
+├── Account A
+└── Account B
+
+Vehicle sightings
+│
+└── Vehicle → Location
+
+Ground Truth
+│
+└── Expected graph
+
+Then evaluate:
+
+NER Precision
+NER Recall
+
+Entity Resolution Precision
+Entity Resolution Recall
+
+Relationship Extraction Precision
+Relationship Extraction Recall
+
+False Merge Rate
+False Split Rate
+
+This gives you actual ML evaluation numbers for your presentation.
+
+28. This is where I think we can make the project stand out
+
+Instead of telling judges:
+
+"We use AI to analyze crime data."
+
+show them:
+
+Evidence → Intelligence → Decision
+
+For example:
+
+UPLOAD FIR
+    ↓
+12 entities extracted
+    ↓
+3 entities matched
+    ↓
+2 ambiguous matches
+    ↓
+1 review task
+    ↓
+CDR uploaded
+    ↓
+42 communications detected
+    ↓
+Graph expands
+    ↓
+Community detected
+    ↓
+Financial transaction correlated
+    ↓
+Location correlation detected
+    ↓
+AI generates evidence-backed summary
+
+That is a story.
+
+And SIH judges remember stories much more than technology lists.
+
+29. What I would NOT change
+
+Don't waste time replacing:
+
+React
+FastAPI
+PostgreSQL
+Neo4j
+Celery
+Redis
+ForceGraph
+Leaflet
+
+The stack is fine.
+
+Don't rewrite the UI from scratch.
+
+Don't replace the entire architecture.
+
+Instead:
+
+Turn the existing prototype into a trustworthy intelligence pipeline.
+
+30. My recommended CRIMENET v5 architecture
+
+I'd take the current code toward:
+
+                         ┌───────────────────┐
+                         │   INVESTIGATOR    │
+                         └─────────┬─────────┘
+                                   │
+                              React UI
+                                   │
+             ┌─────────────────────┼──────────────────────┐
+             │                     │                      │
+          Evidence              Graph                  AI
+          Explorer             Explorer              Assistant
+             │                     │                      │
+             └─────────────────────┼──────────────────────┘
+                                   │
+                              FastAPI API
+                                   │
+              ┌────────────────────┼───────────────────┐
+              │                    │                   │
+          PostgreSQL            Neo4j               Redis
+          System of Record     Knowledge Graph      Queue
+              │                    │                   │
+              │                    │                Celery
+              │                    │                   │
+              └──────────────┬─────┴───────────────────┘
+                             │
+                    Intelligence Pipeline
+                             │
+               ┌─────────────┼──────────────┐
+               │             │              │
+              NLP       Entity Resolution   Rules
+               │             │              │
+               └─────────────┼──────────────┘
+                             │
+                      Human Review Queue
+                             │
+                             ▼
+                      Verified Knowledge
+                             │
+              ┌──────────────┼──────────────┐
+              │              │              │
+           Timeline        Graph         Geospatial
+              │              │              │
+              └──────────────┼──────────────┘
+                             │
+                       Evidence-backed
+                         AI Analysis
+31. Priority list — what we should actually do
+
+I wouldn't work randomly through the repository.
+
+I'd use this order:
+
+🔴 P0 — Fix immediately
+Remove exposed Gemini key
+Remove .env from deliverable
+Fix case-isolation vulnerabilities
+Remove db.query(Case).first() fallbacks
+Fix evidence authorization
+Make production secrets mandatory
+Remove fake AI citations
+Remove fake intelligence from production mode
+🟠 P1 — Core intelligence
+Real MinIO evidence storage
+Real evidence → extraction pipeline
+Better entity resolution
+Preserve relationship types during merge
+Implement real outbox idempotency
+Add evidence provenance to graph
+Real AI RAG based on relevant graph traversal
+Evidence-backed AI citations
+🟡 P2 — Intelligence differentiation
+Investigation timeline
+"Why this connection?" explanation panel
+Graph community detection
+Temporal relationship analysis
+Geospatial correlation
+Anomaly detection
+Entity profile page
+Investigation scoring/explanation — not guilt prediction
+🟢 P3 — Demo polish
+Streaming CDR simulation through Kafka
+WebSocket live graph updates
+System health metrics
+Tamper-evident audit chain
+ML evaluation dashboard
+Final synthetic dataset + ground truth
+32. The most important conceptual change
+
+Right now CRIMENET is approximately:
+
+DATA
+ ↓
+AI
+ ↓
+GRAPH
+ ↓
+UI
+
+I want us to make it:
+
+RAW EVIDENCE
+      ↓
+EXTRACTION
+      ↓
+CLAIMS
+      ↓
+ENTITY RESOLUTION
+      ↓
+HUMAN VALIDATION
+      ↓
+KNOWLEDGE GRAPH
+      ↓
+TEMPORAL + GEOSPATIAL + GRAPH ANALYTICS
+      ↓
+EVIDENCE-BACKED AI
+      ↓
+INVESTIGATOR DECISION
+
+That distinction is huge.
+
+It changes CRIMENET from an "AI crime dashboard" into an explainable multi-source intelligence fusion platform.
+
+My recommendation
+
+Don't start coding new UI features yet.
+
+The next phase should be a CRIMENET v4.1 hardening pass:
+
+Security → remove mocks → fix case isolation → fix entity resolution → provenance → real RAG → real MinIO → testing
+
+After that, we can build the killer intelligence features on top.
+
+And one particularly important thing: the current codebase is already good enough that I would preserve it as a baseline (v4.0) and build the hardened version incrementally rather than rewriting it.
+
+The next logical step is therefore:
+
+CRIMENET v4.0
+     ↓
+v4.1 SECURITY + DATA INTEGRITY
+     ↓
+v4.2 REAL INTELLIGENCE PIPELINE
+     ↓
+v4.3 EXPLAINABLE AI + PROVENANCE
+     ↓
+v5.0 SIH FINAL
+
+Overall: the project is much stronger than I expected from a typical prototype. The architecture is worth keeping; the biggest weakness is not technology, it's that too much of the current system can still fall back to fabricated/demo intelligence. Fix that, and CRIMENET becomes genuinely compelling.

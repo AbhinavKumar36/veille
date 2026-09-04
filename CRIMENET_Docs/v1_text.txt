@@ -1,0 +1,535 @@
+CRIMENET AI
+
+AI-Powered Criminal Network Intelligence & Analysis System
+
+Consolidated Master Document — SIH 2026
+
+Attribute
+
+Value
+
+Problem Statement
+
+SIH26189
+
+Title
+
+AI-Powered Criminal Network Analysis System
+
+Organization
+
+Ministry of Home Affairs, Government of India
+
+Category / Theme
+
+Software — Blockchain & Cybersecurity
+
+Document Scope
+
+Consolidated summary of Parts 1–5 + new Part 6 (Data Architecture) + gap-fixes
+
+Version
+
+v1.0 — Master Consolidated Edition
+
+Contents
+
+1. Executive Summary
+
+2. The Problem, In One Page
+
+3. Product Vision & What We Will NOT Claim
+
+4. End-to-End System Architecture
+
+5. AI / ML Intelligence Engine (Condensed)
+
+6. Investigator UX (Condensed)
+
+7. Part 6 — Data Architecture, Knowledge Graph Schema & Database Design
+
+8. Risks & Mitigations (Expanded)
+
+9. Synthetic Data Strategy (Fixed Gap)
+
+10. MVP Scope Cut & Team-to-Module Mapping (Fixed Gap)
+
+11. Build Roadmap
+
+12. Overall Assessment & Recommendations
+
+1. Executive Summary
+
+CRIMENET AI turns fragmented, heterogeneous investigation data — FIRs, call detail records (CDRs), financial transactions, surveillance reports, social-media intelligence — into a structured Criminal Intelligence Knowledge Graph, then applies AI/NLP and graph analytics to surface relationships, key players, and suspicious patterns for investigators. It is built as an AI-assisted decision-support tool, not an autonomous decision-maker.
+
+Core Principle
+
+• Extract → Reconcile → Connect → Analyze → Explain → Assist
+
+• — not the naive "Upload → Generate Graph" approach most competing teams will pitch.
+
+Why this stands out
+
+Hybrid AI philosophy: deterministic code, NLP, ML, and graph algorithms each do the job they're best at — the LLM is only used for interaction and evidence-grounded explanation.
+
+Evidence provenance is mandatory for every important relationship — nothing the system claims is un-traceable.
+
+Explicit ethical boundaries (Section 3) — the system never claims to determine guilt.
+
+A working data-and-graph pipeline is the flagship deliverable; the LLM layer is an enhancement, not the dependency.
+
+2. The Problem, In One Page
+
+Investigations today are not blocked by a lack of data — they're blocked by fragmentation. Case-relevant information is scattered across FIRs, police reports, CDRs, bank transaction logs, surveillance notes, and social media, in different formats and systems. Investigators manually stitch together relationships between entities (people, phones, vehicles, accounts, locations, organizations, events) that appear inconsistently across these sources.
+
+Core entities the system must track
+
+Person · Phone Number · Vehicle · Bank Account · Location · Organization · Event · Case
+
+Why this is a fusion problem, not a visualization problem
+
+SIH26189 is best understood as a multisource intelligence fusion and relationship-analysis problem. A graph is the output representation — the hard part is getting clean, resolved, evidence-linked entities and relationships into that graph in the first place.
+
+3. Product Vision & What We Will NOT Claim
+
+CRIMENET AI is positioned as: "A decision-support and intelligence-discovery system that helps authorized investigators understand complex networks while preserving evidence provenance and human oversight."
+
+Explicit non-claims (this is a strength, not a hedge)
+
+That AI can determine guilt.
+
+That graph centrality proves criminal involvement.
+
+That an association automatically means criminal association.
+
+That synthetic-data performance equals field performance.
+
+That AI predictions are infallible.
+
+That every detected relationship is genuine.
+
+That the system replaces investigators.
+
+That the system can autonomously make enforcement decisions.
+
+Keep this section prominent in the pitch deck — for an MHA-sponsored, civil-liberties-adjacent problem statement, judges will actively look for exactly this kind of self-awareness.
+
+4. End-to-End System Architecture
+
+The system follows a layered pipeline. Each layer is independently replaceable (modular design principle A2), and analytical outputs preserve provenance back to source evidence (A3).
+
+Figure 1 — End-to-end data-to-decision pipeline
+
+Architectural objectives
+
+Objective
+
+Meaning
+
+A1 — Multisource
+
+Support heterogeneous investigation data (structured + unstructured).
+
+A2 — Modular
+
+Each major subsystem is independently replaceable.
+
+A3 — Evidence-Aware
+
+Analytical results must preserve provenance to source documents.
+
+A4 — Explainable
+
+Important AI outputs must have supporting evidence, never a bare score.
+
+5. AI / ML Intelligence Engine (Condensed)
+
+Design principle
+
+"Not every problem should be solved with an LLM." The engine is a pipeline of purpose-built components, not a single model doing everything.
+
+Component
+
+Role
+
+NLP (NER + parsing)
+
+Extract entities & candidate relationships from FIRs, reports, free text
+
+Entity Resolution
+
+Confidence-scored deduplication of the same real-world entity across sources
+
+Graph Analytics
+
+Centrality (betweenness/closeness/eigenvector), community detection, bridge/motif detection, link prediction
+
+Temporal Engine
+
+Event extraction, activity-spike detection, sequence detection
+
+Geospatial Engine
+
+Location clustering, geo-anomaly detection
+
+Pattern & Anomaly Engine
+
+Rule-based suspicious-pattern flags + multi-signal anomaly scoring
+
+Investigation Priority Engine
+
+Ranks entities by investigative relevance — explicitly NOT a guilt score (Decision D6)
+
+RAG + LLM Assistant
+
+Natural-language Q&A over the case, always citation-grounded to evidence
+
+Guardrails
+
+Hallucination control on the LLM layer
+
+Prompt-injection defense
+
+Citation model — every AI claim links back to source evidence
+
+Human-in-the-loop verification is mandatory (Decision D7), not optional
+
+6. Investigator UX (Condensed)
+
+The interface is built around a single investigator workflow: Case Workspace → Data Ingestion → Entity Review Queue → Network Explorer (graph + timeline + map) → Evidence Explorer → AI Assistant → Report Generation.
+
+Flagship demo flow (already scripted — presentation-ready)
+
+Scene 1 — Investigator opens a case with an initially incomplete network.
+
+Scene 2 — Uploads 3 heterogeneous sources (FIR PDF, CDR CSV, transactions CSV).
+
+Scene 3 — UI visibly shows AI processing: extracting entities → resolving identities → building relationships → running analytics.
+
+Scene 4 — Graph appears; two initially separate clusters resolve into a shared bridge entity, "Person X" — the flagship discovery moment.
+
+This is your strongest live-demo asset — protect it in scoping (see Section 10).
+
+7. Part 6 — Data Architecture, Knowledge Graph Schema & Database Design
+
+This part defines exactly what CRIMENET stores, how entities connect, and how the application retrieves them. It follows directly from the layered architecture in Section 4 and the entity model established in Parts 1–2.
+
+7.1 Storage Strategy: Why Two Databases
+
+CRIMENET deliberately splits storage by workload, rather than forcing everything into one engine:
+
+Store
+
+Role
+
+Holds
+
+PostgreSQL
+
+System of record
+
+Users, cases, evidence metadata, audit logs, AI job status, permissions — anything relational, transactional, and access-controlled.
+
+Neo4j
+
+Knowledge graph
+
+Person / Organization / Phone / Vehicle / Account / Location / Event nodes and their relationships — anything that is queried by traversal, not by row lookup.
+
+Object Storage
+
+Raw evidence
+
+PDFs, images, documents, and extracted artifacts — the immutable source-of-truth files every graph fact must trace back to.
+
+Redis / Queue
+
+Async layer
+
+Processing jobs, caching, and asynchronous ingestion workflows so long-running NLP jobs don't block the UI.
+
+Figure 2 — Storage split and Neo4j relationship model
+
+7.2 Neo4j Node Types
+
+Person — investigation subjects, witnesses, associates
+
+Organization — companies, gangs, fronts
+
+Phone — numbers appearing in CDRs
+
+Vehicle — registration numbers, linked movement records
+
+Account — bank/financial accounts
+
+Location — addresses, geocoded points, hotspots
+
+Event — a dated occurrence (meeting, transaction, call, incident)
+
+7.3 Core Relationship Types
+
+AFFILIATED_WITH (Person → Organization)
+
+USES (Person → Phone)
+
+OWNS (Person → Account)
+
+COMMUNICATES_WITH (Person → Person, with call/message metadata + confidence)
+
+PARTICIPATED_IN (Person → Event)
+
+OCCURRED_AT (Event → Location)
+
+LINKED_TO (Person → Vehicle)
+
+Every relationship edge carries: confidence score, source evidence ID(s), extraction method (rule-based / NLP / manual), and a created/verified timestamp. This is what makes Decision D3 (evidence provenance) enforceable at the schema level, not just a policy statement.
+
+7.4 PostgreSQL Core Tables (indicative)
+
+Table
+
+Key Columns
+
+users
+
+id, name, role, permissions_ref, created_at
+
+cases
+
+id, title, status, assigned_investigator, created_at
+
+evidence
+
+id, case_id, source_type, file_ref (object storage key), uploaded_by, hash
+
+audit_logs
+
+id, actor_id, action, target_ref, timestamp
+
+ai_jobs
+
+id, case_id, job_type, status, started_at, completed_at, model_version
+
+permissions
+
+role, resource, action, allowed (bool)
+
+7.5 Data Lineage — Every Fact is Traceable
+
+Figure 3 — Source-to-report lineage enforced by the schema
+
+This lineage chain is the technical backbone of Decision D3 and the "What We Will NOT Claim" commitments in Section 3 — a finding in a report can always be walked back to the original document.
+
+7.6 Indexing & Query Patterns
+
+Neo4j: composite index on (entity_type, normalized_name) for fast candidate matching during entity resolution.
+
+Neo4j: relationship property index on confidence for filtering low-confidence edges out of default graph views.
+
+PostgreSQL: index on cases.status and evidence.case_id for dashboard queries.
+
+Common query pattern: "shortest path between two entities within a case, filtered to confidence > threshold" — this should be a first-class, pre-optimized query, since it's the core of the flagship demo discovery moment.
+
+7.7 Retention, Backup & Synthetic Dataset Hook
+
+Evidence files: immutable once uploaded; retention policy configurable per case (align with MHA data-handling norms — flag as an open compliance question in Q&A, don't guess an answer).
+
+Backup: nightly PostgreSQL dump + Neo4j snapshot; both versioned so a demo environment can be reset to a known-good state (needed for the Judge-Facing Demo Mode already scoped in Part 4).
+
+The synthetic dataset (see Section 9) should be loaded through the exact same ingestion → NLP → resolution → graph pipeline as real data — never inserted directly into Neo4j. This is what makes the demo pipeline itself the thing being judged, not a canned graph.
+
+8. Risks & Mitigations (Expanded)
+
+Risk
+
+Impact if unaddressed
+
+Mitigation
+
+Overengineering
+
+Team burns hackathon time on infra instead of the demo
+
+Modular monolith for MVP — split into microservices only after it works
+
+LLM dependency
+
+If the LLM API is slow/down during judging, whole demo breaks
+
+Core graph + analytics must work with zero LLM calls; LLM is an add-on layer only
+
+Graph performance
+
+Large graphs lag live during demo
+
+Cap demo dataset size; pre-warm Neo4j indexes before presenting
+
+Entity-resolution errors
+
+Wrong merges undermine trust in front of judges
+
+Confidence threshold + visible human-review queue in the UI — show it, don't hide it
+
+Synthetic-data weakness
+
+Demo data looks fake or too clean
+
+See Section 9 — ground-truth generator with deliberate realistic noise
+
+False intelligence
+
+A wrong AI claim shown as fact
+
+Evidence provenance + human verification enforced at schema level (Section 7.5)
+
+Team-scope mismatch (new)
+
+6-person team can't build all 5 parts' worth of scope in the hackathon window
+
+See Section 10 — ruthless MVP cut + explicit team-to-module mapping
+
+Demo fragility (new)
+
+Live demo fails under judge questioning or unexpected input
+
+Rehearsed reset-to-known-state (Judge-Facing Demo Mode) + a recorded backup video of the full flagship flow
+
+9. Synthetic Data Strategy (Fixed Gap)
+
+This was the single most under-specified risk across Parts 1–5 relative to how much the demo depends on it. Below is a concrete design.
+
+9.1 Ground-truth generator design
+
+Start from a small hand-authored 'true' network (e.g., 40–60 entities, 2 clusters bridged by 1–2 connector entities) — this is your answer key.
+
+Generate source documents (synthetic FIR text, CDR rows, transaction rows) that describe this true network — using varied phrasing, partial name matches, and inconsistent formatting across sources.
+
+Deliberately inject realistic noise: misspelled names, same person with 2 different phone numbers, duplicate near-identical entities, a few red herrings unconnected to the main cluster, missing fields.
+
+Keep the answer key (true entities + true edges) separate — this becomes your evaluation set for entity resolution and relationship extraction accuracy (already scoped in Part 5, Sections 63–66).
+
+9.2 Why this matters more than it looks
+
+Your differentiation (Section 4, Technical Differentiation) rests on entity resolution and evidence-linked relationship extraction actually working — not just a graph rendering nicely. A synthetic dataset that's too clean will make judges suspicious that the hard part isn't real; a synthetic dataset with realistic noise, paired with a visible confidence/review UI, proves the hard part is solved.
+
+9.3 Practical build order
+
+Week 1: hand-author the 40–60 entity ground-truth network + answer key (spreadsheet is fine).
+
+Week 1–2: script-generate the 3 source documents (FIR text, CDR CSV, transactions CSV) from the ground truth, with noise injection parameters you control.
+
+Ongoing: re-run the same generator with different noise seeds to stress-test entity resolution before the final demo.
+
+10. MVP Scope Cut & Team-to-Module Mapping (Fixed Gap)
+
+Parts 1–5 describe a full platform. A 6-person team in a hackathon window cannot build all of it to production quality — and shouldn't try. Below is a ruthless split between what must work live and what can be architected-but-stubbed.
+
+Figure 4 — MVP core vs. stretch scope
+
+10.1 Suggested team-to-module mapping (6 members)
+
+#
+
+Role
+
+Owns
+
+1
+
+Data pipeline lead
+
+Ingestion, preprocessing, synthetic data generator (Section 9)
+
+2
+
+NLP/ML engineer
+
+Entity extraction, entity resolution, relationship extraction
+
+3
+
+Graph/backend engineer
+
+Neo4j schema (Section 7), graph analytics (centrality, community detection), API layer
+
+4
+
+Backend/infra engineer
+
+PostgreSQL schema, auth, job queue, deployment (containerization)
+
+5
+
+Frontend engineer
+
+Case workspace, Network Explorer graph UI, entity review queue
+
+6
+
+Frontend + demo/PM lead
+
+Dashboard, flagship demo scripting & rehearsal, judge Q&A prep, pitch deck
+
+Adjust to your actual team's strengths — the point is that every one of the 6 members should own a load-bearing piece of the MVP core (red path in Figure 4), not a stretch feature, until the core is demo-ready end to end.
+
+10.2 What stays fully in-document, not in code
+
+Temporal intelligence layer — describe it in the pitch as designed/architected, don't fake a live temporal UI unless core is done early.
+
+Geospatial clustering — same treatment; a static map screenshot in the deck is fine if not built live.
+
+Cross-case bridge analysis — this needs multiple cases with real depth; likely out of scope for a single-case hackathon demo.
+
+Full RAG assistant with citations — a simplified, narrowly-scoped Q&A over the one demo case is achievable; a general-purpose assistant is not.
+
+11. Build Roadmap
+
+Phase
+
+Deliverable
+
+Phase 0 — Foundation
+
+Ground-truth dataset, PostgreSQL + Neo4j schema, repo & container setup
+
+Phase 1 — Pipeline
+
+Ingestion → NLP extraction → entity resolution, working end-to-end on synthetic data
+
+Phase 2 — Graph Intelligence
+
+Graph load into Neo4j, centrality + community detection, confidence-scored edges
+
+Phase 3 — Investigator UI
+
+Case workspace, entity review queue, Network Explorer graph view
+
+Phase 4 — Demo Hardening
+
+Judge-facing demo mode, reset-to-known-state, recorded backup video, Q&A rehearsal
+
+Phase 5 — Stretch (if time)
+
+Temporal layer, geospatial layer, RAG assistant
+
+12. Overall Assessment & Recommendations
+
+Overall take
+
+This is well above typical SIH prep quality. The framing discipline (Extract → Reconcile → Connect → Analyze → Explain → Assist), the explicit ethical non-claims, the hybrid-AI philosophy, and the named architecture risks with mitigations all show mature systems thinking — not just an AI feature bolted onto a graph viewer. The single biggest gap across the original 5 parts was that everything was a specification, not yet a build plan; Sections 7, 9, and 10 of this document exist specifically to close that gap.
+
+Top 5 recommendations, in priority order
+
+Protect the flagship demo (Section 6) above everything else — build backward from it, not forward from the architecture.
+
+Build the synthetic data generator (Section 9) in week 1, not as an afterthought — your whole credibility rests on it.
+
+Cut scope honestly using Section 10 before your team writes a line of backend code — 5 documents' worth of architecture is not 5 documents' worth of hackathon build time.
+
+Keep the 'What We Will NOT Claim' framing (Section 3) visible in the pitch deck itself, not just the docs — it's a genuine differentiator with an MHA-sponsored, civil-liberties-sensitive problem statement.
+
+Rehearse a recorded backup of the full flagship demo flow — live graph demos are the single most common hackathon failure point.
+
+Final note
+
+The architecture is sound and the differentiation story is genuinely strong. The risk isn't the idea — it's execution discipline under a hard deadline. Everything in Sections 9–11 exists to convert your excellent planning into something your team can actually finish and defend live.

@@ -1,0 +1,286 @@
+"""
+VEILLE v4.0 — Celery Tasks
+Real pipeline replacing all mocked/hardcoded task implementations.
+
+Task flow for FIR documents:
+  upload_evidence → extract_entities_task → resolve_entities_task → insert into Neo4j
+
+Task flow for CDR/FINANCIAL:
+  upload_evidence → process_structured_data_task → resolve_entities_task → insert into Neo4j
+"""
+import csv
+import io
+import json
+import logging
+import os
+import sys
+
+# Ensure the backend root is on the path so ml.* imports work from Celery workers
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from workers.celery_app import celery_app
+from workers.base_task import CrimenetBaseTask, _update_evidence_status
+
+logger = logging.getLogger("veille.tasks")
+
+
+# ── Task 1: NLP Entity Extraction (FIR / PDF / TXT) ──────────────────────────
+
+@celery_app.task(
+    bind=True,
+    base=CrimenetBaseTask,
+    name="extract_entities",
+    max_retries=3,
+    default_retry_delay=30,
+)
+def extract_entities_task(self, evidence_id: str, file_path: str, case_id: str):
+    """
+    Reads an uploaded FIR/TXT/PDF file, sends it to the Gemini NLP extractor,
+    resolves entities against the existing graph, and upserts them into Neo4j.
+
+    Args:
+        evidence_id: UUID of the Evidence record in PostgreSQL.
+        file_path:   Local path to the uploaded file (Phase 1 uses local fs; Phase 2+ uses MinIO).
+        case_id:     UUID of the parent Case (used for Neo4j case_id scoping).
+
+    Error handling (via CrimenetBaseTask):
+        - GeminiAPIError → auto-retry (transient network/quota issue)
+        - ExtractionValidationError → no retry → DLQ
+        - Any other exception → auto-retry → DLQ on exhaustion
+    """
+    from ml.nlp.extractor import EvidenceExtractor, GeminiAPIError, ExtractionValidationError, ConfigurationError
+    from ml.entity_resolution.resolver import EntityResolver
+    from services.graph_service import insert_extracted_graph
+
+    logger.info(f"Starting entity extraction", extra={"evidence_id": evidence_id, "file_path": file_path})
+
+    # ── 1. Read file content ──────────────────────────────────────────────
+    try:
+        with open(file_path, "r", encoding="utf-8", errors="replace") as f:
+            text_content = f.read()
+    except FileNotFoundError:
+        # File missing — don't retry, go straight to DLQ
+        _update_evidence_status(evidence_id, "FAILED", f"File not found: {file_path}")
+        raise ValueError(f"Evidence file not found: {file_path}")
+
+    if not text_content.strip():
+        _update_evidence_status(evidence_id, "FAILED", "Empty file — nothing to extract")
+        return {"status": "skipped", "evidence_id": evidence_id, "reason": "empty_file"}
+
+    # ── 2. NLP Extraction (Gemini) ────────────────────────────────────────
+    try:
+        extractor = EvidenceExtractor()
+        extracted_graph = extractor.extract(text_content, file_path)
+
+    except ConfigurationError as e:
+        # Missing API key — don't retry, it won't fix itself
+        _update_evidence_status(evidence_id, "FAILED", str(e))
+        raise
+
+    except GeminiAPIError as e:
+        # Transient API error — let Celery retry with backoff
+        logger.warning(f"Gemini API error for {evidence_id}, retrying: {e}")
+        raise self.retry(exc=e, countdown=30 * (2 ** self.request.retries))
+
+    except ExtractionValidationError as e:
+        # Schema validation failed after 3 internal retries — route to DLQ
+        logger.error(f"Extraction validation exhausted for {evidence_id}: {e}")
+        _update_evidence_status(evidence_id, "FAILED", str(e))
+        raise   # Goes to on_failure → DLQ
+
+    # ── 3. Entity Resolution against existing graph ───────────────────────
+    resolver = EntityResolver()
+    resolved = resolver.resolve_extracted_graph(extracted_graph, case_id)
+
+    # ── 4. Upsert via Outbox Pattern ─────────────────────────────────────
+    from core.database import SessionLocal
+    db = SessionLocal()
+    try:
+        insert_extracted_graph(db, resolved, source_evidence_id=evidence_id, case_id=case_id)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Outbox insert failed for {evidence_id}: {e}")
+        raise self.retry(exc=e, countdown=60)
+    finally:
+        db.close()
+
+    # ── 5. Mark Evidence as COMPLETED ────────────────────────────────────
+    _update_evidence_status(evidence_id, "COMPLETED")
+
+    stats = {
+        "status": "success",
+        "evidence_id": evidence_id,
+        "entities_extracted": len(extracted_graph.entities),
+        "relationships_extracted": len(extracted_graph.relationships),
+        "auto_merged": resolved.get("auto_merged", 0),
+        "queued_for_review": resolved.get("queued_for_review", 0),
+    }
+    logger.info("Entity extraction completed", extra=stats)
+    return stats
+
+
+# ── Task 2: Structured Data Processing (CDR / FINANCIAL CSV) ─────────────────
+
+@celery_app.task(
+    bind=True,
+    base=CrimenetBaseTask,
+    name="process_structured_data",
+    max_retries=3,
+    default_retry_delay=30,
+)
+def process_structured_data_task(
+    self, evidence_id: str, source_type: str, file_path: str, case_id: str
+):
+    """
+    Parses a CDR or FINANCIAL CSV file into graph entities and relationships,
+    bypassing the NLP pipeline (structured data has explicit relationships).
+
+    CDR columns expected: caller, receiver, timestamp, duration_seconds, cell_tower_id
+    FINANCIAL columns expected: sender_account, receiver_account, amount, timestamp, reference
+    """
+    from services.graph_service import insert_extracted_graph
+    from ml.nlp.schemas import ExtractedGraph, ExtractedEntity, ExtractedRelation
+
+    logger.info(
+        f"Processing structured data",
+        extra={"evidence_id": evidence_id, "source_type": source_type}
+    )
+
+    try:
+        with open(file_path, "r", encoding="utf-8", errors="replace") as f:
+            content = f.read()
+    except FileNotFoundError:
+        _update_evidence_status(evidence_id, "FAILED", f"File not found: {file_path}")
+        raise ValueError(f"Evidence file not found: {file_path}")
+
+    entities = []
+    relationships = []
+    seen_ids = set()
+
+    def add_entity(entity_id: str, label: str, name: str, props: dict):
+        safe_id = entity_id.replace(" ", "_").replace("-", "_")
+        if safe_id not in seen_ids:
+            seen_ids.add(safe_id)
+            entities.append(ExtractedEntity(id=safe_id, label=label, name=name, properties=props))
+        return safe_id
+
+    try:
+        reader = csv.DictReader(io.StringIO(content))
+        rows_parsed = 0
+
+        for row in reader:
+            row = {k.strip().lower(): v.strip() for k, v in row.items() if k}
+
+            if source_type == "CDR":
+                # ── Call Detail Record ─────────────────────────────────
+                caller = row.get("caller", "")
+                receiver = row.get("receiver", "")
+                if not caller or not receiver:
+                    continue
+
+                caller_id = add_entity(f"Phone_{caller}", "Phone", caller, {})
+                receiver_id = add_entity(f"Phone_{receiver}", "Phone", receiver, {})
+
+                relationships.append(ExtractedRelation(
+                    source_id=caller_id,
+                    target_id=receiver_id,
+                    type="COMMUNICATES_WITH",
+                    confidence=1.0,   # Explicit CDR data = certainty
+                    properties={
+                        "timestamp": row.get("timestamp", ""),
+                        "duration_seconds": row.get("duration_seconds", ""),
+                        "cell_tower_id": row.get("cell_tower_id", ""),
+                    },
+                ))
+
+            elif source_type == "FINANCIAL":
+                # ── Financial Transaction ──────────────────────────────
+                sender = row.get("sender_account", "")
+                receiver = row.get("receiver_account", "")
+                if not sender or not receiver:
+                    continue
+
+                sender_id = add_entity(f"Account_{sender}", "Account", sender, {})
+                receiver_id = add_entity(f"Account_{receiver}", "Account", receiver, {})
+
+                relationships.append(ExtractedRelation(
+                    source_id=sender_id,
+                    target_id=receiver_id,
+                    type="ASSOCIATED_WITH",
+                    confidence=1.0,
+                    properties={
+                        "amount": row.get("amount", ""),
+                        "timestamp": row.get("timestamp", ""),
+                        "reference": row.get("reference", ""),
+                    },
+                ))
+
+            rows_parsed += 1
+
+    except csv.Error as e:
+        _update_evidence_status(evidence_id, "FAILED", f"CSV parse error: {e}")
+        raise ValueError(f"Invalid CSV file: {e}")
+
+    extracted_graph = ExtractedGraph(entities=entities, relationships=relationships)
+
+    from core.database import SessionLocal
+    db = SessionLocal()
+    try:
+        insert_extracted_graph(db, extracted_graph, source_evidence_id=evidence_id, case_id=case_id)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise self.retry(exc=e, countdown=60)
+    finally:
+        db.close()
+
+    _update_evidence_status(evidence_id, "COMPLETED")
+
+    stats = {
+        "status": "success",
+        "evidence_id": evidence_id,
+        "source_type": source_type,
+        "rows_parsed": rows_parsed,
+        "entities_created": len(entities),
+        "relationships_created": len(relationships),
+    }
+    logger.info("Structured data processing completed", extra=stats)
+    return stats
+
+
+# ── Task 3: Graph Analytics ───────────────────────────────────────────────────
+
+@celery_app.task(
+    bind=True,
+    base=CrimenetBaseTask,
+    name="run_graph_analytics",
+    max_retries=2,
+)
+def graph_analytics_task(self, case_id: str):
+    """
+    Runs degree centrality across the graph for a case and writes scores back to nodes.
+    Triggered after a successful ingestion to refresh the analytics overlay.
+    """
+    from core.graph_db import get_graph_session
+
+    try:
+        with get_graph_session() as session:
+            result = session.run(
+                """
+                MATCH (n)
+                WHERE n.case_id = $case_id
+                OPTIONAL MATCH (n)-[r]-()
+                WITH n, count(r) AS degree
+                SET n.degree_centrality = degree
+                RETURN count(n) AS updated_nodes
+                """,
+                case_id=case_id,
+            )
+            updated = result.single()["updated_nodes"]
+            logger.info(f"Graph analytics updated {updated} nodes for case {case_id}")
+            return {"status": "success", "case_id": case_id, "nodes_updated": updated}
+    except Exception as e:
+        raise self.retry(exc=e, countdown=30)
+    finally:
+        pass

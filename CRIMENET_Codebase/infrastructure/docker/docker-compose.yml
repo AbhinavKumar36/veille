@@ -1,0 +1,115 @@
+version: '3.8'
+
+services:
+  # PostgreSQL - System of Record
+  postgres:
+    image: postgres:15-alpine
+    container_name: veille-postgres
+    environment:
+      POSTGRES_USER: veille
+      POSTGRES_PASSWORD: veille_password
+      POSTGRES_DB: veille_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U veille -d veille_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Neo4j - Knowledge Graph
+  neo4j:
+    image: neo4j:5.11.0
+    container_name: veille-neo4j
+    environment:
+      NEO4J_AUTH: neo4j/veille_graph
+      # Enable APOC plugin for advanced graph analytics
+      NEO4J_apoc_export_file_enabled: "true"
+      NEO4J_apoc_import_file_enabled: "true"
+      NEO4J_apoc_import_file_use__neo4j__config: "true"
+      NEO4JLABS_PLUGINS: '["apoc"]'
+    ports:
+      - "7474:7474" # HTTP Browser
+      - "7687:7687" # Bolt Protocol
+    volumes:
+      - neo4j_data:/data
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:7474/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis - Job Queue
+  redis:
+    image: redis:7-alpine
+    container_name: veille-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # MinIO - Immutable Object Storage (S3 API)
+  minio:
+    image: minio/minio
+    container_name: veille-minio
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadminpassword
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000" # S3 API
+      - "9001:9001" # Web Console
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Zookeeper - Required for Kafka
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    container_name: veille-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
+      - zookeeper_log:/var/lib/zookeeper/log
+
+  # Kafka - Message Broker for Streaming Ingestion
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: veille-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+
+volumes:
+  postgres_data:
+  neo4j_data:
+  redis_data:
+  minio_data:
+  zookeeper_data:
+  zookeeper_log:
+  kafka_data:

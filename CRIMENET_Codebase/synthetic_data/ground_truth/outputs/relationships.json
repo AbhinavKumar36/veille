@@ -1,0 +1,367 @@
+[
+  {
+    "source_id": "person_1",
+    "target_id": "phone_5",
+    "type": "USES"
+  },
+  {
+    "source_id": "person_1",
+    "target_id": "veh_3",
+    "type": "OWNS"
+  },
+  {
+    "source_id": "person_1",
+    "target_id": "org_1",
+    "type": "AFFILIATED_WITH"
+  },
+  {
+    "source_id": "person_1",
+    "target_id": "evt_2",
+    "type": "PARTICIPATED_IN"
+  },
+  {
+    "source_id": "person_1",
+    "target_id": "loc_3",
+    "type": "LOCATED_AT"
+  },
+  {
+    "source_id": "person_2",
+    "target_id": "phone_1",
+    "type": "USES"
+  },
+  {
+    "source_id": "person_2",
+    "target_id": "veh_1",
+    "type": "OWNS"
+  },
+  {
+    "source_id": "person_2",
+    "target_id": "org_1",
+    "type": "AFFILIATED_WITH"
+  },
+  {
+    "source_id": "person_2",
+    "target_id": "evt_2",
+    "type": "PARTICIPATED_IN"
+  },
+  {
+    "source_id": "person_2",
+    "target_id": "loc_3",
+    "type": "LOCATED_AT"
+  },
+  {
+    "source_id": "person_3",
+    "target_id": "phone_3",
+    "type": "USES"
+  },
+  {
+    "source_id": "person_3",
+    "target_id": "org_1",
+    "type": "AFFILIATED_WITH"
+  },
+  {
+    "source_id": "person_3",
+    "target_id": "evt_2",
+    "type": "PARTICIPATED_IN"
+  },
+  {
+    "source_id": "person_3",
+    "target_id": "loc_1",
+    "type": "LOCATED_AT"
+  },
+  {
+    "source_id": "person_4",
+    "target_id": "phone_4",
+    "type": "USES"
+  },
+  {
+    "source_id": "person_4",
+    "target_id": "org_1",
+    "type": "AFFILIATED_WITH"
+  },
+  {
+    "source_id": "person_4",
+    "target_id": "evt_2",
+    "type": "PARTICIPATED_IN"
+  },
+  {
+    "source_id": "person_4",
+    "target_id": "loc_3",
+    "type": "LOCATED_AT"
+  },
+  {
+    "source_id": "person_5",
+    "target_id": "phone_2",
+    "type": "USES"
+  },
+  {
+    "source_id": "person_5",
+    "target_id": "veh_1",
+    "type": "OWNS"
+  },
+  {
+    "source_id": "person_5",
+    "target_id": "org_1",
+    "type": "AFFILIATED_WITH"
+  },
+  {
+    "source_id": "person_5",
+    "target_id": "evt_2",
+    "type": "PARTICIPATED_IN"
+  },
+  {
+    "source_id": "person_5",
+    "target_id": "loc_3",
+    "type": "LOCATED_AT"
+  },
+  {
+    "source_id": "person_6",
+    "target_id": "phone_5",
+    "type": "USES"
+  },
+  {
+    "source_id": "person_6",
+    "target_id": "veh_1",
+    "type": "OWNS"
+  },
+  {
+    "source_id": "person_6",
+    "target_id": "org_1",
+    "type": "AFFILIATED_WITH"
+  },
+  {
+    "source_id": "person_6",
+    "target_id": "evt_2",
+    "type": "PARTICIPATED_IN"
+  },
+  {
+    "source_id": "person_6",
+    "target_id": "loc_1",
+    "type": "LOCATED_AT"
+  },
+  {
+    "source_id": "person_7",
+    "target_id": "phone_5",
+    "type": "USES"
+  },
+  {
+    "source_id": "person_7",
+    "target_id": "veh_3",
+    "type": "OWNS"
+  },
+  {
+    "source_id": "person_7",
+    "target_id": "org_1",
+    "type": "AFFILIATED_WITH"
+  },
+  {
+    "source_id": "person_7",
+    "target_id": "evt_1",
+    "type": "PARTICIPATED_IN"
+  },
+  {
+    "source_id": "person_7",
+    "target_id": "loc_3",
+    "type": "LOCATED_AT"
+  },
+  {
+    "source_id": "person_8",
+    "target_id": "phone_3",
+    "type": "USES"
+  },
+  {
+    "source_id": "person_8",
+    "target_id": "org_1",
+    "type": "AFFILIATED_WITH"
+  },
+  {
+    "source_id": "person_8",
+    "target_id": "evt_1",
+    "type": "PARTICIPATED_IN"
+  },
+  {
+    "source_id": "person_8",
+    "target_id": "loc_2",
+    "type": "LOCATED_AT"
+  },
+  {
+    "source_id": "person_9",
+    "target_id": "phone_3",
+    "type": "USES"
+  },
+  {
+    "source_id": "person_9",
+    "target_id": "org_1",
+    "type": "AFFILIATED_WITH"
+  },
+  {
+    "source_id": "person_9",
+    "target_id": "evt_1",
+    "type": "PARTICIPATED_IN"
+  },
+  {
+    "source_id": "person_9",
+    "target_id": "loc_3",
+    "type": "LOCATED_AT"
+  },
+  {
+    "source_id": "person_10",
+    "target_id": "phone_1",
+    "type": "USES"
+  },
+  {
+    "source_id": "person_10",
+    "target_id": "org_1",
+    "type": "AFFILIATED_WITH"
+  },
+  {
+    "source_id": "person_10",
+    "target_id": "evt_2",
+    "type": "PARTICIPATED_IN"
+  },
+  {
+    "source_id": "person_10",
+    "target_id": "loc_1",
+    "type": "LOCATED_AT"
+  },
+  {
+    "source_id": "person_9",
+    "target_id": "person_3",
+    "type": "COMMUNICATES_WITH"
+  },
+  {
+    "source_id": "person_3",
+    "target_id": "person_8",
+    "type": "COMMUNICATES_WITH"
+  },
+  {
+    "source_id": "person_5",
+    "target_id": "person_9",
+    "type": "COMMUNICATES_WITH"
+  },
+  {
+    "source_id": "person_10",
+    "target_id": "person_7",
+    "type": "COMMUNICATES_WITH"
+  },
+  {
+    "source_id": "person_11",
+    "target_id": "phone_8",
+    "type": "USES"
+  },
+  {
+    "source_id": "person_11",
+    "target_id": "veh_4",
+    "type": "OWNS"
+  },
+  {
+    "source_id": "person_11",
+    "target_id": "org_2",
+    "type": "AFFILIATED_WITH"
+  },
+  {
+    "source_id": "person_11",
+    "target_id": "evt_4",
+    "type": "PARTICIPATED_IN"
+  },
+  {
+    "source_id": "person_11",
+    "target_id": "loc_5",
+    "type": "LOCATED_AT"
+  },
+  {
+    "source_id": "person_12",
+    "target_id": "phone_12",
+    "type": "USES"
+  },
+  {
+    "source_id": "person_12",
+    "target_id": "veh_5",
+    "type": "OWNS"
+  },
+  {
+    "source_id": "person_12",
+    "target_id": "org_2",
+    "type": "AFFILIATED_WITH"
+  },
+  {
+    "source_id": "person_12",
+    "target_id": "evt_4",
+    "type": "PARTICIPATED_IN"
+  },
+  {
+    "source_id": "person_12",
+    "target_id": "loc_4",
+    "type": "LOCATED_AT"
+  },
+  {
+    "source_id": "person_13",
+    "target_id": "phone_8",
+    "type": "USES"
+  },
+  {
+    "source_id": "person_13",
+    "target_id": "org_2",
+    "type": "AFFILIATED_WITH"
+  },
+  {
+    "source_id": "person_13",
+    "target_id": "evt_4",
+    "type": "PARTICIPATED_IN"
+  },
+  {
+    "source_id": "person_13",
+    "target_id": "loc_4",
+    "type": "LOCATED_AT"
+  },
+  {
+    "source_id": "person_14",
+    "target_id": "phone_11",
+    "type": "USES"
+  },
+  {
+    "source_id": "person_14",
+    "target_id": "veh_4",
+    "type": "OWNS"
+  },
+  {
+    "source_id": "person_14",
+    "target_id": "org_2",
+    "type": "AFFILIATED_WITH"
+  },
+  {
+    "source_id": "person_14",
+    "target_id": "evt_3",
+    "type": "PARTICIPATED_IN"
+  },
+  {
+    "source_id": "person_14",
+    "target_id": "loc_4",
+    "type": "LOCATED_AT"
+  },
+  {
+    "source_id": "person_15",
+    "target_id": "phone_12",
+    "type": "USES"
+  },
+  {
+    "source_id": "person_15",
+    "target_id": "veh_4",
+    "type": "OWNS"
+  },
+  {
+    "source_id": "person_15",
+    "target_id": "org_2",
+    "type": "AFFILIATED_WITH"
+  },
+  {
+    "source_id": "person_15",
+    "target_id": "evt_3",
+    "type": "PARTICIPATED_IN"
+  },
+  {
+    "source_id": "person_15",
+    "target_id": "loc_4",
+    "type": "LOCATED_AT"
+  }
+]

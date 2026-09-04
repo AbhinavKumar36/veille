@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CRIMENET - Suspect Profile</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed": "#e8deff",
+                        "surface-variant": "#333539",
+                        "surface": "#111318",
+                        "on-primary": "#00363d",
+                        "surface-dim": "#111318",
+                        "status-warning": "#FFB300",
+                        "primary": "#c3f5ff",
+                        "surface-tint": "#00daf3",
+                        "on-error": "#690005",
+                        "secondary-fixed-dim": "#bdc2ff",
+                        "on-primary-fixed": "#001f24",
+                        "outline-variant": "#3b494c",
+                        "surface-card": "#0D1117",
+                        "error-container": "#93000a",
+                        "surface-elevated": "#161B22",
+                        "on-primary-container": "#00626e",
+                        "primary-container": "#00e5ff",
+                        "background": "#111318",
+                        "surface-container-low": "#1a1c20",
+                        "on-secondary": "#1b247f",
+                        "outline": "#849396",
+                        "tertiary-container": "#d6c9ff",
+                        "on-secondary-fixed": "#000767",
+                        "surface-container": "#1e2024",
+                        "on-background": "#e2e2e8",
+                        "primary-fixed": "#9cf0ff",
+                        "inverse-surface": "#e2e2e8",
+                        "primary-fixed-dim": "#00daf3",
+                        "on-tertiary": "#370096",
+                        "inverse-on-surface": "#2f3035",
+                        "on-primary-fixed-variant": "#004f58",
+                        "on-secondary-fixed-variant": "#343d96",
+                        "surface-container-lowest": "#0c0e12",
+                        "surface-bright": "#37393e",
+                        "data-node-person": "#00E5FF",
+                        "tertiary": "#f1e9ff",
+                        "stroke-subtle": "rgba(255, 255, 255, 0.08)",
+                        "surface-container-high": "#282a2e",
+                        "secondary": "#bdc2ff",
+                        "secondary-fixed": "#e0e0ff",
+                        "status-critical": "#FF3D00",
+                        "on-tertiary-fixed-variant": "#4f00d0",
+                        "error": "#ffb4ab",
+                        "tertiary-fixed-dim": "#cdbdff",
+                        "status-success": "#00E676",
+                        "surface-container-highest": "#333539",
+                        "on-surface": "#e2e2e8",
+                        "on-tertiary-container": "#622be5",
+                        "inverse-primary": "#006875",
+                        "on-error-container": "#ffdad6",
+                        "on-surface-variant": "#bac9cc",
+                        "on-tertiary-fixed": "#20005f",
+                        "on-secondary-container": "#a8afff",
+                        "data-node-event": "#FF4081",
+                        "secondary-container": "#343d96"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "inspector-width": "400px",
+                        "margin-mobile": "16px",
+                        "margin-desktop": "32px",
+                        "sidebar-width": "280px",
+                        "gutter": "16px",
+                        "unit": "4px"
+                    },
+                    "fontFamily": {
+                        "headline-sm": ["Inter"],
+                        "label-caps": ["JetBrains Mono"],
+                        "headline-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "body-md": ["Inter"],
+                        "data-code": ["JetBrains Mono"]
+                    },
+                    "fontSize": {
+                        "headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+                        "label-caps": ["11px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "data-code": ["13px", { "lineHeight": "18px", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { background-color: theme('colors.background'); color: theme('colors.on-surface'); }
+        .glass-panel { background: rgba(30, 32, 36, 0.6); backdrop-filter: blur(12px); border: 1px solid theme('colors.stroke-subtle'); }
+        .grid-bg { background-image: radial-gradient(theme('colors.stroke-subtle') 1px, transparent 0); background-size: 24px 24px; }
+        .status-glow-warning { box-shadow: 0 0 12px theme('colors.status-warning'); }
+        .status-glow-critical { box-shadow: 0 0 12px theme('colors.status-critical'); }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden antialiased">
+<!-- SideNavBar -->
+<nav class="bg-surface dark:bg-surface fixed left-0 top-0 h-full w-[280px] border-r border-stroke-subtle flex flex-col py-4 z-40 hidden md:flex">
+<div class="px-6 mb-8">
+<h1 class="font-headline-sm text-headline-sm font-bold text-primary-fixed-dim tracking-tighter">CRIMENET</h1>
+<p class="font-label-caps text-label-caps text-on-surface-variant mt-1">Intelligence Fusion</p>
+</div>
+<div class="flex-1 overflow-y-auto">
+<ul class="space-y-1">
+<li><a class="flex items-center px-6 py-3 text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors duration-200 ease-in-out font-label-caps text-label-caps" href="#"><span class="material-symbols-outlined mr-4" data-icon="dashboard">dashboard</span>Dashboard</a></li>
+<li><a class="flex items-center px-6 py-3 text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors duration-200 ease-in-out font-label-caps text-label-caps" href="#"><span class="material-symbols-outlined mr-4" data-icon="hub">hub</span>Network Explorer</a></li>
+<li><a class="flex items-center px-6 py-3 text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors duration-200 ease-in-out font-label-caps text-label-caps" href="#"><span class="material-symbols-outlined mr-4" data-icon="rule">rule</span>Review Queue</a></li>
+<li><a class="flex items-center px-6 py-3 text-primary-fixed-dim bg-primary-container/10 border-r-2 border-primary-fixed-dim transition-colors duration-200 ease-in-out font-label-caps text-label-caps" href="#"><span class="material-symbols-outlined mr-4" data-icon="inventory_2">inventory_2</span>Evidence Library</a></li>
+<li><a class="flex items-center px-6 py-3 text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors duration-200 ease-in-out font-label-caps text-label-caps" href="#"><span class="material-symbols-outlined mr-4" data-icon="history_edu">history_edu</span>Audit Logs</a></li>
+<li><a class="flex items-center px-6 py-3 text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors duration-200 ease-in-out font-label-caps text-label-caps" href="#"><span class="material-symbols-outlined mr-4" data-icon="folder_shared">folder_shared</span>Case Selector</a></li>
+</ul>
+</div>
+<div class="px-6 mt-auto flex items-center pt-4 border-t border-stroke-subtle">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest overflow-hidden">
+<img alt="Investigator Avatar" class="w-full h-full object-cover" data-alt="A highly detailed close-up portrait of an intense intelligence analyst working late in a high-tech control center. Low-key lighting, cool blue monitor glow, cyberpunk corporate aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCzVv8BNqpYXY30aGuIufcjgJX-2SUV4HGUpbPOzaq6cIvKXJ_RMRzlCtQQk9_OGZvQCpuOOcI18gk5x1yMs44-EYrjgFTVm9_vAw6G8jAibhDVocmGlk2UZlN4Yt4MlVyPT4Y5rmHrgVu47W5MBZbmbadZdNwhSTdleFnZdCdE6xz_t2H1KblsvCuCbdECTUpSmM2NjtjmJ0bkdKP3YyQQD0YMCy0aTQlGs2cdtGdZHdDdkwuB0woM"/>
+</div>
+<div class="ml-3 flex flex-col">
+<span class="font-data-code text-data-code text-on-surface">OP-DIRECTOR</span>
+<span class="font-label-caps text-label-caps text-status-success">SECURE TETHER</span>
+</div>
+</div>
+</nav>
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-surface fixed top-0 right-0 w-full md:w-[calc(100%-280px)] h-16 border-b border-stroke-subtle flex items-center justify-between px-margin-desktop z-30">
+<div class="flex items-center space-x-6">
+<span class="font-headline-sm text-headline-sm font-bold text-primary-fixed-dim">Active Case: ALPHA-7</span>
+<span class="font-label-caps text-label-caps px-2 py-1 bg-error-container/20 text-status-critical border border-status-critical rounded status-glow-critical">Priority: Critical</span>
+</div>
+<div class="flex items-center space-x-4">
+<button class="text-on-surface-variant hover:text-primary-fixed transition-all duration-150"><span class="material-symbols-outlined" data-icon="notifications">notifications</span></button>
+<button class="text-on-surface-variant hover:text-primary-fixed transition-all duration-150"><span class="material-symbols-outlined" data-icon="settings">settings</span></button>
+<div class="md:hidden w-8 h-8 rounded-full bg-surface-container-highest overflow-hidden ml-2">
+<img alt="Investigator Profile" class="w-full h-full object-cover" data-alt="A highly detailed close-up portrait of an intense intelligence analyst working late in a high-tech control center. Low-key lighting, cool blue monitor glow, cyberpunk corporate aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCaYukDVf5VC2IouBzemUYSYMTZr8C8WxqkUbeiv1PEGVNUYZa9qzdOwURNKldtOPrS3XXQOMGm1LU0l9bVKtJOhit-_Iwk0J2wb6WSVuSAW9nUKAQH8ooJZ2EO9QwVVulvjMw6glenotpIP1pFKbuJNYgMARYFVdw-s-2kXyQ56MuBPm691BF-_LAhv4Fg62ffSt9Oc-NMi4ydSlLN0YHbsnfPu1JyM8dC1y8VEoH37u531bxoWFBY"/>
+</div>
+</div>
+</header>
+<!-- Main Workspace -->
+<main class="mt-16 md:ml-[280px] w-full h-[calc(100vh-64px-32px)] overflow-y-auto p-margin-desktop grid-bg relative">
+<div class="max-w-6xl mx-auto space-y-6">
+<!-- Dossier Header Card -->
+<div class="glass-panel rounded-lg p-6 flex flex-col md:flex-row gap-8 relative overflow-hidden">
+<div class="absolute top-0 right-0 p-4 opacity-10">
+<span class="material-symbols-outlined text-[120px]" data-icon="fingerprint">fingerprint</span>
+</div>
+<!-- Mugshot/Identity -->
+<div class="flex-shrink-0 flex flex-col items-center space-y-4">
+<div class="w-48 h-48 border-2 border-primary-fixed-dim p-1 relative">
+<div class="absolute -top-2 -left-2 w-4 h-4 border-t-2 border-l-2 border-primary-fixed-dim"></div>
+<div class="absolute -top-2 -right-2 w-4 h-4 border-t-2 border-r-2 border-primary-fixed-dim"></div>
+<div class="absolute -bottom-2 -left-2 w-4 h-4 border-b-2 border-l-2 border-primary-fixed-dim"></div>
+<div class="absolute -bottom-2 -right-2 w-4 h-4 border-b-2 border-r-2 border-primary-fixed-dim"></div>
+<img alt="Subject Mugshot" class="w-full h-full object-cover filter grayscale" data-alt="A gritty, high-contrast digital mugshot of a suspect in a clinical, harsh white light setting. The subject looks disheveled but alert. The background is a stark, height-marked wall typical of police booking photos. Grayscale tone with a slight blue technical tint." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDeuzoeR_bL5Q9GoTlcBD_9ievU1-AU3zFWLY0bi-ej_kWhSpAatG7blPOyH-p4jsz3vCX9gnbcjz_fH9bdObMCgeJCWSG8GiGjlmPfnHGT6lm_qqIDYzHyoDGX2V9Pchl5ygQy550jGVivSfYr7u-KUqeE059n6koYCe0NBfDiiiI0qsmr4qiqLBYX6bP9cawD5qwmysF4FbBvyt2QKgB6sukcYr2XR6I5zaTwQJi4uLhsxNIHUlj0"/>
+</div>
+<div class="text-center w-full">
+<h2 class="font-headline-lg text-headline-lg text-primary-fixed-dim uppercase tracking-wider">Malkov, V.</h2>
+<p class="font-data-code text-data-code text-on-surface-variant mt-1">ID: 882-XQ-993A</p>
+</div>
+</div>
+<!-- Vital Stats & Aliases -->
+<div class="flex-1 flex flex-col justify-center space-y-6 z-10">
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+<div class="bg-surface-container-low p-3 rounded border border-stroke-subtle">
+<span class="block font-label-caps text-label-caps text-on-surface-variant mb-1">STATUS</span>
+<span class="font-data-code text-data-code text-status-warning flex items-center"><span class="w-2 h-2 rounded-full bg-status-warning mr-2 animate-pulse"></span>ACTIVE TARGET</span>
+</div>
+<div class="bg-surface-container-low p-3 rounded border border-stroke-subtle">
+<span class="block font-label-caps text-label-caps text-on-surface-variant mb-1">THREAT LEVEL</span>
+<span class="font-data-code text-data-code text-status-critical">TIER 1 (RED)</span>
+</div>
+<div class="bg-surface-container-low p-3 rounded border border-stroke-subtle">
+<span class="block font-label-caps text-label-caps text-on-surface-variant mb-1">LAST SEEN</span>
+<span class="font-data-code text-data-code text-on-surface">2023-11-14 04:22Z</span>
+</div>
+<div class="bg-surface-container-low p-3 rounded border border-stroke-subtle">
+<span class="block font-label-caps text-label-caps text-on-surface-variant mb-1">LOCATION PING</span>
+<span class="font-data-code text-data-code text-on-surface">SECTOR 7G (EUR)</span>
+</div>
+</div>
+<div>
+<span class="block font-label-caps text-label-caps text-on-surface-variant mb-2 border-b border-stroke-subtle pb-1">KNOWN ALIASES</span>
+<div class="flex flex-wrap gap-2 mt-2">
+<span class="px-2 py-1 bg-surface-container text-on-surface border border-stroke-subtle font-data-code text-data-code text-xs rounded">"The Architect"</span>
+<span class="px-2 py-1 bg-surface-container text-on-surface border border-stroke-subtle font-data-code text-data-code text-xs rounded">Viktor Vance</span>
+<span class="px-2 py-1 bg-surface-container text-on-surface border border-stroke-subtle font-data-code text-data-code text-xs rounded">Null_Pointer</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Tabs Navigation -->
+<div class="border-b border-stroke-subtle">
+<nav aria-label="Tabs" class="flex space-x-8">
+<a class="font-label-caps text-label-caps text-primary-fixed-dim border-b-2 border-primary-fixed-dim py-4 px-1 flex items-center" href="#">
+<span class="material-symbols-outlined mr-2 text-sm" data-icon="hub">hub</span>Known Associates
+                    </a>
+<a class="font-label-caps text-label-caps text-on-surface-variant hover:text-on-surface py-4 px-1 flex items-center transition-colors" href="#">
+<span class="material-symbols-outlined mr-2 text-sm" data-icon="receipt_long">receipt_long</span>Communication Logs
+                    </a>
+<a class="font-label-caps text-label-caps text-on-surface-variant hover:text-on-surface py-4 px-1 flex items-center transition-colors" href="#">
+<span class="material-symbols-outlined mr-2 text-sm" data-icon="account_balance">account_balance</span>Financial Footprint
+                    </a>
+</nav>
+</div>
+<!-- Tab Content (Known Associates - Mini Graph Concept) -->
+<div class="glass-panel rounded-lg p-6 h-96 relative flex items-center justify-center overflow-hidden">
+<!-- Decorative abstract graph elements -->
+<div class="absolute w-3 h-3 bg-data-node-person rounded-full top-1/4 left-1/4 status-glow-warning flex items-center justify-center"><div class="w-1 h-1 bg-black rounded-full"></div></div>
+<div class="absolute w-3 h-3 bg-data-node-event rounded-full bottom-1/3 right-1/4 flex items-center justify-center"><div class="w-1 h-1 bg-black rounded-full"></div></div>
+<div class="absolute w-3 h-3 bg-tertiary-fixed rounded-full top-1/2 right-1/3 flex items-center justify-center"><div class="w-1 h-1 bg-black rounded-full"></div></div>
+<!-- Central Node -->
+<div class="w-16 h-16 bg-surface-container border-2 border-primary-fixed-dim rounded-full flex items-center justify-center z-10 shadow-[0_0_20px_rgba(0,218,243,0.3)]">
+<span class="material-symbols-outlined text-primary-fixed-dim text-3xl" data-icon="person">person</span>
+</div>
+<svg class="absolute inset-0 w-full h-full pointer-events-none opacity-30" xmlns="http://www.w3.org/2000/svg">
+<line stroke="theme('colors.primary-fixed-dim')" stroke-dasharray="4" stroke-width="1" x1="50%" x2="25%" y1="50%" y2="25%"></line>
+<line stroke="theme('colors.stroke-subtle')" stroke-width="2" x1="50%" x2="75%" y1="50%" y2="66%"></line>
+<line stroke="theme('colors.data-node-event')" stroke-width="1" x1="50%" x2="66%" y1="50%" y2="50%"></line>
+</svg>
+<div class="absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-sm pointer-events-none">
+<div class="text-center border border-stroke-subtle bg-surface/80 p-4 rounded inline-block">
+<span class="material-symbols-outlined text-on-surface-variant block mb-2" data-icon="lock">lock</span>
+<span class="font-data-code text-data-code text-on-surface-variant">GRAPH VISUALIZATION LOCKED. DECRYPTING...</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="bg-surface-container-lowest dark:bg-surface-container-lowest fixed bottom-0 right-0 w-full md:w-[calc(100%-280px)] h-8 border-t border-stroke-subtle flex items-center justify-between px-4 z-30 cursor-default">
+<span class="font-data-code text-data-code text-status-success">SYSTEM STATUS: NOMINAL | SYNC ACTIVE</span>
+<div class="flex space-x-6 text-on-surface-variant font-data-code text-data-code text-xs">
+<span>v2.4.1-STABLE</span>
+<span>Latency: 24ms</span>
+</div>
+</footer>
+</body></html>
