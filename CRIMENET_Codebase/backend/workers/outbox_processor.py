@@ -50,6 +50,7 @@ def process_outbox_events():
             return
 
         logger.info(f"Processing {len(events)} outbox events...")
+        modified_case_ids = set()
 
         for event in events:
             try:
@@ -64,6 +65,9 @@ def process_outbox_events():
                 else:
                     raise ValueError(f"Unknown event_type: {event.event_type}")
 
+                if "case_id" in payload:
+                    modified_case_ids.add(payload["case_id"])
+                    
                 event.status = "PROCESSED"
                 event.error_message = None
                 
@@ -92,6 +96,25 @@ def process_outbox_events():
                         logger.error(f"Could not push to DLQ: {redis_err}")
 
         db.commit()
+        
+        # ── Invalidate Redis Cache for modified case_ids ──────────────────────
+        try:
+            redis_client = _get_redis_client()
+            for case_id in modified_case_ids:
+                # Invalidate graph data
+                redis_client.delete(f"graph_data:{case_id}")
+                # Invalidate analytics for this case
+                keys = redis_client.keys(f"graph_analytics:{case_id}:*")
+                if keys:
+                    redis_client.delete(*keys)
+                    
+                # Broadcast WS update
+                redis_client.publish("graph_updates", json.dumps({
+                    "case_id": case_id,
+                    "event": "graph_updated"
+                }))
+        except Exception as redis_err:
+            logger.error(f"Failed to invalidate cache: {redis_err}")
 
     finally:
         db.close()

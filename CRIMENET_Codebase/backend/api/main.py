@@ -15,6 +15,7 @@ from api.routers.review_queue import router as review_queue_router
 from api.routers.auth import router as auth_router
 from api.routers.audit_logs import router as audit_logs_router
 from api.routers.ai import router as ai_router
+from api.routers.ws import router as ws_router
 from core.config import settings
 from core.logging_config import setup_logging
 
@@ -77,6 +78,7 @@ app.include_router(geospatial.router)
 app.include_router(review_queue_router)
 app.include_router(audit_logs_router)
 app.include_router(ai_router)
+app.include_router(ws_router)
 
 # ── Global Exception Handlers ────────────────────────────────────────────────
 

@@ -29,7 +29,7 @@ UPLOAD_DIR = os.path.join(
 )
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-ALLOWED_EXTENSIONS = {".pdf", ".txt", ".csv"}
+ALLOWED_EXTENSIONS = {".pdf", ".txt", ".csv", ".png", ".jpg", ".jpeg", ".mp3", ".wav"}
 MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024  # 50 MB
 
 
@@ -224,7 +224,7 @@ async def upload_evidence(
     # ── Dispatch to Async Pipeline ───────────────────────────────────────
     job_id = str(uuid.uuid4())  # Fallback if Celery is unavailable
     try:
-        if source_type == "FIR" or file_ext in (".pdf", ".txt"):
+        if source_type == "FIR" or file_ext in (".pdf", ".txt", ".png", ".jpg", ".jpeg", ".mp3", ".wav"):
             result = extract_entities_task.delay(str(evidence_id), file_path, case_id)
             job_id = result.id
         else:
@@ -246,6 +246,58 @@ async def upload_evidence(
         job_id=job_id,
         message=f"File '{file.filename}' accepted. Processing in background.",
     )
+
+
+class CDRStreamPayload(BaseModel):
+    case_id: str
+    caller: str
+    receiver: str
+    timestamp: str
+    duration_seconds: int
+    cell_tower_id: str
+
+@router.post("/stream", status_code=status.HTTP_202_ACCEPTED)
+async def stream_cdr(
+    payload: CDRStreamPayload,
+    current_user: dict = Depends(require_role("INVESTIGATOR", "SUPERVISOR")),
+    db: Session = Depends(get_db),
+):
+    """
+    Ingest a single CDR record into the Kafka stream for real-time processing.
+    """
+    from confluent_kafka import Producer
+    import json
+    
+    # Verify case exists
+    case = db.query(Case).filter(Case.id == payload.case_id).first()
+    if not case:
+        raise HTTPException(status_code=404, detail="Case not found.")
+
+    producer_conf = {'bootstrap.servers': settings.KAFKA_BOOTSTRAP_SERVERS}
+    try:
+        producer = Producer(producer_conf)
+        
+        # We include source_evidence_id as a dummy UUID to satisfy the outbox processor schema constraints
+        msg = {
+            "case_id": payload.case_id,
+            "caller": payload.caller,
+            "receiver": payload.receiver,
+            "timestamp": payload.timestamp,
+            "duration_seconds": payload.duration_seconds,
+            "cell_tower_id": payload.cell_tower_id,
+            "source_evidence_id": str(uuid.uuid4())
+        }
+        
+        producer.produce(settings.KAFKA_CDR_TOPIC, json.dumps(msg).encode('utf-8'))
+        producer.flush(timeout=1.0)
+        
+    except Exception as e:
+        import logging
+        logging.getLogger("veille.ingestion").error(f"Kafka producer error: {e}")
+        raise HTTPException(status_code=503, detail="Streaming ingestion unavailable.")
+
+    return {"status": "accepted", "message": "Record added to stream."}
+
 
 
 @router.get("/status/{evidence_id}")

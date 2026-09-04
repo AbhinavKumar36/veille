@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from api.auth import get_current_user, log_action, require_role
 from core.database import get_db
 from core.graph_db import get_graph_session
+from core.redis_client import cache_get, cache_set
 from db.models import Case
 
 router = APIRouter(prefix="/api/v1/graph", tags=["graph"])
@@ -56,6 +57,11 @@ def get_graph(
     case = _verify_case_access(case_id, current_user, db)
     case_id_str = str(case.id)
     log_action(db, current_user["id"], "QUERY_GRAPH", case_id=case_id_str)
+
+    cache_key = f"graph_data:{case_id_str}"
+    cached_data = cache_get(cache_key)
+    if cached_data:
+        return cached_data
 
     try:
         with get_graph_session() as session:
@@ -119,7 +125,7 @@ def get_graph(
                     },
                 })
 
-            return {
+            response_data = {
                 "case_id": case_id,
                 "nodes": nodes,
                 "edges": edges,
@@ -128,6 +134,8 @@ def get_graph(
                     "edge_count": len(edges),
                 },
             }
+            cache_set(cache_key, response_data, expire_seconds=60)
+            return response_data
 
     except Exception as e:
         import logging
@@ -151,6 +159,11 @@ def get_graph_analytics(
     """
     _verify_case_access(case_id, current_user, db)
     log_action(db, current_user["id"], f"ANALYTICS_{algorithm.upper()}", case_id=case_id)
+
+    cache_key = f"graph_analytics:{case_id}:{algorithm}"
+    cached_data = cache_get(cache_key)
+    if cached_data:
+        return cached_data
 
     try:
         with get_graph_session() as session:
@@ -180,6 +193,29 @@ def get_graph_analytics(
                 RETURN n.id AS id, n.name AS name, labels(n)[0] AS type, communityId AS score
                 ORDER BY communityId
                 """
+            elif algorithm == "temporal":
+                # Temporal Timeline Analytics
+                query = """
+                MATCH (n)-[r]->(m)
+                WHERE n.case_id = $case_id AND m.case_id = $case_id
+                  AND r.properties IS NOT NULL
+                  AND r.properties CONTAINS 'timestamp'
+                WITH n, r, m,
+                     CASE 
+                       WHEN apoc.meta.type(r.properties) = 'STRING' THEN apoc.convert.fromJsonMap(r.properties).timestamp
+                       ELSE null 
+                     END as ts
+                WHERE ts IS NOT NULL
+                RETURN 
+                    n.id AS source,
+                    n.name AS source_name,
+                    m.id AS target,
+                    m.name AS target_name,
+                    type(r) AS event_type,
+                    ts AS timestamp
+                ORDER BY timestamp DESC
+                LIMIT 100
+                """
             else:
                 # Degree centrality fallback
                 query = """
@@ -197,21 +233,36 @@ def get_graph_analytics(
 
             result = session.run(query, case_id=case_id)
 
-            results = [
-                {
-                    "id": record["id"],
-                    "name": record["name"],
-                    "type": record["type"],
-                    "score": record["score"],
-                }
-                for record in result
-            ]
+            if algorithm == "temporal":
+                results = [
+                    {
+                        "source": record["source"],
+                        "source_name": record["source_name"],
+                        "target": record["target"],
+                        "target_name": record["target_name"],
+                        "event_type": record["event_type"],
+                        "timestamp": record["timestamp"],
+                    }
+                    for record in result
+                ]
+            else:
+                results = [
+                    {
+                        "id": record["id"],
+                        "name": record["name"],
+                        "type": record["type"],
+                        "score": record["score"],
+                    }
+                    for record in result
+                ]
 
-            return {
+            response_data = {
                 "case_id": case_id,
                 "algorithm": algorithm,
                 "nodes": results,
             }
+            cache_set(cache_key, response_data, expire_seconds=300)
+            return response_data
 
     except Exception as e:
         import logging
