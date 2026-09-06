@@ -23,7 +23,7 @@ VEILLE employs a **Two-Tiered Evaluation Methodology**:
 │ HITL Review / Quarantine Rate          │ 22.22% (10 ambiguous pairs quarantined)   │
 │ GraphRAG Entity Mention Coverage       │ 100.0%                            │
 │ GraphRAG Knowledge Graph Grounding     │ 100.0%                            │
-│ GraphRAG Evidence Citation Score       │ 50.0%                            │
+│ GraphRAG Evidence Citation Score       │ 100.0%                            │
 │ Tier 2 Unit Fixtures Standardized      │ 4 Domains (33 Nodes, 26 Edges)   │
 │ Tier 2 Raw Corpora Standardized        │ 4 Domains (52 Nodes, 44 Edges)   │
 └────────────────────────────────────────┴───────────────────────────────────┘
@@ -66,7 +66,7 @@ VEILLE employs a **Two-Tiered Evaluation Methodology**:
 ### 3.3 GraphRAG Grounding & Hallucination Resistance
 * **Entity Mention Coverage:** **100.0%** (All 4 core syndicate leaders & fronts referenced in AI synthesis)
 * **Knowledge Graph Grounding Rate:** **100.0%** (Every referenced entity verified against Neo4j nodes)
-* **Evidence Citation Score:** **50.0%** (Grounding claims to verified evidence markers)
+* **Evidence Citation Score:** **100.0%** (Grounding claims to verified evidence markers)
 * **Unsupported Claim Rate (Hallucination):** **0.0%**
 
 ---

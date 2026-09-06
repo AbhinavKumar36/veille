@@ -1,53 +1,1414 @@
 [
   {
-    "id": "IN_SC_2023_4910",
-    "year": 2023,
-    "court": "Supreme Court of India",
-    "text": "In the Supreme Court of India, Criminal Appellate Jurisdiction. Appeal filed by Appellant Harish Chandra against the State of Maharashtra. The Bench presided by Hon'ble Justice Dr. D.Y. Chandrachud and Justice Surya Kant heard Senior Advocate Kapil Sibal appearing for the petitioner. The Central Bureau of Investigation submitted chargesheet under Section 120B and Section 409 of Indian Penal Code concerning illicit procurement at Jawaharlal Nehru Port Trust in Navi Mumbai.",
+    "id": "90d9a97c7b7749ec8a4f460fda6f937e",
+    "source": "tax_districtcourts judgement https://indiankanoon.org/doc/1556717/",
+    "text": "\n\n(7) On specific query by the Bench about an entry of Rs. 1,31,37,500 on deposit side of Hongkong Bank account of which a photo copy is appearing at p. 40 of assessee's paper book, learned authorised representative submitted that it was related to loan from broker, Rahul & Co. on the basis of his submission a necessary mark is put by us on that photo copy.",
     "annotations": [
-      { "name": "Harish Chandra", "label": "PETITIONER" },
-      { "name": "State of Maharashtra", "label": "RESPONDENT" },
-      { "name": "Dr. D.Y. Chandrachud", "label": "JUDGE" },
-      { "name": "Surya Kant", "label": "JUDGE" },
-      { "name": "Kapil Sibal", "label": "LAWYER" },
-      { "name": "Central Bureau of Investigation", "label": "ORG" },
-      { "name": "Jawaharlal Nehru Port Trust", "label": "LOC" },
-      { "name": "Navi Mumbai", "label": "GPE" },
-      { "name": "Section 120B", "label": "STATUTE" },
-      { "name": "Section 409", "label": "STATUTE" }
+      {
+        "name": "Hongkong Bank",
+        "label": "ORG"
+      },
+      {
+        "name": "Rahul & Co.",
+        "label": "ORG"
+      }
     ]
   },
   {
-    "id": "IN_BHC_2024_1029",
-    "year": 2024,
-    "court": "High Court of Judicature at Bombay",
-    "text": "Before the High Court of Judicature at Bombay, Criminal Division. Bail Application No. 891 of 2024. In the matter of Elena Rostova versus Directorate of Enforcement (ED). Counsel Abhishek Manu Singhvi appeared on behalf of applicant Elena Rostova concerning allegations under PMLA 2002 connected to Horizon Global Logistics based in Bandra Kurla Complex, Mumbai.",
+    "id": "a325c57ba5b84c6fa46bee65e6616633",
+    "source": "criminal_punjab-haryana_high_court judgement https://indiankanoon.org/doc/264463",
+    "text": "He was also asked whether Agya <span class=\"hidden_text\" id=\"span_5\"> CRA No.326-DB of 1998 6</span> Kaur, mother-in-law of the deceased lived separately from Tarlochan Singh.",
     "annotations": [
-      { "name": "Elena Rostova", "label": "PETITIONER" },
-      { "name": "Directorate of Enforcement", "label": "ORG" },
-      { "name": "Abhishek Manu Singhvi", "label": "LAWYER" },
-      { "name": "Horizon Global Logistics", "label": "ORG" },
-      { "name": "Bandra Kurla Complex", "label": "LOC" },
-      { "name": "Mumbai", "label": "GPE" },
-      { "name": "PMLA 2002", "label": "STATUTE" }
+      {
+        "name": "Agya",
+        "label": "OTHER_PERSON"
+      },
+      {
+        "name": "Kaur",
+        "label": "OTHER_PERSON"
+      },
+      {
+        "name": "Tarlochan Singh",
+        "label": "OTHER_PERSON"
+      }
     ]
   },
   {
-    "id": "IN_DHC_2025_0412",
-    "year": 2025,
-    "court": "High Court of Delhi",
-    "text": "In the High Court of Delhi at New Delhi. Serious Fraud Investigation Office (SFIO) versus Zenith Infrastructure Consortium. Justice Pratibha M. Singh presided. Advocate Mukul Rohatgi represented respondent Vikram Mehta. Financial forensic evidence established round-tripping of funds via Mauritius and Singapore entities in violation of Companies Act 2013 and Section 420 of Indian Penal Code.",
+    "id": "33cface31108441080976035ee04d07e",
+    "source": "financial_districtcourts judgement https://indiankanoon.org/doc/94286093/",
+    "text": " \n5.2 CW3 Mr Vijay Mishra , Deputy Manager, HDFC Bank, Noida, UP has deposed that complainant had a current account with HDFC Bank in the year 2004\u00ad2005.",
     "annotations": [
-      { "name": "Serious Fraud Investigation Office", "label": "ORG" },
-      { "name": "Zenith Infrastructure Consortium", "label": "ORG" },
-      { "name": "Pratibha M. Singh", "label": "JUDGE" },
-      { "name": "Mukul Rohatgi", "label": "LAWYER" },
-      { "name": "Vikram Mehta", "label": "RESPONDENT" },
-      { "name": "New Delhi", "label": "GPE" },
-      { "name": "Mauritius", "label": "GPE" },
-      { "name": "Singapore", "label": "GPE" },
-      { "name": "Companies Act 2013", "label": "STATUTE" },
-      { "name": "Section 420", "label": "STATUTE" }
+      {
+        "name": "Vijay Mishra",
+        "label": "WITNESS"
+      },
+      {
+        "name": "HDFC Bank, Noida",
+        "label": "ORG"
+      },
+      {
+        "name": "UP",
+        "label": "GPE"
+      },
+      {
+        "name": "HDFC Bank",
+        "label": "ORG"
+      }
     ]
+  },
+  {
+    "id": "08debe900b51464e9f26b5d1eecae170",
+    "source": "civil_bombay_high_court judgement https://indiankanoon.org/doc/710312",
+    "text": "You are hereby asked not to carry out any construction work of the said building hereafter since the agreement has been terminated\".",
+    "annotations": []
+  },
+  {
+    "id": "428070222cd940eba78b233829eb28b8",
+    "source": "motorvehicles_andhra_high_court judgement https://indiankanoon.org/doc/903089",
+    "text": "The pillion rider T.V. Satyanarayana Murthy also sustained injuries.",
+    "annotations": [
+      {
+        "name": "T.V. Satyanarayana Murthy",
+        "label": "OTHER_PERSON"
+      }
+    ]
+  },
+  {
+    "id": "ac75957f317f4277ae7e21a5c74190d8",
+    "source": "criminal_andhra_high_court judgement https://indiankanoon.org/doc/60411382",
+    "text": ", if the argument of the learned counsel for the respondents is accepted, it would mean that a person whose bail under POTA has been rejected by the Special Court will have two remedies and he can avail any one of them at his sweet will.",
+    "annotations": [
+      {
+        "name": "POTA",
+        "label": "STATUTE"
+      }
+    ]
+  },
+  {
+    "id": "25a06e51867f41ab83691cef5ec228c5",
+    "source": "criminal_calcutta_high_court judgement https://indiankanoon.org/doc/810514",
+    "text": "After all the steps at the stage of investigation has to be reported before the Court and the order passed thereon is obviously judicial order and this takes clear note of the agony of the learned Counsels.",
+    "annotations": []
+  },
+  {
+    "id": "4cb7a0dd260d48e495a9df7f6219c3f4",
+    "source": "criminal_karnataka_high_court judgement https://indiankanoon.org/doc/7032220",
+    "text": "PW--2 Chandregowda is the younger brother of bi-hglllltleceased.",
+    "annotations": [
+      {
+        "name": "Chandregowda",
+        "label": "WITNESS"
+      }
+    ]
+  },
+  {
+    "id": "a4d0bb91a70c4fbf88dba1e0373d6c71",
+    "source": "constitution_districtcourts judgement https://indiankanoon.org/doc/88979551/",
+    "text": "What is the main offence in the charges involved in all these 36 cases?",
+    "annotations": []
+  },
+  {
+    "id": "77e7e78086d748438ee72d63df9651f7",
+    "source": "criminal_allahabad_high_court judgement https://indiankanoon.org/doc/600200",
+    "text": "He had prepared G.D. No. 7 on 19.8.1998 at 3.05 A.M.",
+    "annotations": [
+      {
+        "name": "19.8.1998",
+        "label": "DATE"
+      }
+    ]
+  },
+  {
+    "id": "e26564d66f884772af904ce568008344",
+    "source": "constitution_karnataka_high_court judgement https://indiankanoon.org/doc/1125817",
+    "text": "On the night of 28 March, 1959, Krishnamurthi Rao, according to his story, walked into the room of the petitioner, gave the bribe and made the pre-arranged signal which brought the Assistant Superintendent of Police and his companions to the room.",
+    "annotations": [
+      {
+        "name": "28 March, 1959",
+        "label": "DATE"
+      },
+      {
+        "name": "Krishnamurthi Rao",
+        "label": "OTHER_PERSON"
+      }
+    ]
+  },
+  {
+    "id": "6e30eef5f6ba4e98b0627252989fdb94",
+    "source": "tax_patna_high_court judgement https://indiankanoon.org/doc/374135",
+    "text": "The deceased Collector also initiated a proceeding under the Crime Control Order against Tripathi and inspite of his best efforts bail was not granted to him.",
+    "annotations": [
+      {
+        "name": "Tripathi",
+        "label": "OTHER_PERSON"
+      }
+    ]
+  },
+  {
+    "id": "ecca444c63514507a708eca50494c1d3",
+    "source": "tax_madhya_pradesh_high_court judgement https://indiankanoon.org/doc/1809810",
+    "text": "In this reference under Section 66 (1) of the Indian Income-tax Act, 1922, at the instance of the assessee Messrs. Dayabhai & Co. of Barwani, the question posed for our answer is: \n \"Whether on the facts and in the circumstances of this case, the assessee is entitled to registration under Section 26-A of the Indian Income-tax Act for the assessment year 1956-57?\" \n 2.",
+    "annotations": [
+      {
+        "name": "Section 66 (1)",
+        "label": "PROVISION"
+      },
+      {
+        "name": "Indian Income-tax Act, 1922",
+        "label": "STATUTE"
+      },
+      {
+        "name": "Dayabhai & Co. of Barwani",
+        "label": "ORG"
+      },
+      {
+        "name": "Section 26-A",
+        "label": "PROVISION"
+      },
+      {
+        "name": "Indian Income-tax Act",
+        "label": "STATUTE"
+      }
+    ]
+  },
+  {
+    "id": "23dea1fad3a84ceb8392f02f80831c08",
+    "source": "criminal_rajasthan_high_court judgement https://indiankanoon.org/doc/702474",
+    "text": "In view of these fact, it can he safely held that for the area of Jaipur City (municipal limits) there were two Special Judges on 29.4.1968, one was Sessions Judge Jaipur City, who by virtue of his Office was appointed to be Special Judge for that area by virtue of-Notified ion dated 26.2.1968.",
+    "annotations": [
+      {
+        "name": "29.4.1968",
+        "label": "DATE"
+      },
+      {
+        "name": "Sessions Judge Jaipur City",
+        "label": "COURT"
+      },
+      {
+        "name": "26.2.1968",
+        "label": "DATE"
+      }
+    ]
+  },
+  {
+    "id": "821e66318a5349c99c3377f8de150ae4",
+    "source": "civil_madhya_pradesh_high_court judgement https://indiankanoon.org/doc/156256483",
+    "text": "Shri Vinay Saraf, learned counsel for the appellant.",
+    "annotations": [
+      {
+        "name": "Vinay Saraf",
+        "label": "OTHER_PERSON"
+      }
+    ]
+  },
+  {
+    "id": "8023b175be5d485e885f9485f38b0528",
+    "source": "tax_districtcourts judgement https://indiankanoon.org/doc/1858364/",
+    "text": "The other section involved in these appeals is Section 80 IB which provides for deduction in respect of profits and gains from certain industrial undertakings other than infrastructure development undertakings.",
+    "annotations": [
+      {
+        "name": "Section 80",
+        "label": "PROVISION"
+      }
+    ]
+  },
+  {
+    "id": "fbf6cb6ccffc4d82bd8c4aac339f61fb",
+    "source": "criminal_districtcourts judgement https://indiankanoon.org/doc/39434590/",
+    "text": "It was observed that:\n \"Of late, crime against women in general and rape in particular is on the increase.",
+    "annotations": []
+  },
+  {
+    "id": "effa634b10f04c6f88be2b13c57e2c49",
+    "source": "industrial&labour_punjab-haryana_high_court judgement https://indiankanoon.org/doc/1364051",
+    "text": "The torch was taken in possession vide memo Ex.PO which was signed by him and Nityanand, besides the police officials.",
+    "annotations": [
+      {
+        "name": "Nityanand",
+        "label": "OTHER_PERSON"
+      }
+    ]
+  },
+  {
+    "id": "a5c4b7abdaf64be9bc5270a4aad570d5",
+    "source": "criminal_punjab-haryana_high_court judgement https://indiankanoon.org/doc/455761",
+    "text": "Under Article 21, Constitution of India no person can be deprived of his life or personal liberty except according \"to procedure established bylaw\".",
+    "annotations": [
+      {
+        "name": "Article 21",
+        "label": "PROVISION"
+      },
+      {
+        "name": "Constitution of India",
+        "label": "STATUTE"
+      }
+    ]
+  },
+  {
+    "id": "f0204abe2471461fbfc5c4eb8888d1ba",
+    "source": "financial_districtcourts judgement https://indiankanoon.org/doc/187868344/",
+    "text": "But, in spite of all, the efforts taken by the complainant accused failed to clear the outstanding or to pay the total amount of the cheque in question.",
+    "annotations": []
+  },
+  {
+    "id": "4bd1524f801a44d386d293ebb6f86770",
+    "source": "tax_madhya_pradesh_high_court judgement https://indiankanoon.org/doc/1014711",
+    "text": "The Supreme Court, in the case of Susamma Thomas, 1994 ACJ 1 (SC), has awarded a sum of Rs. 15,000/- each on the above two heads.",
+    "annotations": [
+      {
+        "name": "Supreme Court",
+        "label": "COURT"
+      },
+      {
+        "name": "Susamma Thomas, 1994 ACJ 1 (SC)",
+        "label": "PRECEDENT"
+      }
+    ]
+  },
+  {
+    "id": "932da02ff33f4facb9ac79ea251ee9d9",
+    "source": "industrial&labour_karnataka_high_court judgement https://indiankanoon.org/doc/1977916",
+    "text": "Till this order was passed, the selections to the professional and Technical Colleges affiliated to the Mysore University were mainly made from the students who passed out of the Mysore University.",
+    "annotations": [
+      {
+        "name": "Mysore University",
+        "label": "ORG"
+      },
+      {
+        "name": "Mysore University",
+        "label": "ORG"
+      }
+    ]
+  },
+  {
+    "id": "f9dfd074c1c84530b163443f10b5d60e",
+    "source": "constitution_madhya_pradesh_high_court judgement https://indiankanoon.org/doc/218161",
+    "text": "To that extent, the State's power to regulate as an expression of the sovereign power has its limitations.",
+    "annotations": []
+  },
+  {
+    "id": "a497510b08914456a5066a5549ee18f8",
+    "source": "tax_andhra_high_court judgement https://indiankanoon.org/doc/1495346",
+    "text": "From this, it is seen that the amounts accrued under the policy are even not only kept away from court attachments but also from any other amounts payable by the employee to the department.",
+    "annotations": []
+  },
+  {
+    "id": "bbbaa5495edd4041a5efc3664a539286",
+    "source": "criminal_kerala_high_court judgement https://indiankanoon.org/doc/429485",
+    "text": "After finishing the letter PW4 posted the same in the Edad Post Office in the address of PW10 , (Vijayan) the brother of the deceased.",
+    "annotations": [
+      {
+        "name": "Edad Post Office",
+        "label": "ORG"
+      },
+      {
+        "name": "Vijayan",
+        "label": "WITNESS"
+      }
+    ]
+  },
+  {
+    "id": "ca975beb58284e82a8556359b41809ff",
+    "source": "industrial&labour_calcutta_high_court judgement https://indiankanoon.org/doc/1118170",
+    "text": "A contention similar to the one now raised by Mr. Dasgupta was also raised before the Supreme Court.",
+    "annotations": [
+      {
+        "name": "Dasgupta",
+        "label": "OTHER_PERSON"
+      },
+      {
+        "name": "Supreme Court",
+        "label": "COURT"
+      }
+    ]
+  },
+  {
+    "id": "5a52d7b5796b4359a5b8a9d069f23690",
+    "source": "motorvehicles_punjab-haryana_high_court judgement https://indiankanoon.org/doc/77021761",
+    "text": "This 2015.07.04 12:32 I attest to the accuracy and authenticity of this document Chandigarh <span class=\"hidden_text\" id=\"span_10\"> FAO No.1042 of 2003 11</span>",
+    "annotations": [
+      {
+        "name": "2015.07.04",
+        "label": "DATE"
+      },
+      {
+        "name": "Chandigarh",
+        "label": "GPE"
+      }
+    ]
+  },
+  {
+    "id": "1e3b86ab1d3942678bdda7e5e0d35e66",
+    "source": "civil_calcutta_high_court judgement https://indiankanoon.org/doc/1862564",
+    "text": "The Supreme Court granted special leave to appeal against P.N. Talukdar and S.M. Basu.",
+    "annotations": [
+      {
+        "name": "Supreme Court",
+        "label": "COURT"
+      },
+      {
+        "name": "P.N. Talukdar",
+        "label": "OTHER_PERSON"
+      },
+      {
+        "name": "S.M. Basu",
+        "label": "OTHER_PERSON"
+      }
+    ]
+  },
+  {
+    "id": "09dc490f1314467682af10751f68bb2b",
+    "source": "criminal_gujarat_high_court judgement https://indiankanoon.org/doc/435487",
+    "text": "For causing injury to Vinubhai Keshavlal accused No. 2 Bhikhabhai Nathabhai and accused No. 13 Mahadevbhai Magribhai and accused No. 5 Sagrambhai Nagribhai would be liable to be punished under Section 326 and rest of the respondents-accused would be liable to be punished under Section 326 read with Section 149.",
+    "annotations": [
+      {
+        "name": "Vinubhai Keshavlal",
+        "label": "OTHER_PERSON"
+      },
+      {
+        "name": "Bhikhabhai Nathabhai",
+        "label": "OTHER_PERSON"
+      },
+      {
+        "name": "Mahadevbhai Magribhai",
+        "label": "OTHER_PERSON"
+      },
+      {
+        "name": "Sagrambhai Nagribhai",
+        "label": "OTHER_PERSON"
+      },
+      {
+        "name": "Section 326",
+        "label": "PROVISION"
+      },
+      {
+        "name": "Section 326",
+        "label": "PROVISION"
+      },
+      {
+        "name": "Section 149",
+        "label": "PROVISION"
+      }
+    ]
+  },
+  {
+    "id": "d98e3044d94d4cb9a8600bd5a25c76e7",
+    "source": "tax_kerala_high_court judgement https://indiankanoon.org/doc/1168238",
+    "text": "Once it is found to be acceptable intrinsically and on broad probabilities, the criticism against the evidence of witnesses will have to be gone through realistically to ascertain whether any reasonable doubt is generated thereby.",
+    "annotations": []
+  },
+  {
+    "id": "42299484a7c843a1af1100e0228a32e6",
+    "source": "constitution_gujarat_high_court judgement https://indiankanoon.org/doc/62603394",
+    "text": "In United India Insurance Co. Ltd. v. Rajendra Singh this Court observed that \"Fraud and justice never dwell together\" (fraus et jus nunquam cohabitant) and it is a pristine maxim which has never lost its temper over all these centuries.",
+    "annotations": [
+      {
+        "name": "United India Insurance Co. Ltd. v. Rajendra Singh",
+        "label": "PRECEDENT"
+      }
+    ]
+  },
+  {
+    "id": "dbadc954b43e4dd6b3d0fb1fc54ad8e7",
+    "source": "financial_districtcourts judgement https://indiankanoon.org/doc/10354745/",
+    "text": "Considering the evidence on record I find that the accused has not brought any credible evidence to rebut the presumptions provided in Section 114, Illustration (f) of the Evidence Act, 1872 and Section 27 of the General Clauses Act, 1897 and further looking at the mandate given by the H'onble Supreme Court in C.C. Alavi Hazi Vs.Palapetty Mohd. & Anr",
+    "annotations": [
+      {
+        "name": "Section 114, Illustration (f)",
+        "label": "PROVISION"
+      },
+      {
+        "name": "Evidence Act, 1872",
+        "label": "STATUTE"
+      },
+      {
+        "name": "Section 27",
+        "label": "PROVISION"
+      },
+      {
+        "name": "General Clauses Act, 1897",
+        "label": "STATUTE"
+      },
+      {
+        "name": "Supreme Court",
+        "label": "COURT"
+      },
+      {
+        "name": "C.C. Alavi Hazi Vs.Palapetty Mohd. & Anr",
+        "label": "PRECEDENT"
+      }
+    ]
+  },
+  {
+    "id": "c8f3dc58470445f0899bee0790ddfddc",
+    "source": "criminal_districtcourts judgement https://indiankanoon.org/doc/11170780/",
+    "text": "He proved report Ex.Pw19/A which says that thumb impression appearing in Ex.Pw18/A and Ex.Pw18/B are identical with that appearing in FIR No: 156/04 State v. Angoori Devi Page No.10/19 original card Ex.Pw18/E. \n\n11.",
+    "annotations": []
+  },
+  {
+    "id": "15c368eebc1f49e7b56ce51b83761193",
+    "source": "civil_andhra_high_court judgement https://indiankanoon.org/doc/709552",
+    "text": "To complete the narration of facts since the defendants sold the land in violation of the interim injunction granted by this Court on 5-7-1990 the plaintiffs filed CMA No. 6727 of 93 to punish the defendants under Order 39 Rules 2A read with 151 CPC seeking detention of the defendants in civil prison and to attach their property in the hands of the alienees.",
+    "annotations": [
+      {
+        "name": "5-7-1990",
+        "label": "DATE"
+      },
+      {
+        "name": "CMA No. 6727 of 93",
+        "label": "CASE_NUMBER"
+      },
+      {
+        "name": "Order 39 Rules 2A read with 151",
+        "label": "PROVISION"
+      },
+      {
+        "name": "CPC",
+        "label": "STATUTE"
+      }
+    ]
+  },
+  {
+    "id": "610fc14b87aa4ca7bce0f59217b2cbfa",
+    "source": "tax_rajasthan_high_court judgement https://indiankanoon.org/doc/1142474",
+    "text": "We now proceed to examine the evidence of the witnesses of the petitioner who were produced to prove that Shri Krishna Kumar visited Lakhaya, Nayagaon, Rejhadi and Anandpura villages on 21st February, 1962, in the evening, accompanied by Shankar Lal, and told the electors that Shankar Lal would take them to the polling station in a truck on the next day.",
+    "annotations": [
+      {
+        "name": "Krishna Kumar",
+        "label": "OTHER_PERSON"
+      },
+      {
+        "name": "Lakhaya",
+        "label": "GPE"
+      },
+      {
+        "name": "Nayagaon",
+        "label": "GPE"
+      },
+      {
+        "name": "Rejhadi",
+        "label": "GPE"
+      },
+      {
+        "name": "Anandpura",
+        "label": "GPE"
+      },
+      {
+        "name": "21st February, 1962",
+        "label": "DATE"
+      },
+      {
+        "name": "Shankar Lal",
+        "label": "OTHER_PERSON"
+      },
+      {
+        "name": "Shankar Lal",
+        "label": "OTHER_PERSON"
+      }
+    ]
+  },
+  {
+    "id": "bcc072f82072449db35636793feb50b9",
+    "source": "criminal_bombay_high_court judgement https://indiankanoon.org/doc/398744",
+    "text": "There was no regular TADA Court at Mumbai and TADA case's trial was likely to take some time to commence and, therefore, a fresh bail application was filed.",
+    "annotations": [
+      {
+        "name": "TADA Court at Mumbai",
+        "label": "COURT"
+      },
+      {
+        "name": "TADA",
+        "label": "STATUTE"
+      }
+    ]
+  },
+  {
+    "id": "32e5156e0e134618b95f4c9369041b1f",
+    "source": "criminal_madhya_pradesh_high_court judgement https://indiankanoon.org/doc/28165823",
+    "text": "Please see - State of Rajasthan v. Rajendra Singh, (2009) 11 SCC 106:(AIR 1998 SC 2554).",
+    "annotations": [
+      {
+        "name": "State of Rajasthan v. Rajendra Singh, (2009) 11 SCC 106:(AIR 1998 SC 2554)",
+        "label": "PRECEDENT"
+      }
+    ]
+  },
+  {
+    "id": "b0a0cea99f464385b1bd36fc68668640",
+    "source": "tax_districtcourts judgement https://indiankanoon.org/doc/169073/",
+    "text": "According to him, the ratio in the case of H.R. Sugar Factory (P) Ltd. 187 ITR 363, on which reliance has been placed by the AO as well as by the learned CIT(A), is not applicable to the facts of this case.",
+    "annotations": [
+      {
+        "name": "H.R. Sugar Factory (P) Ltd. 187 ITR 363",
+        "label": "PRECEDENT"
+      }
+    ]
+  },
+  {
+    "id": "77c1c7c5c3254c169f05b70937a988fc",
+    "source": "criminal_rajasthan_high_court judgement https://indiankanoon.org/doc/137668320",
+    "text": "The Superintendent of Jail can grant parole upto a period of seven days subject to confirmation by the Inspector General, Prisons.",
+    "annotations": []
+  },
+  {
+    "id": "a6c2011d61524538a06cc0ce9f01601c",
+    "source": "criminal_allahabad_high_court judgement https://indiankanoon.org/doc/939702",
+    "text": "We affirm the death sentence passed by the trial court as also the other sentences passed under Sections 364 and 376 I.P.C. \n\n45.",
+    "annotations": [
+      {
+        "name": "Sections 364 and 376",
+        "label": "PROVISION"
+      },
+      {
+        "name": "I.P.C.",
+        "label": "STATUTE"
+      }
+    ]
+  },
+  {
+    "id": "70087034159349c19c262e5a5375806f",
+    "source": "criminal_bombay_high_court judgement https://indiankanoon.org/doc/1020783",
+    "text": "During the raid, 47 persons including the petitioners were arrested, several documents found on the premises or with the persons arrested were seized and the accused were released on bail by the police.",
+    "annotations": []
+  },
+  {
+    "id": "c60230135750418b9c4a23ac4e7707e9",
+    "source": "motorvehicles_patna_high_court judgement https://indiankanoon.org/doc/124344618",
+    "text": "While dealing with the said issue, this Court opined that:-\n \"It is settled law that disputes relating to contracts cannot be agitated under Article 226 of the Constitution of India.",
+    "annotations": [
+      {
+        "name": "Article 226",
+        "label": "PROVISION"
+      },
+      {
+        "name": "Constitution of India",
+        "label": "STATUTE"
+      }
+    ]
+  },
+  {
+    "id": "39c95402e77643278b360546b25272d8",
+    "source": "industrial&labour_allahabad_high_court judgement https://indiankanoon.org/doc/772120",
+    "text": "Even assuming, although we shall presently show that it is not so, that in such a case an order of the Court taking cognizance or issuing processes is an interlocutory order, does it stand to reason to say that inherent power of the High Court cannot be exercised for stopping the criminal proceeding as early as possible, instead of harassing the accused up to the end?",
+    "annotations": []
+  },
+  {
+    "id": "1e2452678b604fad8ac5d3be74159393",
+    "source": "tax_districtcourts judgement https://indiankanoon.org/doc/990432/",
+    "text": "As to the judgment relied upon by the learned CIT (Departmental Representative) reported in (1962) 45 ITR 210 (SC) (supra), we find the same to be out of context.",
+    "annotations": [
+      {
+        "name": "(1962) 45 ITR 210 (SC)",
+        "label": "CASE_NUMBER"
+      }
+    ]
+  },
+  {
+    "id": "622e49a44e2141618400e52d61f34ae1",
+    "source": "civil_calcutta_high_court judgement https://indiankanoon.org/doc/143128",
+    "text": "At this conference the petitioner's partner Guidayal Berlia was present.",
+    "annotations": [
+      {
+        "name": "Guidayal Berlia",
+        "label": "OTHER_PERSON"
+      }
+    ]
+  },
+  {
+    "id": "c79a213e996a40219613811ffda9ac91",
+    "source": "constitution_bombay_high_court judgement https://indiankanoon.org/doc/1136355",
+    "text": "It might have been given in Pash-bandi.\" \n ",
+    "annotations": []
+  },
+  {
+    "id": "65efbe6948dc42048333a29faa7f1fa8",
+    "source": "civil_bombay_high_court judgement https://indiankanoon.org/doc/723619",
+    "text": "The Arbitrators set out several reasons in paragraph 7 of the original award in support of their view that section 56 of Indian Contract Act was not attracted in the instant case.",
+    "annotations": [
+      {
+        "name": "section 56",
+        "label": "PROVISION"
+      },
+      {
+        "name": "Indian Contract Act",
+        "label": "STATUTE"
+      }
+    ]
+  },
+  {
+    "id": "50e90e3b595f46078daeb29f3c011507",
+    "source": "industrial&labour_patna_high_court judgement https://indiankanoon.org/doc/104053",
+    "text": "They asserted that the lands in suit appertained to village Basarh belonging to the 'debottar' estate and not to any of the villages of the plaintiff as claimed in the plaint, and the plaintiff had not been in possession of that disputed lands within 12 years of the suit, the possession being the possession of the deity.",
+    "annotations": [
+      {
+        "name": "Basarh",
+        "label": "GPE"
+      }
+    ]
+  },
+  {
+    "id": "19cfa4c7e8024dadb858cfe344de7cc8",
+    "source": "industrial&labour_districtcourts judgement https://indiankanoon.org/doc/100449682/",
+    "text": "In the instant case, the contract was for supply of pouches which were required by defendant for packaging certain medicines.",
+    "annotations": []
+  },
+  {
+    "id": "17e8d176494e4015ae347529850d28ad",
+    "source": "tax_andhra_high_court judgement https://indiankanoon.org/doc/1911637",
+    "text": "Sub-section (1) of s. 195, to the extent it is relevant lays an obligation on any person on securities or any other sum not being dividends chargeable under the provisions of the Act, to deduct tax at source at the rates in force.",
+    "annotations": [
+      {
+        "name": "Sub-section (1) of s. 195",
+        "label": "PROVISION"
+      }
+    ]
+  },
+  {
+    "id": "98b57393145643caa713af9eee6cfc77",
+    "source": "tax_kerala_high_court judgement https://indiankanoon.org/doc/1555074",
+    "text": "He was again re-admitted in the hospital just six days thereafter on 1.4.96 and then discharged after one week's hospitalisation.",
+    "annotations": [
+      {
+        "name": "1.4.96",
+        "label": "DATE"
+      }
+    ]
+  },
+  {
+    "id": "ea160a2d3609428885feb84be9faad0b",
+    "source": "criminal_madras_high_court judgement https://indiankanoon.org/doc/296625",
+    "text": "Aggrieved by the said order, Home Department of the Government of Tamil Nadu and others filed Writ Appeal No. 479 of 2005.",
+    "annotations": [
+      {
+        "name": "Government of Tamil Nadu",
+        "label": "ORG"
+      },
+      {
+        "name": "Writ Appeal No. 479 of 2005",
+        "label": "CASE_NUMBER"
+      }
+    ]
+  },
+  {
+    "id": "ad0619e033c649bc8c13cff77a1fa544",
+    "source": "industrial&labour_andhra_high_court judgement https://indiankanoon.org/doc/1685776",
+    "text": "It will be noticed that the Supreme Court did not altogether ban the evolution of a new head of public policy.",
+    "annotations": [
+      {
+        "name": "Supreme Court",
+        "label": "COURT"
+      }
+    ]
+  },
+  {
+    "id": "f5d451b1e99246808597a0cd382d2ca9",
+    "source": "motorvehicles_gujarat_high_court judgement https://indiankanoon.org/doc/110330425",
+    "text": "That in the year 1998, a massive cyclone hit the coast of Gujarat and caused severe damage to the appellant's property, machineries, equipments etc. at the refinery site.",
+    "annotations": [
+      {
+        "name": "Gujarat",
+        "label": "GPE"
+      }
+    ]
+  },
+  {
+    "id": "6ec494225a1b4a88980c5df723b0c94f",
+    "source": "constitution_calcutta_high_court judgement https://indiankanoon.org/doc/1967582",
+    "text": "It lays down that no election to either House of Parliament shall be called in question except by an election petition presented to such authority, and hi such manner, as may be provided for, by or under any law made by the appropriate Legislature.",
+    "annotations": [
+      {
+        "name": "Parliament",
+        "label": "ORG"
+      }
+    ]
+  },
+  {
+    "id": "5c4d4f710dcb44ea81867edeb93243d4",
+    "source": "tax_districtcourts judgement https://indiankanoon.org/doc/1640604/",
+    "text": "Reliance was also placed on Tribunal's decision in K. Viswanathan v. CC , which was relied on in Ion Exchange (supra).",
+    "annotations": [
+      {
+        "name": "K. Viswanathan v. CC",
+        "label": "PRECEDENT"
+      },
+      {
+        "name": "Ion Exchange",
+        "label": "ORG"
+      }
+    ]
+  },
+  {
+    "id": "a2e4d3f8ff474bd99e73a90d9177bac2",
+    "source": "criminal_districtcourts judgement https://indiankanoon.org/doc/197027170/",
+    "text": "File be consigned to record room subject to furnishing of bail bonds u/s 437 A Cr.P.C. \n\nAnnounced in the open (ASHOK KUMAR) Court on 14.07.2014 MM\u00ad07, SOUTH EAST, SAKET, NEW DELHI, <span class=\"hidden_text\" id=\"span_26\">FIR No. 80/11 Page 26 of 26</span>",
+    "annotations": [
+      {
+        "name": "s 437 A",
+        "label": "PROVISION"
+      },
+      {
+        "name": "Cr.P.C.",
+        "label": "STATUTE"
+      },
+      {
+        "name": "open (ASHOK KUMAR) Court",
+        "label": "COURT"
+      },
+      {
+        "name": "14.07.2014",
+        "label": "DATE"
+      },
+      {
+        "name": "SAKET",
+        "label": "GPE"
+      },
+      {
+        "name": "NEW DELHI",
+        "label": "GPE"
+      }
+    ]
+  },
+  {
+    "id": "9cf3190654544137afa1d97298888de7",
+    "source": "tax_rajasthan_high_court judgement https://indiankanoon.org/doc/968342",
+    "text": "First, we shall take the facts of Writ Petition No. 1177 of 1974.",
+    "annotations": [
+      {
+        "name": "Writ Petition No. 1177 of 1974",
+        "label": "CASE_NUMBER"
+      }
+    ]
+  },
+  {
+    "id": "44c70b8329254f5389a2983923680f85",
+    "source": "tax_bombay_high_court judgement https://indiankanoon.org/doc/1359902",
+    "text": "Therefore, Shri. Dharap, learned Counsel for the respondent submitted that the learned Single Judge was justified in holding that there is an unfair labour practice under item 4(c) of Schedule-II of the MRTU & PULP Act.",
+    "annotations": [
+      {
+        "name": "Dharap",
+        "label": "OTHER_PERSON"
+      },
+      {
+        "name": "item 4(c) of Schedule-II",
+        "label": "PROVISION"
+      },
+      {
+        "name": "MRTU & PULP Act",
+        "label": "STATUTE"
+      }
+    ]
+  },
+  {
+    "id": "a40be2f7500c4dfa9efd53740ed45b90",
+    "source": "civil_punjab-haryana_high_court judgement https://indiankanoon.org/doc/23168407",
+    "text": "From this major premise or fixed point anchored and rooted in Section 13 of both HMA and CPC, the exceptions carved out by the Supreme Court would need to be examined.",
+    "annotations": [
+      {
+        "name": "Section 13",
+        "label": "PROVISION"
+      },
+      {
+        "name": "HMA",
+        "label": "ORG"
+      },
+      {
+        "name": "CPC",
+        "label": "STATUTE"
+      },
+      {
+        "name": "Supreme Court",
+        "label": "COURT"
+      }
+    ]
+  },
+  {
+    "id": "aefab446abe545d8ad3bd784fba5635a",
+    "source": "tax_districtcourts judgement https://indiankanoon.org/doc/1253092/",
+    "text": "In paras 7.4 and 7.6, the learned Judicial Member has highlighted as to how Shri Salauddin had explained his earlier statement dated 2.3.1993 in subsequent statement dated 11.3.1993 with reference to entries in his books of account.",
+    "annotations": [
+      {
+        "name": "Salauddin",
+        "label": "OTHER_PERSON"
+      },
+      {
+        "name": "2.3.1993",
+        "label": "DATE"
+      },
+      {
+        "name": "11.3.1993",
+        "label": "DATE"
+      }
+    ]
+  },
+  {
+    "id": "a4f6711fbed7426fa226c36cccdfbfff",
+    "source": "constitution_districtcourts judgement https://indiankanoon.org/doc/50442690/",
+    "text": "Dy.Registrar was competent to pass winding up order as powers were delegated to him vide notification dated 18.10.77 issued by Delhi Administration, Delhi.",
+    "annotations": [
+      {
+        "name": "18.10.77",
+        "label": "DATE"
+      },
+      {
+        "name": "Delhi Administration",
+        "label": "ORG"
+      },
+      {
+        "name": "Delhi",
+        "label": "GPE"
+      }
+    ]
+  },
+  {
+    "id": "6a6fe2dec1964689a065bdf6f18dab5a",
+    "source": "industrial&labour_madras_high_court judgement https://indiankanoon.org/doc/1120139",
+    "text": "Accepting the verdict, the Government of Tamil Nadu issued G.O.Ms.No.139 dated 25.07.2007.",
+    "annotations": [
+      {
+        "name": "Government of Tamil Nadu",
+        "label": "ORG"
+      },
+      {
+        "name": "25.07.2007",
+        "label": "DATE"
+      }
+    ]
+  },
+  {
+    "id": "1a49261e94ff4340b379d1752ed32ea2",
+    "source": "criminal_allahabad_high_court judgement https://indiankanoon.org/doc/17790813",
+    "text": "When they were at Sharjah, Amna Muzaffar requested that her two brothers also be called there and get them employed some where, which was done by Mohd. Waqar, and after that, there was change in the behaviour of Amna Muzaffar, and she started treating him with cruelty and started demanding divorce.",
+    "annotations": [
+      {
+        "name": "Sharjah",
+        "label": "GPE"
+      },
+      {
+        "name": "Amna Muzaffar",
+        "label": "OTHER_PERSON"
+      },
+      {
+        "name": "Mohd. Waqar",
+        "label": "OTHER_PERSON"
+      },
+      {
+        "name": "Amna Muzaffar",
+        "label": "OTHER_PERSON"
+      }
+    ]
+  },
+  {
+    "id": "e59eb7606ad1465b986176bdd0131665",
+    "source": "tax_supremecourts judgement https://indiankanoon.org/doc/512761/",
+    "text": "In D.A.V. College v. State of Punjab and Ors. [1971 (Supp.) SCR 688], the question posed was as to what constituted a religious or linguistic minority, and how it was to be determined.",
+    "annotations": [
+      {
+        "name": "D.A.V. College v. State of Punjab and Ors. [1971 (Supp.) SCR 688]",
+        "label": "PRECEDENT"
+      }
+    ]
+  },
+  {
+    "id": "969a511050384cc38fa0497309d079a4",
+    "source": "tax_districtcourts judgement https://indiankanoon.org/doc/1729656/",
+    "text": "It is a matter of record that the representative of the assessee has not disproved the findings of inquiries made at Jodhpur which was duly communicated to him along with a copy of statements of alleged shareholders, \"but has filed copies of affidavits of some of the persons which are placed on records.",
+    "annotations": [
+      {
+        "name": "Jodhpur",
+        "label": "GPE"
+      }
+    ]
+  },
+  {
+    "id": "2fa23274c8d2451ab444c3f78b569f6a",
+    "source": "motorvehicles_supremecourts judgement https://indiankanoon.org/doc/1797138/",
+    "text": "Majority of three judges, dissented by minority opinion of two judges, had held that the words \"things done\" in para 6 of the French Establishments' (Application of Laws) order was comprehensive enough to take within its ambit not only things done but also the effect of the legal consequences flowing therefrom.",
+    "annotations": []
+  },
+  {
+    "id": "fad01c63060a44f8b6604484f0ad0f2b",
+    "source": "criminal_kerala_high_court judgement https://indiankanoon.org/doc/814422",
+    "text": "This aspect is canvassed by the defence, pointing out that the injuries were inflicted only on the leg of the accused.",
+    "annotations": []
+  },
+  {
+    "id": "9e72c79089014cae909cf03c4cc785ea",
+    "source": "tax_rajasthan_high_court judgement https://indiankanoon.org/doc/510946",
+    "text": "The Challenge to the validity of the above Clause 13 of the Standing Orders is based on Articles 14 and 16 of the Constitution of India which are being reproduced hereunder for ready reference:\nArticle 14. Equality before law: The State shall not deny to any person equality before the law or the equal protection of the laws within the territory of India.",
+    "annotations": [
+      {
+        "name": "Clause 13",
+        "label": "PROVISION"
+      },
+      {
+        "name": "Articles 14 and 16",
+        "label": "PROVISION"
+      },
+      {
+        "name": "Constitution of India",
+        "label": "STATUTE"
+      },
+      {
+        "name": "Article 14",
+        "label": "PROVISION"
+      },
+      {
+        "name": "India",
+        "label": "GPE"
+      }
+    ]
+  },
+  {
+    "id": "baf73cf2ddff422296d922ee26b7b32c",
+    "source": "criminal_bombay_high_court judgement https://indiankanoon.org/doc/939313",
+    "text": "What needs to be adverted to is that complainant is to be examined to bring on record \"Legal Evidence\", and not just to have the evidence of \"owner of the Negotiable instrument i.e. cheque\".",
+    "annotations": []
+  },
+  {
+    "id": "f6f354a84fe54c5c9d0f5b9d41d94d1e",
+    "source": "civil_andhra_high_court judgement https://indiankanoon.org/doc/1794559",
+    "text": "See Alien Berry & Co. v. Union of India, .",
+    "annotations": [
+      {
+        "name": "Alien Berry & Co. v. Union of India",
+        "label": "PRECEDENT"
+      }
+    ]
+  },
+  {
+    "id": "1197fb185fc34bc39f6c1a75a698f093",
+    "source": "tax_madhya_pradesh_high_court judgement https://indiankanoon.org/doc/1087176",
+    "text": "To achieve this aspect, the Legislature had deleted (b) clause of proviso with an intention that the interlocutory orders should not be interfered with in the revisional jurisdiction of the High Court.",
+    "annotations": [
+      {
+        "name": "(b) clause of proviso",
+        "label": "PROVISION"
+      }
+    ]
+  },
+  {
+    "id": "75db5c32bb734756a95b526c8418ff8a",
+    "source": "financial_districtcourts judgement https://indiankanoon.org/doc/187868344/",
+    "text": "It is evident that the drawer has failed to make the payment CC no. 126/14 Bhoopindra kumar Vs. Meenu Verma  of cheque amount in question within 15 days of the receipt of aforesaid notice, thus, the present complaint U/s 138 NI Act has been initiated against the accused.",
+    "annotations": [
+      {
+        "name": "CC no. 126/14 Bhoopindra kumar Vs. Meenu Verma",
+        "label": "PRECEDENT"
+      },
+      {
+        "name": "s 138",
+        "label": "PROVISION"
+      },
+      {
+        "name": "NI Act",
+        "label": "STATUTE"
+      }
+    ]
+  },
+  {
+    "id": "a1c38a117071475287f3ed9f7d5ed923",
+    "source": "constitution_calcutta_high_court judgement https://indiankanoon.org/doc/136487026",
+    "text": "The question that the Supreme Court posed for itself was as to whether the injustice resulting from the practice of discarding bidis and not making any payment to the workers could be checked, controlled and regulated by the issuance of a notification.",
+    "annotations": [
+      {
+        "name": "Supreme Court",
+        "label": "COURT"
+      }
+    ]
+  },
+  {
+    "id": "4afb5b4db7544878ab59deb142c2df3a",
+    "source": "constitution_madras_high_court judgement https://indiankanoon.org/doc/447972",
+    "text": "Referring to the decision in D.S.NAKARA Vs. UNION OF INDIA (1983 1 SCC 305), the Apex Court held that by adopting the principle of severability by striking down the words of limitation in the enactment, the provision can still be upheld.",
+    "annotations": [
+      {
+        "name": "D.S.NAKARA Vs. UNION OF INDIA (1983 1 SCC 305)",
+        "label": "PRECEDENT"
+      },
+      {
+        "name": "Apex Court",
+        "label": "COURT"
+      }
+    ]
+  },
+  {
+    "id": "496b38de1b4f4ff5973853c91df7f19a",
+    "source": "motorvehicles_supremecourts judgement https://indiankanoon.org/doc/52449/",
+    "text": "A few lines occurring at page 119 in the judgment of the Privy Council in the case of Attorney-General for British Columbia and Esquimalt and Nanaimo Railway Company and others may be quoted with advantage.",
+    "annotations": [
+      {
+        "name": "British Columbia",
+        "label": "GPE"
+      },
+      {
+        "name": "Esquimalt and Nanaimo Railway Company",
+        "label": "ORG"
+      }
+    ]
+  },
+  {
+    "id": "4c9bfd19e94f4019bb5ae5a1c3187c9a",
+    "source": "motorvehicles_districtcourts judgement https://indiankanoon.org/doc/188242843/",
+    "text": "Copy of this judgment be given free of cost to the accused driver.",
+    "annotations": []
+  },
+  {
+    "id": "d0e469fd395848128e050bf4c3a12d34",
+    "source": "tax_rajasthan_high_court judgement https://indiankanoon.org/doc/510946",
+    "text": "Amarsingh, Bhanwarial, Narpat Singh II, Jagdish Prasad Sharma, Mohd. Ahmed Khan, all the petitioners are admittedly permanent employees and since the bedrock of the impugned orders of termination of their services is Clause 13, the termination orders are liable to be quashed and are hereby quashed.",
+    "annotations": [
+      {
+        "name": "Amarsingh",
+        "label": "PETITIONER"
+      },
+      {
+        "name": "Bhanwarial",
+        "label": "PETITIONER"
+      },
+      {
+        "name": "Narpat Singh II",
+        "label": "OTHER_PERSON"
+      },
+      {
+        "name": "Jagdish Prasad Sharma",
+        "label": "PETITIONER"
+      },
+      {
+        "name": "Mohd. Ahmed Khan",
+        "label": "PETITIONER"
+      },
+      {
+        "name": "Clause 13",
+        "label": "PROVISION"
+      }
+    ]
+  },
+  {
+    "id": "a92ae2c20fee4e46959056dd5c2b069c",
+    "source": "tax_delhi_high_court judgement https://indiankanoon.org/doc/160136566",
+    "text": "The contention of the petitioner is that it is not open to the assessee, the second respondent herein, to question the order passed by the CIT on 01.04.2010 on the ground that he did not validly assume jurisdiction to revise the assessment orders.",
+    "annotations": [
+      {
+        "name": "01.04.2010",
+        "label": "DATE"
+      }
+    ]
+  },
+  {
+    "id": "9843b5b0176b4444b816204906d3cecf",
+    "source": "motorvehicles_andhra_high_court judgement https://indiankanoon.org/doc/7351000",
+    "text": "HONBLE SRI JUSTICE A. SHANKAR NARAYANA            MACMA No. 1808 of 2005    30-03-2015  The National Insurance Company, rep. by its Branch Manager, Chittoor, Chittoor District",
+    "annotations": [
+      {
+        "name": "A. SHANKAR NARAYANA",
+        "label": "JUDGE"
+      },
+      {
+        "name": "MACMA No. 1808 of 2005",
+        "label": "CASE_NUMBER"
+      },
+      {
+        "name": "30-03-2015",
+        "label": "DATE"
+      },
+      {
+        "name": "National Insurance Company",
+        "label": "PETITIONER"
+      },
+      {
+        "name": "Chittoor",
+        "label": "GPE"
+      },
+      {
+        "name": "Chittoor District",
+        "label": "GPE"
+      }
+    ]
+  },
+  {
+    "id": "b7d5ae13218a411bac3babc686efbe96",
+    "source": "criminal_andhra_high_court judgement https://indiankanoon.org/doc/1868429",
+    "text": "That itself amounts to cruelty by filing a criminal case.",
+    "annotations": []
+  },
+  {
+    "id": "7ec1c450b30e4983a62e8a3c3509cdd6",
+    "source": "constitution_punjab-haryana_high_court judgement https://indiankanoon.org/doc/1928440",
+    "text": "Equally me building of national and State highways involves the creation of bridges, culverts, etc. over large rivers or smaller streams, which vest in the Government and can only be done under the umbrella and cloak of the sovereign governmental powers.",
+    "annotations": []
+  },
+  {
+    "id": "c1f1b52d5e06489c8e03db6de9f70ae5",
+    "source": "criminal_madhya_pradesh_high_court judgement https://indiankanoon.org/doc/104222301",
+    "text": "The witness further deposed that on 1st April, 2003 he alongwith police party had gone forests at Gopalpur and Kanchanpur villages and on 2nd April, 2003 behind the bushes, he found his son Vikash Jain with three accused persons namely Pradip Kumar, Gopal and Naval Singh.",
+    "annotations": [
+      {
+        "name": "1st April, 2003",
+        "label": "DATE"
+      },
+      {
+        "name": "Gopalpur",
+        "label": "GPE"
+      },
+      {
+        "name": "Kanchanpur",
+        "label": "GPE"
+      },
+      {
+        "name": "2nd April, 2003",
+        "label": "DATE"
+      },
+      {
+        "name": "Vikash Jain",
+        "label": "OTHER_PERSON"
+      },
+      {
+        "name": "Pradip Kumar",
+        "label": "OTHER_PERSON"
+      },
+      {
+        "name": "Gopal and",
+        "label": "OTHER_PERSON"
+      },
+      {
+        "name": "Naval Singh",
+        "label": "OTHER_PERSON"
+      }
+    ]
+  },
+  {
+    "id": "bb3ce1731b474f6189e11624f0102d3f",
+    "source": "land&property_districtcourts judgement https://indiankanoon.org/doc/105988986/",
+    "text": "Thereafter the ownership of property in which tenanted premises is situated fell in favour of Smt. Jeet Kaur, who expired on 21/04/2004.",
+    "annotations": [
+      {
+        "name": "Jeet Kaur",
+        "label": "OTHER_PERSON"
+      },
+      {
+        "name": "21/04/2004",
+        "label": "DATE"
+      }
+    ]
+  },
+  {
+    "id": "9d6287b96eb14890962bf2ecc394c8fd",
+    "source": "tax_punjab-haryana_high_court judgement https://indiankanoon.org/doc/194413303",
+    "text": "On the date of the incident, that is, on 05.09.2008 it must be about 8.45 p.m. that Happy (Tejinder Bawa - appellant in CRA No.1046 of 2011) and Suraj Ahluwalia (appellant in CRA No. D-1026-DB of 2011), President of Shiv Sena, Bal Thakre and his Gunman Shammi Kumar came on a black colour Bolero vehicle bearing registration No. PB-10BE-4979.",
+    "annotations": [
+      {
+        "name": "05.09.2008",
+        "label": "DATE"
+      },
+      {
+        "name": "Tejinder Bawa",
+        "label": "PETITIONER"
+      },
+      {
+        "name": "CRA No.1046 of 2011",
+        "label": "CASE_NUMBER"
+      },
+      {
+        "name": "Suraj Ahluwalia",
+        "label": "PETITIONER"
+      },
+      {
+        "name": "CRA No. D-1026-DB of 2011",
+        "label": "CASE_NUMBER"
+      },
+      {
+        "name": "Shiv Sena",
+        "label": "ORG"
+      },
+      {
+        "name": "Bal Thakre",
+        "label": "OTHER_PERSON"
+      },
+      {
+        "name": "Shammi Kumar",
+        "label": "OTHER_PERSON"
+      }
+    ]
+  },
+  {
+    "id": "6cbe558c81844249b2e5b96ecdd4a19f",
+    "source": "industrial&labour_delhi_high_court judgement https://indiankanoon.org/doc/76589794",
+    "text": "In contrast, the impression that we get by reading Section 2(s), which defines \"shared household\" is that the \"household\" which is referred to in the said provision, relates to the property and not just to the group of people who dwell under the same roof or the family living together.",
+    "annotations": [
+      {
+        "name": "Section 2(s)",
+        "label": "PROVISION"
+      }
+    ]
+  },
+  {
+    "id": "906c19a29a6843618e161207a34e87cd",
+    "source": "constitution_supremecourts judgement https://indiankanoon.org/doc/1985369/",
+    "text": "If he had to be a member, then the conclusion of the Nagpur High Court in this case that the dispute between the co-operative bank and the plaintiffs relating to their liability which arose out of their capacity as treasurers was referable to the Registrar seems to be correct.",
+    "annotations": [
+      {
+        "name": "Nagpur High Court",
+        "label": "COURT"
+      }
+    ]
+  },
+  {
+    "id": "fabc34e67960443abd061477c50f003b",
+    "source": "criminal_karnataka_high_court judgement https://indiankanoon.org/doc/70221349",
+    "text": "Consent of the girl in order to relieve an act, of a criminal character like rape, must be an act of reason, accompanied with deliberation, after the mind has weighed as in a balance, the good and evil on each side, with the existing capacity and power to withdraw the assent according to one's will or pleasure.\"",
+    "annotations": []
+  },
+  {
+    "id": "eff42d57e3c9454f9585282fc6324a6c",
+    "source": "criminal_punjab-haryana_high_court judgement https://indiankanoon.org/doc/184587709",
+    "text": "He denied that Pushkar (appellant No.4) was a parking attendant in Hotel Le Meridien for the last about 16 years.",
+    "annotations": [
+      {
+        "name": "Pushkar",
+        "label": "PETITIONER"
+      },
+      {
+        "name": "Hotel Le Meridien",
+        "label": "ORG"
+      }
+    ]
+  },
+  {
+    "id": "b883f79f35964222b2503b71a1bddc55",
+    "source": "tax_bombay_high_court judgement https://indiankanoon.org/doc/1084185",
+    "text": "Accordingly in June 1970 a dispute was sought to be raised before the District Deputy Registrar .",
+    "annotations": []
+  },
+  {
+    "id": "18e1ef93f58b42df98f126952b6a742c",
+    "source": "tax_rajasthan_high_court judgement https://indiankanoon.org/doc/170250118",
+    "text": "In the aforesaid background, the plea raised by learned counsel for petitioners is not tenable for relaxation of qualification.",
+    "annotations": []
+  },
+  {
+    "id": "26e162483123412495e1602d49aa45af",
+    "source": "criminal_bombay_high_court judgement https://indiankanoon.org/doc/54247380",
+    "text": "Justice B.N. Srikrishna, the then sitting Judge of this Court was appointed as the sole Commissioner to head the inquiry.",
+    "annotations": [
+      {
+        "name": "B.N. Srikrishna",
+        "label": "JUDGE"
+      }
+    ]
+  },
+  {
+    "id": "41c1b27f7aa6484ea620c25fc10ecc5d",
+    "source": "tax_andhra_high_court judgement https://indiankanoon.org/doc/1929483",
+    "text": "This revision petition was disposed of by Order No. 2122 of 1977 dated December 14, 1977.",
+    "annotations": [
+      {
+        "name": "Order No. 2122 of 1977",
+        "label": "CASE_NUMBER"
+      },
+      {
+        "name": "December 14, 1977",
+        "label": "DATE"
+      }
+    ]
+  },
+  {
+    "id": "1209979dea314524927dd3ef6dfd5525",
+    "source": "criminal_supremecourts judgement https://indiankanoon.org/doc/1060754/",
+    "text": "Having given our careful consideration we are unable to agree with the view taken by Seth, J.P.W. 7",
+    "annotations": [
+      {
+        "name": "Seth",
+        "label": "WITNESS"
+      }
+    ]
+  },
+  {
+    "id": "3f65f638a427437cb175394d09b3e0d7",
+    "source": "tax_punjab-haryana_high_court judgement https://indiankanoon.org/doc/1812540",
+    "text": "The registration certificate was granted about three months thereafter on 3rd June, 1966, i.e., about three days after the sale in question.",
+    "annotations": [
+      {
+        "name": "3rd June, 1966",
+        "label": "DATE"
+      }
+    ]
+  },
+  {
+    "id": "863b7a686106411db7f3056b714fdf28",
+    "source": "tax_kerala_high_court judgement https://indiankanoon.org/doc/1713632",
+    "text": "But it was found by the Upa Lok Ayukta that the second W.P.(C).No.33916 of 2008 & con. Cases.",
+    "annotations": [
+      {
+        "name": "Upa Lok Ayukta",
+        "label": "ORG"
+      },
+      {
+        "name": "W.P.(C).No.33916 of 2008",
+        "label": "CASE_NUMBER"
+      }
+    ]
+  },
+  {
+    "id": "296405230b5646f8a0b67f1d16ed1929",
+    "source": "industrial&labour_calcutta_high_court judgement https://indiankanoon.org/doc/717361",
+    "text": "The assessee further contended that interest paid was an allowable deduction under Section 36 of the I.T. Act, 1961, being interest paid on capital borrowed for the purpose of business which included the payment of income-tax on the income of the business.",
+    "annotations": [
+      {
+        "name": "Section 36",
+        "label": "PROVISION"
+      },
+      {
+        "name": "I.T. Act, 1961",
+        "label": "STATUTE"
+      }
+    ]
+  },
+  {
+    "id": "878e94854b1a4c8f9d3a75d12642fa84",
+    "source": "constitution_calcutta_high_court judgement https://indiankanoon.org/doc/1615111",
+    "text": "The petitioner Uthan Pada Das and petitioner Abhimunna Ghosh having already attained the age of 65 years in 1997 and 31.10.96 respectively, the question of extension of their services does not arise but it stands admitted that during their extended period they still have been granted salary at the old scale.",
+    "annotations": [
+      {
+        "name": "Uthan Pada Das",
+        "label": "PETITIONER"
+      },
+      {
+        "name": "Abhimunna Ghosh",
+        "label": "PETITIONER"
+      },
+      {
+        "name": "31.10.96",
+        "label": "DATE"
+      }
+    ]
+  },
+  {
+    "id": "277223757c284bcebe6240f98c79f9c6",
+    "source": "industrial&labour_kerala_high_court judgement https://indiankanoon.org/doc/474393",
+    "text": "The question arose as to whether the living allowances and salaries paid to the foreign technicians is taxable treating the same as constituting salary earned in India as per section 9(1)(ii) of the Income Tax Act as it stood at the relevant time include which falls under the head \"Salaries\" if it is earned in India.",
+    "annotations": [
+      {
+        "name": "India",
+        "label": "GPE"
+      },
+      {
+        "name": "section 9(1)(ii)",
+        "label": "PROVISION"
+      },
+      {
+        "name": "Income Tax Act",
+        "label": "STATUTE"
+      },
+      {
+        "name": "India",
+        "label": "GPE"
+      }
+    ]
+  },
+  {
+    "id": "77fd644d0bb546a1ae05f1548e8c3f26",
+    "source": "criminal_kerala_high_court judgement https://indiankanoon.org/doc/115600865",
+    "text": "The doctor, after examining them declared both dead.",
+    "annotations": []
   }
 ]

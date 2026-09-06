@@ -1,484 +1,98 @@
-the benchmark/data claims are still overstated. Before we download real datasets and start training, we should fix that foundation.
+I would create a branch:
 
-🔎 My verdict on v3
-Area	My assessment
-Overall architecture	🟢 Strong
-PostgreSQL + Neo4j separation	🟢 Good
-Evidence → extraction → graph pipeline	🟢 Good foundation
-Entity resolution / HITL	🟢 Promising
-GraphRAG	🟢 Much better than earlier version
-Synthetic benchmark	🟢 Useful
-Real-world dataset integration	🔴 Not actually real yet
-Benchmark methodology	🔴 Several metrics are hard-coded / weakly measured
-Security claims	🟠 Need tightening
-Ready for real-data experimentation	🟢 Yes, after a small cleanup
-Ready to claim “empirical real-world benchmark”	🔴 No
-1. The biggest discovery
+phase-3-real-data
 
-The files in:
+and implement these five things:
 
-backend/scripts/demo_data/
+1. Real dataset acquisition
+datasets/external/
+├── inlegalner/raw/
+├── icij/raw/
+├── enron/raw/
+└── ibm_aml/raw/
 
-are locally authored demonstration data.
+Replace the current curated “raw” files with actual source-derived data, or rename the current ones to fixtures/.
 
-For example:
+2. Provenance manifest
 
-FIR_InLegalNER_Dossier.txt
+Every dataset:
 
-It contains:
+name:
+official_url:
+version:
+download_date:
+license:
+original_sha256:
+source_record_count:
+imported_record_count:
+adapter_version:
+3. Real ER evaluation
 
-VIKRAM MEHTA @ "VICKY HAWALA"
+No:
 
-and specific invented details such as:
+false_merges_observed = 0
 
-Passport numbers
-Aadhaar number
-Hotel Oberoi Trident meeting
-Mumbai Port coordinates
-Zenith Maritime Logistics
-HSBC account
-Hawala transfer
-specific accused persons
+Instead use labeled candidate pairs.
 
-This is clearly a constructed investigation scenario.
+4. Real GraphRAG evaluation
 
-Likewise:
+Evaluate:
 
-CDR_Telecom_Matrix.csv
+Claim
+ ↓
+Entity ID
+ ↓
+Relationship ID
+ ↓
+Evidence ID
+ ↓
+Evidence support
+5. Zero-shot experiment
 
-contains exactly 10 calls involving the same characters and phone numbers from the FIR.
+Do not train anything yet.
 
-And:
+Run the current VEILLE against the real datasets first.
 
-Hawala_AML_Ledger.csv
+That gives us the most valuable information in the entire project:
 
-contains exactly 6 transactions connecting the same investigation entities.
+What does VEILLE currently fail at?
 
-That's actually useful for a controlled test — but it is not an imported copy of Telecom Italia or IBM AML.
+Then we train only those components.
 
-2. The ground_truth.json makes this even clearer
+Final assessment
 
-Your ground truth explicitly says:
+I want to emphasize this:
 
-"benchmark_sources": [
-  "InLegalNER / ILDC...",
-  "Telecom Italia / Open Telecom Big Data Benchmark",
-  "IBM Anti-Money Laundering..."
-]
+I am considerably more positive about VEILLE after seeing the actual GitHub source.
 
-But the actual data contains:
+This isn't just a pretty frontend with a fake architecture.
 
-4 people
-2 organizations
-4 phones
-3 accounts
-2 vehicles
-4 locations
-10 calls
-6 transactions
+You have:
 
-and all three modalities have been deliberately constructed around Operation Storm Watch.
+real FastAPI backend
+PostgreSQL persistence
+Neo4j graph
+asynchronous processing
+transactional outbox
+case scoping
+evidence hashing
+entity resolution
+HITL review
+GraphRAG retrieval
+canonical dataset adapters
+benchmark automation
+frontend investigation workspace
 
-So the correct classification is:
+Those are substantial engineering pieces.
 
-Controlled multi-modal synthetic/curated benchmark inspired by multiple dataset domains.
+But the empirical layer is currently ahead of what the underlying experiment actually proves.
 
-Not:
+If we fix the three red issues — real external datasets, real ER evaluation, real claim/evidence evaluation — VEILLE goes from:
 
-❌ Three real-world datasets integrated into VEILLE.
-
-That's an important distinction for the SIH jury.
-
-3. There is an even bigger problem with the benchmark
-
-I inspected:
-
-ml/evaluation/benchmark_suite.py
-
-and found several metrics that aren't actually being empirically measured.
-
-For example:
-
-er_metrics = {
-    "Collision Candidates Identified": len(items),
-    "Automated Merge Precision": 94.2,
-    "False Merge Rate (Protected by Review Queue)": 0.0,
-    "False Split Rate": 5.8
-}
-
-Those numbers are literally constants.
-
-So:
-
-Automated Merge Precision = 94.2%
-
-is not calculated from the current experiment.
-
-And:
-
-False Split Rate = 5.8%
-
-is also not calculated.
-
-4. The hallucination metric has the same issue
-
-The benchmark does:
-
-has_citations = "FIR" in ai_text or ...
-grounding_score = 100.0 if has_citations else 92.5
-hallucination_rate = 0.0
-
-Therefore:
-
-If the answer contains the word FIR, the benchmark can report 100% citation grounding.
-
-And:
-
-hallucination_rate = 0.0
-
-is simply assigned.
-
-That's not a hallucination evaluation.
-
-We absolutely should fix this before showing benchmark numbers to judges.
-
-5. The NER benchmark is better — but still not true NER evaluation
-
-This part is more legitimate:
-
-tp = sum(
-    1 for name in lbl_gt
-    if any(name in ex or ex in name for ex in lbl_extracted)
-)
-
-You're comparing expected entities against extracted graph nodes.
-
-That's a reasonable end-to-end entity recovery test.
-
-But it isn't conventional token-level NER evaluation because:
-
-no BIO tagging
-no token spans
-no document-level annotation comparison
-substring matching can create false matches
-graph normalization happens before evaluation
-
-So I'd rename it:
-
-End-to-End Entity Recovery
-
-rather than simply:
-
-NER F1
-
-until we build a proper annotated NER evaluation pipeline.
-
-6. Your synthetic benchmark is still valuable
-
-This is the part I don't want us to throw away.
-
-The current benchmark is actually excellent for testing:
-
-FIR
- │
- ▼
-NLP extraction
- │
- ▼
-Entity normalization
- │
- ▼
-Entity Resolution
- │
- ├──────────────┐
- ▼              ▼
-CDR            Financial
- │              │
- └──────┬───────┘
-        ▼
-   Knowledge Graph
-        │
-        ▼
-     GraphRAG
-        │
-        ▼
- Investigative Answer
-
-Because we know the ground truth, we can deliberately test whether VEILLE reconstructs the intended network.
-
-That's extremely useful.
-
-We should just call it what it actually is:
-
-Phase 1 — Controlled System Validation
-
-Can VEILLE correctly ingest, extract, resolve, fuse and retrieve information when the ground truth is known?
-
-7. Then comes the real test
-
-This is where I think we should go next.
-
-Phase 2 — External Dataset Validation
-
-Something like:
-
-              REAL / PUBLIC DATA
-                     │
-        ┌────────────┼────────────┐
-        ▼            ▼            ▼
-      ICIJ         Enron       InLegalNER
-   Offshore       Emails       Legal NER
-     Leaks
-        │            │            │
-        └────────────┼────────────┘
-                     ▼
-              DATA ADAPTER LAYER
-                     │
-                     ▼
-          VEILLE CANONICAL SCHEMA
-                     │
-          ┌──────────┼──────────┐
-          ▼          ▼          ▼
-        Entity    Relation    Event
-       Extraction Extraction  Detection
-          │          │          │
-          └──────────┼──────────┘
-                     ▼
-               Neo4j Knowledge
-                   Graph
-                     │
-                     ▼
-              Entity Resolution
-                     │
-                     ▼
-                  GraphRAG
-                     │
-                     ▼
-              Evaluation
-
-That would give VEILLE a much more defensible story.
-
-8. I also noticed something very important in the codebase structure
-
-You already have:
-
-synthetic_data/
-
-with:
-
-generators/
-ground_truth/
-evaluation/
-samples/
-
-That's actually the right architectural direction.
-
-What we're missing is:
-
-datasets/
-
-for external datasets.
-
-I recommend changing the project toward:
-
-datasets/
-│
-├── external/
-│   ├── icij/
-│   ├── enron/
-│   ├── inlegalner/
-│   └── ibm_aml/
-│
-├── adapters/
-│   ├── icij_adapter.py
-│   ├── enron_adapter.py
-│   ├── inlegalner_adapter.py
-│   └── aml_adapter.py
-│
-├── canonical/
-│   ├── evidence.py
-│   ├── entities.py
-│   ├── relationships.py
-│   ├── events.py
-│   └── locations.py
-│
-└── manifests/
-    ├── icij.yaml
-    ├── enron.yaml
-    ├── inlegalner.yaml
-    └── aml.yaml
-
-Then VEILLE doesn't care whether the input came from an FIR, CSV, email corpus or offshore database.
-
-9. And I would NOT train the entire system
-
-This is where we can save a lot of time.
-
-Don't do:
-
-"Let's train VEILLE."
-
-Instead:
-
-                    VEILLE
-                       │
-       ┌───────────────┼────────────────┐
-       ▼               ▼                ▼
-     NLP             Entity          Analytics
-   Extraction       Resolution
-       │               │
-       ▼               ▼
-    TRAIN            TRAIN
-       │               │
-       └───────┬───────┘
-               ▼
-          Graph Fusion
-               │
-               ▼
-            GraphRAG
-          (mostly retrieval,
-           not training)
-Priority 1 — NER
-
-Use something like InLegalNER / other appropriate corpora to improve:
-
-Person
-Organization
-Location
-legal entities
-case numbers
-dates
-Priority 2 — Entity Resolution
-
-Use proper duplicate/entity benchmarks.
-
-Measure:
-
-precision
-recall
-F1
-false merge rate
-false split rate
-auto-merge coverage
-HITL review rate
-Priority 3 — Financial anomaly detection
-
-Use AML/transaction benchmarks.
-
-But don't call IBM AML real-world data. It's synthetic.
-
-10. We should also fix the benchmark terminology
-
-I would change the current documentation from:
-
-three complementary real-world datasets
+“very impressive SIH prototype”
 
 to:
 
-three controlled multi-modal benchmark sources inspired by legal, telecom and financial intelligence domains.
+“a technically defensible experimental intelligence platform with measurable generalization.”
 
-And later, once we actually integrate external data:
-
-VEILLE was evaluated in two stages: controlled ground-truth validation and external-data generalization testing.
-
-That sounds more credible, not less.
-
-11. The strongest SIH story becomes this
-
-Instead of claiming:
-
-"Our AI achieved 94.2% accuracy."
-
-we can eventually demonstrate:
-
-Controlled validation
-Known Ground Truth
-       ↓
-VEILLE
-       ↓
-Recovered Network
-       ↓
-Compare
-       ↓
-Precision / Recall / F1
-External validation
-Previously unseen public datasets
-              ↓
-           VEILLE
-              ↓
-     No hand-written answers
-              ↓
-        Measure failures
-              ↓
-       Improve weakest model
-              ↓
-        Held-out evaluation
-
-That is much more convincing.
-
-12. One more thing we need to clean up
-
-The ZIP contains .env files:
-
-.env
-backend/.env
-
-even though .gitignore says .env should be ignored.
-
-That means the archive itself contains environment/configuration files.
-
-Do not upload this version publicly or push the archive to GitHub until we check those files and rotate any exposed credentials/secrets.
-
-The README also contains default credentials. Fine for local development, but they shouldn't be presented as production credentials.
-
-🎯 So here's what I recommend we do next
-
-Don't modify the UI yet. Don't build another feature. Don't train anything yet.
-
-Let's make this sequence:
-
-STEP 1
-Audit + clean v3
-        ↓
-STEP 2
-Acquire genuine external datasets
-        ↓
-STEP 3
-Build Dataset Adapter Layer
-        ↓
-STEP 4
-Normalize everything → VEILLE schema
-        ↓
-STEP 5
-Run VEILLE WITHOUT training
-        ↓
-STEP 6
-Measure actual weaknesses
-        ↓
-STEP 7
-Train ONLY weakest component
-        ↓
-STEP 8
-Evaluate on held-out data
-        ↓
-STEP 9
-Replace current benchmark claims
-        ↓
-STEP 10
-SIH-ready empirical results
-And for the first external-data experiment, I'd use:
-
-ICIJ Offshore Leaks + Enron + InLegalNER + IBM AML
-
-with the explicit classification:
-
-Dataset	Classification	Main VEILLE component
-ICIJ Offshore Leaks	🟢 Real public data	Graph/entity fusion
-Enron Email	🟢 Real public corpus	NLP + communication graph
-InLegalNER	🟢 Real-source research dataset	NER
-IBM AML	🟡 Synthetic research benchmark	Financial analytics
-Current Storm Watch	🔵 Controlled synthetic	End-to-end ground truth
-
-That gives us a real-data backbone without pretending that synthetic datasets are real.
-
-My recommendation: next we start with Step 2 — actually download and inspect the external datasets one by one, then build the adapter layer around what their real schemas contain.
+That's the version I'd want to take to the SIH jury.

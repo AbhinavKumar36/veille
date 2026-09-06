@@ -1,14 +1,18 @@
-name: ICIJ Offshore Leaks
-source: International Consortium of Investigative Journalists (Panama/Pandora Papers)
-classification: Real Public Data
-domain: Corporate Crime & Beneficial Ownership
-adapter: datasets.adapters.icij_adapter.ICIJOffshoreAdapter
-target_entities:
-  - Person (Beneficial Director, Shareholder, Nominee)
-  - Organization (Offshore Shell Corporation, Intermediary Law Firm)
-  - Location (Tax Haven, Registered Jurisdiction)
-target_relationships:
-  - OWNS (Director / Shareholder of)
-  - ASSOCIATED_WITH (Intermediary for)
-  - LOCATED_AT (Registered Address)
-primary_evaluation: Complex Graph Traversal & Multi-Hop Entity Resolution
+name: ICIJ Offshore Leaks Database
+official_url: https://offshoreleaks.icij.org/pages/database
+investigations_covered:
+- Panama Papers
+- Pandora Papers
+- Paradise Papers
+- Bahamas Leaks
+version: ICIJ 2024 Release
+download_date: '2026-09-06'
+license: Open Database License (ODbL) / CC-BY-SA
+corpus_sha256: fc4dcbbdf86c46c8a3c9fa306ee5187394cb083a2c17f6c04074c1543b683329
+source_record_count: 810000
+imported_record_count: 11
+adapter_version: datasets.adapters.icij_adapter.ICIJOffshoreAdapter (v4.2 Two-Pass)
+entity_taxonomy:
+- Person (Officer)
+- Organization (Entity, Intermediary)
+- Location (Address)

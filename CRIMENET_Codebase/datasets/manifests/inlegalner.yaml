@@ -1,11 +1,17 @@
 name: InLegalNER
-source: Indian Legal Documents Corpus / InLegalNER Benchmark
-classification: Real Research Corpus
-domain: Legal / Judiciary
-adapter: datasets.adapters.inlegalner_adapter.InLegalNERAdapter
-target_entities:
-  - Person (Judge, Petitioner, Respondent, Lawyer, Witness, Accused)
-  - Organization (Court, Corporate Entity)
-  - Location (Jurisdiction, GPE)
-  - Event (Statute, Statutory Provision)
-primary_evaluation: Named Entity Recognition & Statute Cross-Referencing
+official_url: https://huggingface.co/datasets/opennyaiorg/InLegalNER
+source_archive_url: https://storage.googleapis.com/indianlegalbert/OPEN_SOURCED_FILES/NER/NER_TRAIN.zip
+version: 1.0.0 (OpenNyAI)
+download_date: '2026-09-06'
+license: MIT License
+original_sha256: 90cc6ee9dc88e2fbb88fec6bfcec36ebe397d1ec256710a1600572d74088185f
+corpus_sha256: 2357cc46eace15177d355dad54f3dddab77086b36dc9147ab650bc1a1d09fe55
+source_record_count: 9435
+imported_record_count: 100
+adapter_version: datasets.adapters.inlegalner_adapter.InLegalNERAdapter (v4.2)
+entity_taxonomy:
+- Person
+- Organization
+- Location
+- Statute
+- Event

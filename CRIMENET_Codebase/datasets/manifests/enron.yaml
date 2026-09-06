@@ -1,22 +1,12 @@
 name: Enron Email Corpus
-source: Federal Energy Regulatory Commission (FERC) / CMU
-classification: Real Public Data
-domain: Corporate Fraud & Insider Collusion
-adapter: datasets.adapters.enron_adapter.EnronEmailAdapter
-target_entities:
-  - Person (Email Sender, Recipient, Executive)
-  - Organization (Corporate Branch, External Entity)
-target_relationships:
-  - COMMUNICATES_WITH (Email Exchange)
-primary_evaluation: Temporal Communication Graph & Unstructured NLP Extraction
----
-name: IBM AML Transaction Benchmark
-source: IBM Research Anti-Money Laundering Benchmark
-classification: Synthetic Research Benchmark
-domain: Financial Smurfing & Layering
-adapter: datasets.adapters.aml_adapter.AMLTransactionAdapter
-target_entities:
-  - Account (Bank Account, Mule Account)
-target_relationships:
-  - TRANSFERRED_FUNDS (Wire, RTGS, Cash Mule)
-primary_evaluation: Cycle Detection & Smurfing Anomaly Detection
+official_url: https://www.cs.cmu.edu/~enron/
+source_archive_url: https://raw.githubusercontent.com/MWiechmann/enron_spam_data/master/enron_spam_data.zip
+version: CMU / FERC Cleaned 2024
+download_date: '2026-09-06'
+license: Public Domain (FERC Regulatory Record)
+original_sha256: e994ad3c09fd7528b397e1f921742da5dd59f19695bc25cdb3617eb3ded17634
+corpus_sha256: 78823158927141391bc7e9fec901a64c747b04d9d3d48c26d77cefd9c9865578
+source_record_count: 16274
+imported_record_count: 100
+adapter_version: datasets.adapters.enron_adapter.EnronEmailAdapter (v4.2)
+primary_evaluation: Temporal Communication Graph & Insider Collusion Extraction
