@@ -1,8 +1,8 @@
 # VEILLE Empirical Evaluation & Two-Tier Benchmark Report
 
-> **Experiment ID:** `EXP_E32C5A87`  
-> **Git Commit:** `ec69bd05f2134d15ff69f6ffbe93863f7dfa69bf`  
-> **Execution Date:** 2026-09-06T16:03:52.987532+00:00  
+> **Experiment ID:** `EXP_5661652F`  
+> **Git Commit:** `a6225c8e3e16e7015f419590dfc148b04ce75296`  
+> **Execution Date:** 2026-09-06T16:04:54.695249+00:00  
 > **Evaluation Mode:** Dual-Tier (Controlled Ground-Truth Validation + External Canonical Adapter Standardization)  
 > **Status:** Research Prototype — Controlled Empirical Validation  
 
@@ -111,7 +111,7 @@ VEILLE operates on a **Two-Tiered Evaluation Methodology**:
 ## 5. Machine-Readable Experiment Artifacts
 
 The following machine-readable evaluation artifacts have been generated in `artifacts/`:
-* `experiment_manifest.json` — Immutable run metadata, Git commit `ec69bd05f2134d15ff69f6ffbe93863f7dfa69bf`, and configuration parameters.
+* `experiment_manifest.json` — Immutable run metadata, Git commit `a6225c8e3e16e7015f419590dfc148b04ce75296`, and configuration parameters.
 * `metrics.json` — Consolidated headline metrics across both tiers.
 * `er_results.json` — Full confusion matrix and per-category breakdown for Entity Resolution.
 * `rag_results.json` — Claim decomposition and citation entailment breakdown for GraphRAG.

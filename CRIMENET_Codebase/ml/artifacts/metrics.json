@@ -1,7 +1,7 @@
 {
-  "experiment_id": "EXP_E32C5A87",
-  "git_commit": "ec69bd05f2134d15ff69f6ffbe93863f7dfa69bf",
-  "timestamp": "2026-09-06T16:03:52.987532+00:00",
+  "experiment_id": "EXP_5661652F",
+  "git_commit": "a6225c8e3e16e7015f419590dfc148b04ce75296",
+  "timestamp": "2026-09-06T16:04:54.695249+00:00",
   "tier1_controlled_validation": {
     "entity_recovery_f1": 62.96,
     "entity_recovery_recall": 89.47,
