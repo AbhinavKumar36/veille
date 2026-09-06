@@ -58,11 +58,16 @@ export const GeospatialExplorer: React.FC = () => {
         zoomControl: true,
       });
 
-      // Tactical Dark Map Tile Layer
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; OpenStreetMap &copy; CartoDB',
-        subdomains: 'abcd',
-        maxZoom: 19,
+      // Tactical Dark Map Tile Layer — Clean Esri World Dark Gray Canvas (No API Key Watermark)
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+        attribution: '&copy; Esri &mdash; Esri, DeLorme, NAVTEQ',
+        maxZoom: 16,
+      }).addTo(map);
+
+      // Tactical Reference Label Layer
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
+        attribution: '',
+        maxZoom: 16,
       }).addTo(map);
 
       const markersGroup = L.layerGroup().addTo(map);

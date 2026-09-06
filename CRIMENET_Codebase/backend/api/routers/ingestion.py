@@ -10,7 +10,7 @@ import shutil
 import uuid
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, UploadFile, status
 from fastapi.responses import FileResponse
 from pydantic import UUID4, BaseModel
 from sqlalchemy.orm import Session
@@ -33,6 +33,27 @@ ALLOWED_EXTENSIONS = {".pdf", ".txt", ".csv", ".png", ".jpg", ".jpeg", ".mp3", "
 MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024  # 50 MB
 
 
+def _run_evidence_pipeline(evidence_id_str: str, file_path_str: str, case_id_str: str, source_type_str: str):
+    """Fallback / immediate synchronous background runner for reliable execution in all environments."""
+    import logging
+    logger = logging.getLogger("veille.pipeline.sync")
+    try:
+        file_ext = os.path.splitext(file_path_str)[1].lower()
+        if source_type_str == "FIR" or file_ext in (".pdf", ".txt", ".png", ".jpg", ".jpeg", ".mp3", ".wav"):
+            extract_entities_task(evidence_id_str, file_path_str, case_id_str)
+        else:
+            process_structured_data_task(evidence_id_str, source_type_str, file_path_str, case_id_str)
+
+        # Attempt immediate outbox flush to graph
+        try:
+            from workers.outbox_processor import process_outbox_events
+            process_outbox_events()
+        except Exception as graph_err:
+            logger.warning(f"Outbox flush skipped or deferred: {graph_err}")
+    except Exception as e:
+        logger.error(f"Background execution for evidence {evidence_id_str} failed: {e}")
+
+
 # ── Pydantic Schemas ────────────────────────────────────────────────────────
 
 class EvidenceUploadResponse(BaseModel):
@@ -46,13 +67,17 @@ class EvidenceResponse(BaseModel):
     id: str
     case_id: str
     source_type: str
-    original_filename: Optional[str]
+    original_filename: Optional[str] = None
+    file_size_bytes: Optional[int] = 0
+    hash: Optional[str] = ""
     status: str
+    error_message: Optional[str] = None
     created_at: str
 
 
 # ── Routes ──────────────────────────────────────────────────────────────────
 
+@router.get("", response_model=List[EvidenceResponse])
 @router.get("/", response_model=List[EvidenceResponse])
 def get_all_evidence(
     skip: int = 0,
@@ -68,7 +93,10 @@ def get_all_evidence(
             case_id=str(e.case_id),
             source_type=e.source_type,
             original_filename=e.original_filename,
+            file_size_bytes=e.file_size_bytes or 0,
+            hash=e.hash or "",
             status=e.status,
+            error_message=e.error_message,
             created_at=e.created_at.isoformat() if e.created_at else "",
         )
         for e in evidence_list
@@ -101,7 +129,10 @@ def get_evidence_for_case(
             case_id=str(e.case_id),
             source_type=e.source_type,
             original_filename=e.original_filename,
+            file_size_bytes=e.file_size_bytes or 0,
+            hash=e.hash or "",
             status=e.status,
+            error_message=e.error_message,
             created_at=e.created_at.isoformat() if e.created_at else "",
         )
         for e in evidence_list
@@ -110,6 +141,7 @@ def get_evidence_for_case(
 
 @router.post("/upload", response_model=EvidenceUploadResponse, status_code=status.HTTP_202_ACCEPTED)
 async def upload_evidence(
+    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     case_id: str = Form(...),
     source_type: str = Form(...),
@@ -161,8 +193,6 @@ async def upload_evidence(
         f.write(file_content)
 
     # ── Write Evidence Record to PostgreSQL ──────────────────────────────
-    # This MUST happen before dispatching to Celery so the worker can
-    # update the status when done.
     evidence = Evidence(
         id=evidence_id,
         case_id=case_id,
@@ -178,8 +208,8 @@ async def upload_evidence(
 
     log_action(db, current_user["id"], "UPLOAD_EVIDENCE", case_id=case_id)
 
-    # ── Dispatch to Async Pipeline ───────────────────────────────────────
-    job_id = str(uuid.uuid4())  # Fallback if Celery is unavailable
+    # ── Dispatch to Async Pipeline & Background Worker ───────────────────
+    job_id = str(uuid.uuid4())
     try:
         if source_type == "FIR" or file_ext in (".pdf", ".txt", ".png", ".jpg", ".jpeg", ".mp3", ".wav"):
             result = extract_entities_task.delay(str(evidence_id), file_path, case_id)
@@ -189,19 +219,61 @@ async def upload_evidence(
             job_id = result.id
     except Exception as celery_err:
         import logging
-        logging.getLogger(__name__).error(
-            f"Celery dispatch failed for evidence {evidence_id}: {celery_err}"
+        logging.getLogger(__name__).warning(
+            f"Celery dispatch failed for evidence {evidence_id}: {celery_err}. Using BackgroundTasks."
         )
-        # Don't fail the request — evidence is saved, retry can be triggered later
-        evidence.status = "FAILED"
-        evidence.error_message = f"Pipeline dispatch failed: {celery_err}"
-        db.commit()
+
+    # Always ensure background worker processes file immediately
+    background_tasks.add_task(
+        _run_evidence_pipeline,
+        str(evidence_id),
+        file_path,
+        case_id,
+        source_type
+    )
 
     return EvidenceUploadResponse(
         status="processing",
         evidence_id=str(evidence_id),
         job_id=job_id,
         message=f"File '{file.filename}' accepted. Processing in background.",
+    )
+
+
+@router.post("/{evidence_id}/reprocess", response_model=EvidenceResponse)
+def reprocess_evidence(
+    evidence_id: str,
+    background_tasks: BackgroundTasks,
+    current_user: dict = Depends(require_role("INVESTIGATOR", "HEAD")),
+    db: Session = Depends(get_db),
+):
+    """Trigger reprocessing for an evidence record."""
+    evidence = db.query(Evidence).filter(Evidence.id == evidence_id).first()
+    if not evidence:
+        raise HTTPException(status_code=404, detail="Evidence not found.")
+
+    evidence.status = "PROCESSING"
+    evidence.error_message = None
+    db.commit()
+
+    background_tasks.add_task(
+        _run_evidence_pipeline,
+        str(evidence.id),
+        evidence.file_path,
+        str(evidence.case_id),
+        evidence.source_type
+    )
+
+    return EvidenceResponse(
+        id=str(evidence.id),
+        case_id=str(evidence.case_id),
+        source_type=evidence.source_type,
+        original_filename=evidence.original_filename,
+        file_size_bytes=evidence.file_size_bytes or 0,
+        hash=evidence.hash or "",
+        status="PROCESSING",
+        error_message=None,
+        created_at=evidence.created_at.isoformat() if evidence.created_at else "",
     )
 
 

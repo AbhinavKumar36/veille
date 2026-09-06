@@ -90,10 +90,17 @@ def get_review_queue(
             item = json.loads(raw)
             item["queue_index"] = i
             # Generate a stable review ID from content
-            item["review_id"] = str(uuid.uuid5(
+            stable_id = str(uuid.uuid5(
                 uuid.NAMESPACE_DNS,
                 f"{item.get('candidate_id', '')}{item.get('match_id', '')}"
             ))
+            item["review_id"] = stable_id
+            item["id"] = item.get("id") or stable_id
+            item["task_id"] = item.get("task_id") or stable_id
+            item["source_entity_name"] = item.get("candidate_name") or item.get("source_entity_name", "Candidate Node")
+            item["target_entity_name"] = item.get("match_name") or item.get("target_entity_name", "Existing Node")
+            item["confidence_score"] = float(item.get("total_confidence") or item.get("confidence_score", 0.75))
+            item["status"] = item.get("status", "PENDING")
             items.append(item)
         except json.JSONDecodeError:
             continue
@@ -109,6 +116,27 @@ class ReviewDecisionRequest(BaseModel):
     task_id: Optional[str] = None
     candidate_id: Optional[str] = None
     notes: str = ""
+
+
+@router.post("/review-queue/generate-sample")
+def generate_sample_conflict(
+    current_user: dict = Depends(require_role("INVESTIGATOR", "HEAD")),
+):
+    """Generates a realistic borderline entity resolution conflict for testing."""
+    r = get_redis()
+    sample = {
+        "candidate_id": "Person_Rajesh_K_Alias",
+        "candidate_name": "Rajesh K. (alias)",
+        "candidate_label": "Person",
+        "match_id": "Person_RajeshKumar",
+        "match_name": "Rajesh Kumar",
+        "lexical_score": 0.82,
+        "structural_score": 0.65,
+        "total_confidence": 0.76,
+        "case_id": "CR-2023-MUM-4401",
+    }
+    r.lpush(REVIEW_QUEUE_KEY, json.dumps(sample))
+    return {"status": "success", "message": "Sample entity disambiguation conflict queued."}
 
 
 @router.post("/review-queue/merge")
@@ -162,7 +190,7 @@ def merge_entity(
     finally:
         pass
 
-    _remove_review_item(r, body.review_id)
+    _remove_review_item(r, lookup_id)
     log_action(db, current_user["id"], "MERGE_ENTITY", case_id=item.get("case_id"))
 
     return {

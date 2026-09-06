@@ -129,8 +129,8 @@ class AuditLog(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
-    actor_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("users.id"), nullable=False
+    actor_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
     action_type: Mapped[str] = mapped_column(String(100), nullable=False)
     target_case_id: Mapped[Optional[uuid.UUID]] = mapped_column(
@@ -138,7 +138,7 @@ class AuditLog(Base):
     )
     extra_metadata: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # JSON string (extra context)
 
-    actor: Mapped["User"] = relationship(back_populates="audit_logs")
+    actor: Mapped[Optional["User"]] = relationship(back_populates="audit_logs")
     target_case: Mapped[Optional["Case"]] = relationship(back_populates="audit_logs")
 
 

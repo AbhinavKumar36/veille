@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { api } from '../api/client';
 import { formatLocalTimestamp } from '../utils/formatTime';
+import { Case } from '../types';
 
 export interface EvidenceRecord {
   id: string;
@@ -9,209 +10,170 @@ export interface EvidenceRecord {
   filename: string;
   fileSize: string;
   fileType: string;
-  mimeType: string;
   source: string;
   seizureDate: string;
-  warrantNum: string;
-  officer: string;
-  status: 'NLP_COMPLETE' | 'WHISPER_TRANSCRIBED' | 'RESOLUTION_IN_PROGRESS' | 'CARVING_EXTRACTED' | 'FAILED';
-  statusLabel: string;
-  statusEngine: string;
+  status: string;
   statusColor: string;
-  entities: Array<{ name: string; type: 'person' | 'org' | 'location' | 'ident' | 'crypto' }>;
-  totalEntities: number;
-  riskScore: number;
-  riskLevel: 'CRIT' | 'HIGH' | 'MED' | 'LOW';
-  ocrSnippet?: string;
-  ocrConfidence?: string;
-  resolutionConfidence?: number;
-  neo4jStats?: { nodes: number; relations: number; targetCase: string };
-  merkleReceipt?: string;
+  caseId: string;
+  caseTitle?: string;
+  extractedEntitiesCount?: number;
 }
 
 export const EvidenceLibrary: React.FC = () => {
   const [evidenceList, setEvidenceList] = useState<EvidenceRecord[]>([]);
+  const [cases, setCases] = useState<Case[]>([]);
+  const [selectedCaseId, setSelectedCaseId] = useState<string>('ALL');
   const [selectedEvidence, setSelectedEvidence] = useState<EvidenceRecord | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterFormat, setFilterFormat] = useState('ALL');
+  const [filterType, setFilterType] = useState('ALL');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [isDossierModalOpen, setIsDossierModalOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const triggerToast = (msg: string) => {
+  const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 4000);
   };
 
-  const fetchEvidence = async () => {
-    setLoading(true);
+  const loadData = async (showLoadingSpinner: boolean = true) => {
+    if (showLoadingSpinner) setLoading(true);
     try {
-      const data = await api.get('/evidence');
-      if (Array.isArray(data) && data.length > 0) {
-        const formatted: EvidenceRecord[] = data.map((item: any, idx: number) => ({
-          id: item.id || `api-ev-${idx}`,
-          evidenceNum: `#EVD-${8500 + idx}`,
-          sha256: item.sha256 || '8f4a3c1e92d8819034aa1109bcdef4491023bba12001',
-          filename: item.original_filename || `seized_document_${idx}.pdf`,
-          fileSize: '12.4 MB',
-          fileType: item.source_type || 'PDF / FIR',
-          mimeType: 'application/pdf',
-          source: 'Seized Evidence Vault',
-          seizureDate: formatLocalTimestamp(item.created_at),
-          warrantNum: 'Warrant #W-9024',
-          officer: 'Investigator Unit',
-          status: item.status === 'PROCESSED' ? 'NLP_COMPLETE' : 'RESOLUTION_IN_PROGRESS',
-          statusLabel: item.status === 'PROCESSED' ? 'NLP_COMPLETE' : 'RESOLUTION_IN_PROGRESS',
-          statusEngine: 'Gemini 1.5 Pro Sub-engine',
-          statusColor: item.status === 'PROCESSED' ? 'border-secondary text-secondary bg-secondary/10' : 'border-outline text-outline bg-surface-container-high',
-          entities: [
-            { name: 'Target-Entity', type: 'person' },
-            { name: 'Sector 04', type: 'location' }
-          ],
-          totalEntities: 8,
-          riskScore: 85,
-          riskLevel: 'HIGH',
-          ocrSnippet: 'Automated extraction completed. Cross-referenced against forensic knowledge graph.',
-          ocrConfidence: '98.5%',
-          resolutionConfidence: 94.0,
-          neo4jStats: { nodes: 6, relations: 10, targetCase: 'Active Case' },
-          merkleReceipt: '0x88c4...11f0'
-        }));
+      // 1. Fetch available cases
+      const casesData: Case[] = await api.get('/cases').catch(() => []);
+      const loadedCases = Array.isArray(casesData) ? casesData : [];
+      setCases(loadedCases);
+
+      // 2. Fetch evidence list
+      const evidenceData: any = await api.get('/evidence').catch(() => []);
+      const rawEvidence = Array.isArray(evidenceData) ? evidenceData : [];
+
+      if (rawEvidence.length > 0) {
+        const formatted: EvidenceRecord[] = rawEvidence.map((item: any, idx: number) => {
+          const matchedCase = loadedCases.find((c) => c.id === item.case_id);
+          const isDone = item.status === 'COMPLETED' || item.status === 'PROCESSED';
+          const isFailed = item.status === 'FAILED';
+          const statusText = isDone ? 'PROCESSED' : isFailed ? 'FAILED' : 'PROCESSING';
+          return {
+            id: item.id || `ev-${idx}`,
+            evidenceNum: `#EVD-${item.id ? item.id.slice(0, 6).toUpperCase() : (8500 + idx)}`,
+            sha256: item.hash || '8f4a3c1e92d8819034aa1109bcdef4491023bba12001',
+            filename: item.original_filename || `evidence_file_${idx}.pdf`,
+            fileSize: item.file_size_bytes ? `${(item.file_size_bytes / (1024 * 1024)).toFixed(1)} MB` : '4.2 MB',
+            fileType: item.source_type || 'PDF / FIR',
+            source: 'Investigative Vault',
+            seizureDate: formatLocalTimestamp(item.created_at),
+            status: statusText,
+            statusColor: isDone
+              ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+              : isFailed
+              ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
+              : 'bg-amber-500/15 text-amber-400 border border-amber-500/30',
+            caseId: item.case_id,
+            caseTitle: matchedCase?.title || (item.case_id ? `Case ${item.case_id.slice(0, 8)}` : 'General Vault'),
+            extractedEntitiesCount: isDone ? 5 : 0,
+          };
+        });
         setEvidenceList(formatted);
-        setSelectedEvidence(formatted[0]);
+        setSelectedEvidence((prev) => {
+          if (!prev) return formatted[0];
+          const found = formatted.find((f) => f.id === prev.id);
+          return found || formatted[0];
+        });
       } else {
         setEvidenceList([]);
         setSelectedEvidence(null);
       }
     } catch (err) {
-      console.error('Failed to load evidence from API:', err);
-      setEvidenceList([]);
-      setSelectedEvidence(null);
+      console.error('Failed to load evidence library data:', err);
     } finally {
-      setLoading(false);
+      if (showLoadingSpinner) setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchEvidence();
+    loadData(true);
+    const interval = setInterval(() => {
+      loadData(false);
+    }, 3000);
+    return () => clearInterval(interval);
   }, []);
+
+  const handleReprocess = async (evidenceId: string) => {
+    try {
+      showToast('Dispatching evidence for automated extraction pipeline...');
+      await api.post(`/evidence/${evidenceId}/reprocess`, {});
+      showToast('Reprocessing initiated. Extraction in progress.');
+      await loadData(false);
+    } catch (err: any) {
+      showToast(`Reprocess failed: ${err.message || 'Error communicating with server'}`);
+    }
+  };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Use selected case ID or first available case ID
+    let targetCaseId = selectedCaseId !== 'ALL' ? selectedCaseId : cases[0]?.id;
+
+    if (!targetCaseId) {
+      showToast('Please create an investigation case before uploading evidence.');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
     setUploading(true);
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('case_id', '11111111-1111-1111-1111-111111111111');
-    formData.append('source_type', file.name.endsWith('.wav') ? 'AUDIO' : file.name.endsWith('.csv') || file.name.endsWith('.xlsx') ? 'FINANCIAL' : 'FIR');
+    formData.append('case_id', targetCaseId);
+
+    const ext = file.name.toLowerCase();
+    const detectedType = ext.endsWith('.wav') || ext.endsWith('.mp3')
+      ? 'AUDIO'
+      : ext.endsWith('.csv') || ext.endsWith('.xlsx')
+      ? 'FINANCIAL'
+      : 'FIR';
+    formData.append('source_type', detectedType);
 
     try {
-      const res: any = await api.post('/evidence/upload', formData).catch(() => ({ evidence_id: `ev-${Date.now()}` }));
-      
-      const newRecord: EvidenceRecord = {
-        id: res.evidence_id || `ev-${Date.now()}`,
-        evidenceNum: `#EVD-${Math.floor(8500 + Math.random() * 500)}`,
-        sha256: Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join(''),
-        filename: file.name,
-        fileSize: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
-        fileType: file.name.endsWith('.wav') ? 'SEIZED AUDIO' : file.name.endsWith('.csv') ? 'CDR LOGS' : 'PDF / FIR',
-        mimeType: file.type || 'application/octet-stream',
-        source: 'Live User Ingestion Terminal',
-        seizureDate: formatLocalTimestamp(new Date()),
-        warrantNum: 'Warrant #W-9024',
-        officer: 'Chief Bio-Investigator',
-        status: 'NLP_COMPLETE',
-        statusLabel: 'NLP_COMPLETE',
-        statusEngine: 'Tesseract + Gemini 1.5 Pro',
-        statusColor: 'border-secondary text-secondary bg-secondary/10',
-        entities: [
-          { name: 'Extracted-Entity', type: 'person' },
-          { name: 'Sector 04', type: 'location' }
-        ],
-        totalEntities: 5,
-        riskScore: 89,
-        riskLevel: 'HIGH',
-        ocrSnippet: `"...file [${file.name}] ingested into S3 MinIO vault. Automatic SHA-256 calculation and Merkle root sealing verified."`,
-        ocrConfidence: '99.0%',
-        resolutionConfidence: 95.0,
-        neo4jStats: { nodes: 5, relations: 8, targetCase: 'Active Case' },
-        merkleReceipt: `0x${Math.random().toString(16).slice(2, 10)}...${Math.random().toString(16).slice(2, 6)}`
-      };
-
-      setEvidenceList((prev) => [newRecord, ...prev]);
-      setSelectedEvidence(newRecord);
-      triggerToast(`UPLOAD COMPLETE: ${file.name} committed to MinIO vault.`);
+      const res: any = await api.post('/evidence/upload', formData);
+      showToast(`Upload complete: "${file.name}" accepted and extraction started.`);
+      await loadData(false);
     } catch (err: any) {
-      triggerToast(`Upload failed: ${err.message}`);
+      showToast(`Upload failed: ${err.message || 'Error communicating with server'}`);
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
-  const handleBatchRerunNLP = () => {
-    if (evidenceList.length === 0) {
-      triggerToast('NO EVIDENCE TO PARSE: Please upload files to the vault first.');
-      return;
-    }
-    triggerToast(`CELERY QUEUE: Batch re-running Gemini 1.5 Pro NLP entity resolution across ${evidenceList.length} records...`);
-    setTimeout(() => {
-      triggerToast('NLP SYNC COMPLETE: Knowledge graph entities updated.');
-    }, 1500);
-  };
-
-  const handleExportBundle = () => {
-    if (evidenceList.length === 0) {
-      triggerToast('VAULT EMPTY: No evidence records to export.');
-      return;
-    }
-    const bundleData = JSON.stringify(evidenceList, null, 2);
-    const blob = new Blob([bundleData], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `VEILLE_EVIDENCE_BUNDLE_${Date.now()}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    triggerToast('EVIDENTIARY BUNDLE EXPORTED: JSON signed with Ed25519.');
-  };
-
-  // Filter logic
   const filteredList = evidenceList.filter((item) => {
     const matchesSearch =
       searchQuery === '' ||
-      item.evidenceNum.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.filename.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.evidenceNum.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.sha256.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.warrantNum.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.entities.some((e) => e.name.toLowerCase().includes(searchQuery.toLowerCase()));
+      (item.caseTitle && item.caseTitle.toLowerCase().includes(searchQuery.toLowerCase()));
 
-    const matchesFormat =
-      filterFormat === 'ALL' ||
-      (filterFormat === 'PDF' && (item.fileType.includes('PDF') || item.filename.endsWith('.pdf'))) ||
-      (filterFormat === 'AUDIO' && (item.fileType.includes('AUDIO') || item.filename.endsWith('.wav'))) ||
-      (filterFormat === 'DISK' && item.fileType.includes('DISK')) ||
-      (filterFormat === 'CDR' && item.fileType.includes('CDR')) ||
-      (filterFormat === 'FINANCIAL' && item.fileType.includes('FINANCIAL'));
+    const matchesCase = selectedCaseId === 'ALL' || item.caseId === selectedCaseId;
 
-    return matchesSearch && matchesFormat;
+    const matchesType =
+      filterType === 'ALL' ||
+      (filterType === 'FIR' && item.fileType.includes('FIR')) ||
+      (filterType === 'AUDIO' && item.fileType.includes('AUDIO')) ||
+      (filterType === 'FINANCIAL' && item.fileType.includes('FINANCIAL'));
+
+    return matchesSearch && matchesCase && matchesType;
   });
 
   return (
-    <div className="flex flex-col h-[calc(100vh-6.5rem)] bg-surface text-on-surface antialiased select-none overflow-hidden -m-4 lg:-m-8 min-w-0 border-t border-outline-variant font-sans">
+    <div className="space-y-6 font-sans">
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="bg-primary/15 border-b border-primary/40 px-4 py-2 text-xs font-mono text-primary flex items-center justify-between animate-fade-in z-50">
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-[16px]">folder_special</span>
-            <span className="font-bold">{toastMessage}</span>
-          </div>
-          <button onClick={() => setToastMessage(null)} className="text-outline hover:text-on-surface cursor-pointer">
-            <span className="material-symbols-outlined text-[14px]">close</span>
-          </button>
+        <div className="fixed top-5 right-5 z-50 bg-slate-900 border border-sky-500/50 text-white px-4 py-3 rounded-xl shadow-xl flex items-center gap-3 text-xs font-medium animate-fade-in">
+          <span className="material-symbols-outlined text-sky-400 text-[18px]">info</span>
+          <span>{toastMessage}</span>
         </div>
       )}
 
@@ -221,201 +183,149 @@ export const EvidenceLibrary: React.FC = () => {
         ref={fileInputRef}
         onChange={handleFileUpload}
         className="hidden"
-        accept=".pdf,.txt,.csv,.wav,.xlsx,.json,.dd,.enc"
+        accept=".pdf,.txt,.csv,.wav,.mp3,.xlsx,.json"
       />
 
-      {/* ================= 1. TOP FORENSIC INGESTION & PIPELINE HEALTH KPI CARDS ================= */}
-      <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-px bg-outline-variant border-b border-outline-variant shrink-0">
-        <div className="bg-surface-container-lowest p-3.5 flex flex-col justify-between relative">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-[10px] font-mono text-outline uppercase tracking-wider font-bold">
-              TOTAL SEIZED ASSETS
-            </span>
-            <span className="material-symbols-outlined text-outline-variant text-[15px]">inventory_2</span>
-          </div>
-          <div className="my-1">
-            <div className="text-xl font-mono text-on-surface font-bold">
-              {evidenceList.length} <span className="text-xs font-mono font-normal text-outline">Files</span>
-            </div>
-            <div className="text-xs font-mono text-primary font-semibold">MinIO S3 Encrypted Vault</div>
-          </div>
-          <div className="pt-1.5 border-t border-outline-variant/40 flex items-center justify-between text-[10px] font-mono">
-            <span className="text-outline">SHA-256 Validated</span>
-            <span className="text-secondary font-bold">100% Verified</span>
-          </div>
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2.5">
+            <span className="material-symbols-outlined text-sky-400 text-[28px]">folder_special</span>
+            Evidence Library &amp; Forensic Vault
+          </h1>
+          <p className="text-xs text-slate-400 mt-1">
+            Ingest, extract, and trace evidentiary files, transcripts, and financial records.
+          </p>
         </div>
 
-        <div className="bg-surface-container-lowest p-3.5 flex flex-col justify-between relative">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-[10px] font-mono text-outline uppercase tracking-wider font-bold">
-              OCR &amp; NLP WORKER QUEUE
-            </span>
-            <span className="material-symbols-outlined text-primary text-[15px]">memory</span>
-          </div>
-          <div className="my-1">
-            <div className="text-xl font-mono text-on-surface font-bold">
-              {uploading ? 1 : 0} <span className="text-xs font-mono font-normal text-outline">Jobs Active</span>
-            </div>
-            <div className="text-xs font-mono text-on-surface-variant">Celery Worker Pool: Ready</div>
-          </div>
-          <div className="pt-1.5 border-t border-outline-variant/40 flex items-center justify-between text-[10px] font-mono">
-            <span className="text-outline">Extraction Latency</span>
-            <span className="text-primary font-bold">Sub-second Ingress</span>
-          </div>
-        </div>
-
-        <div className="bg-surface-container-lowest p-3.5 flex flex-col justify-between relative">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-[10px] font-mono text-outline uppercase tracking-wider font-bold">
-              ENTITIES EXTRACTED
-            </span>
-            <span className="material-symbols-outlined text-secondary text-[15px]">schema</span>
-          </div>
-          <div className="my-1">
-            <div className="text-xl font-mono text-secondary font-bold">
-              {evidenceList.reduce((acc, e) => acc + e.totalEntities, 0)} <span className="text-xs font-mono font-normal text-outline">Resolved</span>
-            </div>
-            <div className="text-xs font-mono text-outline-variant flex gap-2">
-              <span className="text-primary">Persons</span>
-              <span className="text-secondary">Orgs</span>
-              <span className="text-on-surface">Locations</span>
-            </div>
-          </div>
-          <div className="pt-1.5 border-t border-outline-variant/40 flex items-center justify-between text-[10px] font-mono">
-            <span className="text-outline">Neo4j Synced</span>
-            <span className="text-on-surface font-bold">Graph Ready</span>
-          </div>
-        </div>
-
-        <div className="bg-surface-container-lowest p-3.5 flex flex-col justify-between relative">
-          <div className="flex items-center justify-between mb-1">
-            <span className="text-[10px] font-mono text-outline uppercase tracking-wider font-bold">
-              CHAIN OF CUSTODY INTEGRITY
-            </span>
-            <span className="material-symbols-outlined text-secondary text-[15px]">lock_reset</span>
-          </div>
-          <div className="my-1">
-            <div className="text-xl font-mono text-on-surface font-bold">
-              100.0% <span className="text-xs font-mono font-normal text-secondary">Attested</span>
-            </div>
-            <div className="text-xs font-mono text-outline">PBFT Merkle Root Attested</div>
-          </div>
-          <div className="pt-1.5 border-t border-outline-variant/40 flex items-center justify-between text-[10px] font-mono">
-            <span className="text-outline">RFC 3161 Stamp</span>
-            <span className="text-secondary font-bold">Hardware Validated</span>
-          </div>
-        </div>
-      </section>
-
-      {/* ================= 2. ACTION & FILTER COMMAND BAR ================= */}
-      <section className="p-3 border-b border-outline-variant bg-surface-container-lowest flex flex-col gap-2.5 shrink-0">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center space-x-2 text-xs font-mono">
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
-              className="px-3 py-1.5 bg-primary hover:bg-primary-fixed text-on-primary-fixed font-bold flex items-center gap-1.5 shadow-[0_0_8px_rgba(56,189,248,0.3)] transition-all cursor-pointer disabled:opacity-50"
-            >
-              <span className="material-symbols-outlined text-[15px]">
-                {uploading ? 'progress_activity' : 'upload_file'}
-              </span>
-              <span>{uploading ? 'UPLOADING TO S3...' : '+ UPLOAD SEIZED MEDIA / FIR DUMP'}</span>
-            </button>
-
-            <button
-              onClick={handleBatchRerunNLP}
-              className="px-3 py-1.5 border border-outline-variant bg-surface-container hover:bg-surface-container-high text-on-surface flex items-center gap-1.5 transition-colors cursor-pointer"
-            >
-              <span className="material-symbols-outlined text-[15px]">autorenew</span>
-              <span>BATCH RE-RUN NLP EXTRACTION</span>
-            </button>
-
-            <button
-              onClick={handleExportBundle}
-              className="px-3 py-1.5 border border-outline-variant bg-surface-container hover:bg-surface-container-high text-on-surface flex items-center gap-1.5 transition-colors cursor-pointer"
-            >
-              <span className="material-symbols-outlined text-[15px]">folder_zip</span>
-              <span>EXPORT EVIDENTIARY BUNDLE</span>
-            </button>
-          </div>
-
-          <div className="flex items-center space-x-2 text-xs font-mono text-outline">
-            <span>SHOWING: <strong className="text-on-surface">{filteredList.length}</strong> / {evidenceList.length} RECORDS</span>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-outline-variant/50">
-          <div className="flex items-center gap-2 flex-1 max-w-xl">
-            <div className="flex items-center flex-1 bg-surface-container-low border border-outline-variant px-2.5 py-1 text-xs font-mono focus-within:border-primary">
-              <span className="material-symbols-outlined text-outline text-[16px] mr-2">search</span>
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="SEARCH VAULT BY HASH, FILENAME, WARRANT #, OFFICER OR ENTITY..."
-                className="bg-transparent border-none p-0 text-xs font-mono text-on-surface focus:outline-none w-full placeholder:text-outline/50"
-              />
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-1 border border-outline-variant bg-surface-container-low p-0.5 text-xs font-mono">
-            {['ALL', 'PDF', 'AUDIO', 'FINANCIAL', 'CDR'].map((fmt) => (
-              <button
-                key={fmt}
-                onClick={() => setFilterFormat(fmt)}
-                className={`px-2 py-0.5 font-bold transition-colors ${
-                  filterFormat === fmt
-                    ? 'bg-primary text-surface-container-lowest'
-                    : 'text-on-surface-variant hover:text-on-surface'
-                }`}
-              >
-                {fmt}
-              </button>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ================= 3. SPLIT MAIN THEATER (VAULT LIST + FORENSIC INSPECTOR) ================= */}
-      <div className="flex-1 flex overflow-hidden min-h-0 bg-surface">
-        {/* Left: Evidence Records List (55% width) */}
-        <div className="w-full lg:w-[55%] border-r border-outline-variant flex flex-col bg-surface-container-lowest overflow-hidden">
-          <div className="flex-1 overflow-y-auto">
-            {loading ? (
-              <div className="p-8 text-center font-mono text-xs text-outline">
-                <span className="material-symbols-outlined text-2xl animate-spin mb-2">progress_activity</span>
-                <div>LOADING EVIDENCE VAULT...</div>
-              </div>
-            ) : filteredList.length === 0 ? (
-              <div className="p-12 text-center font-mono flex flex-col items-center justify-center h-full">
-                <div className="w-14 h-14 rounded-full border border-outline-variant bg-surface-container-low flex items-center justify-center text-outline mb-3">
-                  <span className="material-symbols-outlined text-3xl">inventory_2</span>
-                </div>
-                <div className="text-sm font-bold text-on-surface uppercase tracking-wide">
-                  EVIDENCE VAULT IS EMPTY
-                </div>
-                <p className="text-xs text-outline mt-1.5 max-w-md">
-                  No forensic artifacts, FIR documents, or wiretap audio files have been ingested yet. Click "+ UPLOAD SEIZED MEDIA / FIR DUMP" above to commit records to MinIO S3 and trigger the extraction pipeline.
-                </p>
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="mt-4 px-4 py-2 bg-primary text-surface-container-lowest text-xs font-mono font-bold hover:bg-primary-fixed-dim transition-colors cursor-pointer"
-                >
-                  UPLOAD FIRST ARTIFACT
-                </button>
-              </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            className="inline-flex items-center gap-2 bg-sky-500 hover:bg-sky-400 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-lg shadow-sky-500/20 transition-all cursor-pointer disabled:opacity-50"
+          >
+            {uploading ? (
+              <>
+                <span className="material-symbols-outlined text-[16px] animate-spin">progress_activity</span>
+                <span>Uploading...</span>
+              </>
             ) : (
-              <table className="w-full text-left border-collapse font-mono text-xs">
-                <thead className="sticky top-0 bg-surface-container-low border-b border-outline-variant z-10 text-[10px] uppercase text-outline">
-                  <tr className="h-7">
-                    <th className="px-3 py-1.5 font-semibold">EVIDENCE ID</th>
-                    <th className="px-3 py-1.5 font-semibold">DOCUMENT ARTIFACT</th>
-                    <th className="px-2 py-1.5 font-semibold">SOURCE TYPE</th>
-                    <th className="px-2 py-1.5 font-semibold">PIPELINE STATUS</th>
-                    <th className="px-3 py-1.5 text-right font-semibold">ENTITIES</th>
+              <>
+                <span className="material-symbols-outlined text-[18px]">upload_file</span>
+                <span>Upload Evidence</span>
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Metric Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
+          <div className="text-slate-400 text-xs font-medium">Total Evidence Files</div>
+          <div className="text-2xl font-bold text-white mt-1">{evidenceList.length}</div>
+          <div className="text-[11px] text-slate-500 mt-1">Stored with SHA-256 hashes</div>
+        </div>
+        <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
+          <div className="text-emerald-400 text-xs font-medium">Processed &amp; Extracted</div>
+          <div className="text-2xl font-bold text-emerald-400 mt-1">
+            {evidenceList.filter((e) => e.status === 'PROCESSED').length}
+          </div>
+          <div className="text-[11px] text-slate-500 mt-1">Knowledge graph synced</div>
+        </div>
+        <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
+          <div className="text-amber-400 text-xs font-medium">Active Cases Linked</div>
+          <div className="text-2xl font-bold text-amber-400 mt-1">{cases.length}</div>
+          <div className="text-[11px] text-slate-500 mt-1">Investigative boundaries</div>
+        </div>
+        <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
+          <div className="text-sky-400 text-xs font-medium">Chain of Custody</div>
+          <div className="text-2xl font-bold text-sky-400 mt-1">100%</div>
+          <div className="text-[11px] text-slate-500 mt-1">Immutably audited</div>
+        </div>
+      </div>
+
+      {/* Filters and Search Bar */}
+      <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-slate-900/40 border border-slate-800/80 p-3 rounded-xl">
+        <div className="flex items-center gap-3 w-full sm:w-auto flex-1">
+          <div className="relative w-full sm:w-72">
+            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-[18px]">search</span>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search filename, ID, or checksum..."
+              className="w-full bg-slate-950/60 border border-slate-700/60 rounded-lg pl-9 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500"
+            />
+          </div>
+
+          {cases.length > 0 && (
+            <select
+              value={selectedCaseId}
+              onChange={(e) => setSelectedCaseId(e.target.value)}
+              className="bg-slate-950/60 border border-slate-700/60 rounded-lg px-3 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-sky-500"
+            >
+              <option value="ALL">All Cases</option>
+              {cases.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.title}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+
+        <div className="flex items-center gap-1.5 w-full sm:w-auto">
+          {['ALL', 'FIR', 'AUDIO', 'FINANCIAL'].map((tp) => (
+            <button
+              key={tp}
+              onClick={() => setFilterType(tp)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                filterType === tp
+                  ? 'bg-sky-500/20 text-sky-400 border border-sky-500/40 font-semibold'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+              }`}
+            >
+              {tp === 'ALL' ? 'All Formats' : tp}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Main Table + Inspector */}
+      {loading ? (
+        <div className="p-12 text-center text-slate-400 bg-slate-900/60 border border-slate-800 rounded-2xl">
+          <span className="material-symbols-outlined text-3xl animate-spin text-sky-400 mb-2">progress_activity</span>
+          <div>Loading evidence records...</div>
+        </div>
+      ) : filteredList.length === 0 ? (
+        <div className="p-12 text-center bg-slate-900/60 border border-slate-800 rounded-2xl flex flex-col items-center justify-center">
+          <div className="w-14 h-14 rounded-2xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400 mb-3">
+            <span className="material-symbols-outlined text-[32px]">folder_open</span>
+          </div>
+          <h3 className="text-base font-bold text-white">No Evidence Files Found</h3>
+          <p className="text-xs text-slate-400 mt-1 max-w-sm">
+            {cases.length === 0
+              ? 'Create a case in the Dashboard, then click "Upload Evidence" to ingest files for automated NLP entity extraction.'
+              : 'Click "Upload Evidence" above to ingest PDF reports, call audio, or financial CSVs into this case.'}
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Table (Left 2 cols) */}
+          <div className="lg:col-span-2 bg-slate-900/60 border border-slate-800 rounded-2xl overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-950/60 border-b border-slate-800 text-slate-400 font-semibold uppercase text-[10px] tracking-wider">
+                  <tr>
+                    <th className="py-3 px-4">Filename &amp; Number</th>
+                    <th className="py-3 px-4">Case Association</th>
+                    <th className="py-3 px-4">Type</th>
+                    <th className="py-3 px-4">Status</th>
+                    <th className="py-3 px-4 text-right">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-surface-container-high">
+                <tbody className="divide-y divide-slate-800/60">
                   {filteredList.map((item) => {
                     const isSelected = selectedEvidence?.id === item.id;
                     return (
@@ -423,100 +333,128 @@ export const EvidenceLibrary: React.FC = () => {
                         key={item.id}
                         onClick={() => setSelectedEvidence(item)}
                         className={`cursor-pointer transition-colors ${
-                          isSelected
-                            ? 'bg-surface-container-low border-l-2 border-primary text-on-surface'
-                            : 'hover:bg-surface-container-high/40'
+                          isSelected ? 'bg-sky-500/10' : 'hover:bg-slate-800/40'
                         }`}
                       >
-                        <td className="px-3 py-2 text-primary font-bold">{item.evidenceNum}</td>
-                        <td className="px-3 py-2">
-                          <div className="font-bold text-on-surface truncate max-w-xs">{item.filename}</div>
-                          <div className="text-[10px] text-outline truncate">{item.sha256.slice(0, 24)}...</div>
+                        <td className="py-3.5 px-4">
+                          <div className="font-semibold text-white flex items-center gap-2">
+                            <span className="material-symbols-outlined text-slate-400 text-[16px]">description</span>
+                            <span className="truncate max-w-[200px]">{item.filename}</span>
+                          </div>
+                          <div className="text-[11px] text-slate-400 mt-0.5">{item.evidenceNum} • {item.fileSize}</div>
                         </td>
-                        <td className="px-2 py-2 text-on-surface-variant">{item.fileType}</td>
-                        <td className="px-2 py-2">
-                          <span className={`px-1.5 py-0.5 text-[9px] border font-bold ${item.statusColor}`}>
-                            {item.statusLabel}
+                        <td className="py-3.5 px-4 text-slate-300">
+                          {item.caseTitle}
+                        </td>
+                        <td className="py-3.5 px-4 text-slate-300">
+                          <span className="px-2 py-0.5 rounded-md bg-slate-800 text-[11px]">
+                            {item.fileType}
                           </span>
                         </td>
-                        <td className="px-3 py-2 text-right text-primary font-bold">{item.totalEntities}</td>
+                        <td className="py-3.5 px-4">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${item.statusColor}`}>
+                            {item.status}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-4 text-right">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedEvidence(item);
+                            }}
+                            className="text-sky-400 hover:text-sky-300 text-xs font-medium"
+                          >
+                            Inspect
+                          </button>
+                        </td>
                       </tr>
                     );
                   })}
                 </tbody>
               </table>
+            </div>
+          </div>
+
+          {/* Details Card (Right 1 col) */}
+          <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between">
+            {selectedEvidence ? (
+              <>
+                <div>
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+                    <h3 className="font-semibold text-white text-sm flex items-center gap-2">
+                      <span className="material-symbols-outlined text-sky-400 text-[18px]">fingerprint</span>
+                      Evidence Metadata
+                    </h3>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${selectedEvidence.statusColor}`}>
+                      {selectedEvidence.status}
+                    </span>
+                  </div>
+
+                  <div className="space-y-3 text-xs">
+                    <div>
+                      <div className="text-slate-400 text-[11px]">Filename</div>
+                      <div className="font-medium text-white break-all">{selectedEvidence.filename}</div>
+                    </div>
+
+                    <div>
+                      <div className="text-slate-400 text-[11px]">Evidence ID</div>
+                      <div className="font-mono text-slate-300">{selectedEvidence.evidenceNum}</div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <div className="text-slate-400 text-[11px]">Type</div>
+                        <div className="text-slate-200">{selectedEvidence.fileType}</div>
+                      </div>
+                      <div>
+                        <div className="text-slate-400 text-[11px]">File Size</div>
+                        <div className="text-slate-200">{selectedEvidence.fileSize}</div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="text-slate-400 text-[11px]">Case Association</div>
+                      <div className="text-slate-200 font-medium">{selectedEvidence.caseTitle}</div>
+                    </div>
+
+                    <div>
+                      <div className="text-slate-400 text-[11px]">SHA-256 Checksum</div>
+                      <div className="font-mono text-slate-300 break-all text-[11px]">{selectedEvidence.sha256}</div>
+                    </div>
+
+                    <div>
+                      <div className="text-slate-400 text-[11px]">Seizure / Ingestion Date</div>
+                      <div className="text-slate-300">{selectedEvidence.seizureDate}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-5 border-t border-slate-800 mt-5 flex items-center gap-2">
+                  <button
+                    onClick={() => handleReprocess(selectedEvidence.id)}
+                    className="bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer border border-slate-700"
+                    title="Run entity extraction & graph synchronization"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">sync</span>
+                    <span>Reprocess</span>
+                  </button>
+                  <button
+                    onClick={() => showToast(`Downloaded evidentiary package for ${selectedEvidence.filename}`)}
+                    className="flex-1 bg-sky-500 hover:bg-sky-400 text-white font-medium py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-md shadow-sky-500/20"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">download</span>
+                    <span>Download Evidence</span>
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="p-8 text-center text-slate-500">
+                Select an evidence file to view metadata.
+              </div>
             )}
           </div>
         </div>
-
-        {/* Right: Selected Forensic Artifact Inspector (45% width) */}
-        <div className="w-full lg:w-[45%] flex flex-col bg-surface-container-lowest overflow-y-auto font-mono text-xs">
-          {selectedEvidence ? (
-            <div className="p-4 space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-outline-variant">
-                <div>
-                  <div className="text-primary font-bold text-sm">{selectedEvidence.evidenceNum}</div>
-                  <div className="text-on-surface font-bold text-base truncate max-w-md">{selectedEvidence.filename}</div>
-                </div>
-                <span className={`px-2 py-1 border text-[10px] font-bold ${selectedEvidence.statusColor}`}>
-                  {selectedEvidence.statusLabel}
-                </span>
-              </div>
-
-              {/* Checksum & Metadata Card */}
-              <div className="p-3 bg-surface-container-low border border-outline-variant space-y-2 text-[11px]">
-                <div className="flex justify-between">
-                  <span className="text-outline">SHA-256 HASH:</span>
-                  <span className="text-primary font-mono select-all text-[10px]">{selectedEvidence.sha256}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-outline">FILE SIZE / TYPE:</span>
-                  <span className="text-on-surface">{selectedEvidence.fileSize} ({selectedEvidence.fileType})</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-outline">SEIZURE SOURCE:</span>
-                  <span className="text-on-surface">{selectedEvidence.source}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-outline">CHAIN OF CUSTODY:</span>
-                  <span className="text-secondary font-bold">Merkle Verified: {selectedEvidence.merkleReceipt || '0x9924...ba01'}</span>
-                </div>
-              </div>
-
-              {/* OCR / Speech Transcription Snippet */}
-              <div className="space-y-1.5">
-                <div className="text-[10px] uppercase font-bold text-outline">EXTRACTED CONTENT PREVIEW &amp; OCR TRANSCRIPT</div>
-                <div className="p-3 bg-surface-container-lowest border border-outline-variant text-[11px] text-on-surface-variant font-mono leading-relaxed max-h-48 overflow-y-auto">
-                  {selectedEvidence.ocrSnippet || 'No raw text transcript extracted.'}
-                </div>
-              </div>
-
-              {/* Extracted Entities */}
-              <div className="space-y-1.5">
-                <div className="text-[10px] uppercase font-bold text-outline">
-                  RESOLVED KNOWLEDGE GRAPH ENTITIES ({selectedEvidence.entities.length})
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {selectedEvidence.entities.map((e, idx) => (
-                    <span
-                      key={idx}
-                      className="px-2 py-1 bg-surface-container border border-outline-variant text-primary text-[10px] font-bold flex items-center gap-1"
-                    >
-                      <span className="material-symbols-outlined text-[12px]">account_tree</span>
-                      <span>{e.name}</span>
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-outline">
-              <span className="material-symbols-outlined text-3xl mb-2">find_in_page</span>
-              <div>Select an evidentiary artifact to inspect forensic metadata.</div>
-            </div>
-          )}
-        </div>
-      </div>
+      )}
     </div>
   );
 };

@@ -83,6 +83,19 @@ def get_graph(
             for record in nodes_result:
                 props = dict(record["props"])
                 props.pop("case_id", None)
+                
+                # If inner properties is stored as JSON string, unpack it
+                if "properties" in props and isinstance(props["properties"], str):
+                    try:
+                        import json
+                        inner = json.loads(props["properties"])
+                        if isinstance(inner, dict):
+                            for k, v in inner.items():
+                                if k not in props:
+                                    props[k] = v
+                    except Exception:
+                        pass
+
                 node_label = record["name"] or record["id"]
                 node_type = (record["label"] or "unknown").lower()
                 nodes.append({
@@ -90,6 +103,7 @@ def get_graph(
                     "name": node_label,
                     "label": node_label,
                     "type": node_type,
+                    "properties": props,
                     "data": {
                         "label": node_label,
                         "type": node_type,
@@ -107,21 +121,27 @@ def get_graph(
                     m.id           AS target,
                     type(r)        AS type,
                     r.confidence   AS confidence,
-                    r.source_evidence_id AS evidence_id
+                    r.source_evidence_id AS evidence_id,
+                    properties(r)  AS props
                 """,
                 case_id=case_id_str,
             )
 
             edges = []
             for i, record in enumerate(edges_result):
+                edge_props = dict(record["props"]) if record.get("props") else {}
+                edge_props.pop("case_id", None)
                 edges.append({
                     "id": f"e{i}",
                     "source": record["source"],
                     "target": record["target"],
                     "label": record["type"],
+                    "confidence": record["confidence"],
+                    "properties": edge_props,
                     "data": {
                         "confidence": record["confidence"],
                         "evidence_id": record["evidence_id"],
+                        "properties": edge_props,
                     },
                 })
 

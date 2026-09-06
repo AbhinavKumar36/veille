@@ -34,22 +34,36 @@ class AuditLogResponse(BaseModel):
 def get_audit_logs(
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=200),
+    action: Optional[str] = Query(None),
+    case_id: Optional[str] = Query(None),
+    search: Optional[str] = Query(None),
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """
     Returns recent immutable audit logs for security, compliance, and telemetry.
-    Returns empty list if no logs exist.
+    Supports filtering by action, case_id, or search keyword.
     """
     query = (
         db.query(AuditLog, User.email, Case.title)
         .join(User, AuditLog.actor_id == User.id, isouter=True)
         .join(Case, AuditLog.target_case_id == Case.id, isouter=True)
-        .order_by(desc(AuditLog.created_at))
-        .offset(skip)
-        .limit(limit)
     )
 
+    if action:
+        query = query.filter(AuditLog.action_type == action)
+    if case_id:
+        try:
+            import uuid as _uuid
+            parsed_case = _uuid.UUID(str(case_id))
+            query = query.filter(AuditLog.target_case_id == parsed_case)
+        except Exception:
+            pass
+    if search:
+        s = f"%{search.strip()}%"
+        query = query.filter((AuditLog.action_type.ilike(s)) | (User.email.ilike(s)) | (Case.title.ilike(s)))
+
+    query = query.order_by(desc(AuditLog.created_at)).offset(skip).limit(limit)
     results = query.all()
 
     if not results:

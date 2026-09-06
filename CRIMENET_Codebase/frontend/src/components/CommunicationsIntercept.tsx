@@ -30,25 +30,73 @@ export const CommunicationsIntercept: React.FC = () => {
   };
 
   useEffect(() => {
-    // Check if there are any stream logs or intercepted evidence
-    api.get('/evidence')
-      .then((data: any) => {
-        const items = Array.isArray(data) ? data : [];
+    // Check if there are real communications in the graph or evidence
+    api.get('/cases')
+      .then(async (casesData: any) => {
+        const caseList = Array.isArray(casesData) ? casesData : (casesData?.cases || []);
+        if (caseList.length > 0) {
+          const caseId = caseList[0].id;
+          try {
+            const graphData: any = await api.get(`/graph/${caseId}`);
+            const rawEdges = graphData?.edges || [];
+            const rawNodes = graphData?.nodes || [];
+
+            // Find communication edges
+            const commEdges = rawEdges.filter((e: any) => e.label === 'COMMUNICATES_WITH');
+            if (commEdges.length > 0) {
+              const formatted: InterceptRow[] = commEdges.map((e: any, idx: number) => {
+                const srcNode = rawNodes.find((n: any) => n.id === e.source);
+                const dstNode = rawNodes.find((n: any) => n.id === e.target);
+                const props = e.properties || e.data?.properties || {};
+
+                const srcName = srcNode?.properties?.phone_number || srcNode?.name || e.source;
+                const dstName = dstNode?.properties?.phone_number || dstNode?.name || e.target;
+                const duration = props.duration_seconds || '45';
+                const tower = props.cell_tower_id || 'TWR-MUMBAI-CELL-01';
+
+                return {
+                  id: `SIG-${idx + 1}`,
+                  time: props.timestamp ? String(props.timestamp).slice(11, 19) || '14:30:00' : '14:30:00',
+                  channel: `CH-0${(idx % 4) + 1}`,
+                  src: srcName,
+                  dst: dstName,
+                  protocol: 'GSM-PDU',
+                  status: 'DECRYPTED',
+                  statusColor: 'text-secondary border-secondary/40 bg-secondary/10',
+                  association: `${srcNode?.name || 'Target'} ➔ ${dstNode?.name || 'Receiver'}`,
+                  associationType: 'target',
+                  hasAudio: true,
+                  transcriptSnippet: props.interaction || `Call intercepted via ${tower}. Duration: ${duration}s.`,
+                  keyword: tower
+                };
+              });
+              setIntercepts(formatted);
+              setSelectedIntercept(formatted[0]);
+              return;
+            }
+          } catch (err) {
+            console.error('Graph fetch failed:', err);
+          }
+        }
+
+        // Fallback to evidence list
+        const evidenceData: any = await api.get('/evidence');
+        const items = Array.isArray(evidenceData) ? evidenceData : [];
         const audioCdrItems = items.filter((i: any) => i.source_type === 'AUDIO' || i.source_type === 'CDR');
         if (audioCdrItems.length > 0) {
           const formatted: InterceptRow[] = audioCdrItems.map((item: any, idx: number) => ({
             id: `SIG-${idx + 1}`,
             time: item.created_at ? item.created_at.slice(11, 19) : '14:20:00',
             channel: 'VOLTE-CH01',
-            src: '+91-9811-00-9921',
-            dst: 'TWR-MUMBAI-04',
+            src: item.original_filename || 'Evidence File',
+            dst: 'CDR Vault Siphon',
             protocol: 'GSM-PDU',
             status: 'DECRYPTED',
             statusColor: 'text-secondary border-secondary/40 bg-secondary/10',
-            association: 'EXTRACTED INTERCEPT',
+            association: 'TELECOM STREAM',
             associationType: 'target',
             hasAudio: true,
-            transcriptSnippet: 'Voice packet extracted and indexed into Merkle vault.'
+            transcriptSnippet: `Seized ${item.source_type} stream file indexed into intelligence vault.`
           }));
           setIntercepts(formatted);
           setSelectedIntercept(formatted[0]);

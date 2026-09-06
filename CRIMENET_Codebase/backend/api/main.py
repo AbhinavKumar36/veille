@@ -36,14 +36,20 @@ async def lifespan(app: FastAPI):
     # Create tables if they don't exist (for development convenience)
     # In production, always use Alembic migrations: `alembic upgrade head`
     if settings.APP_ENV == "development":
-        Base.metadata.create_all(bind=engine)
-        logger.info("PostgreSQL tables initialised (development mode)")
+        try:
+            Base.metadata.create_all(bind=engine)
+            logger.info("PostgreSQL tables initialised (development mode)")
+        except Exception as e:
+            logger.warning(f"PostgreSQL connection deferred ({e}) — start Docker container for full DB persistence")
 
     # Verify Neo4j connectivity
-    if graph_db.verify_connectivity():
-        logger.info("Neo4j connection verified")
-    else:
-        logger.warning("Neo4j is not reachable — graph endpoints will return 503")
+    try:
+        if graph_db.verify_connectivity():
+            logger.info("Neo4j connection verified")
+        else:
+            logger.warning("Neo4j is not reachable — graph endpoints will return 503")
+    except Exception as e:
+        logger.warning(f"Neo4j connectivity check deferred ({e})")
         
     yield
     # shutdown logic if needed

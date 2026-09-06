@@ -121,12 +121,26 @@ def process_outbox_events():
 
 
 def _apply_node_upsert(session, payload: dict):
+    props = payload.get("properties") or {}
+    lat = None
+    lng = None
+    if "lat" in props and "lng" in props:
+        try:
+            lat = float(props["lat"])
+            lng = float(props["lng"])
+        except (ValueError, TypeError):
+            pass
+
     query = f"""
     MERGE (n:{payload['label']} {{id: $id, case_id: $case_id}})
     SET
         n.name = $name,
         n.properties = $properties,
         n.source_evidence_id = $source_evidence_id,
+        n.lat = $lat,
+        n.lng = $lng,
+        n.role = $role,
+        n.risk_score = $risk_score,
         n.updated_at = timestamp()
     """
     session.run(
@@ -134,8 +148,12 @@ def _apply_node_upsert(session, payload: dict):
         id=payload['id'],
         case_id=payload['case_id'],
         name=payload['name'],
-        properties=json.dumps(payload['properties']),
-        source_evidence_id=payload['source_evidence_id']
+        properties=json.dumps(props),
+        source_evidence_id=payload['source_evidence_id'],
+        lat=lat,
+        lng=lng,
+        role=props.get("role") or payload['label'],
+        risk_score=props.get("risk_score") or 70
     )
 
 

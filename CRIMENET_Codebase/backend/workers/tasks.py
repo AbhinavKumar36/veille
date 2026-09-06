@@ -15,8 +15,13 @@ import logging
 import os
 import sys
 
-# Ensure the backend root is on the path so ml.* imports work from Celery workers
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Ensure backend root and project root are on sys.path so ml.* and core.* work everywhere
+_backend_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_project_root = os.path.dirname(_backend_root)
+if _project_root not in sys.path:
+    sys.path.insert(0, _project_root)
+if _backend_root not in sys.path:
+    sys.path.insert(0, _backend_root)
 
 from workers.celery_app import celery_app
 from workers.base_task import CrimenetBaseTask, _update_evidence_status
@@ -56,8 +61,23 @@ def extract_entities_task(self, evidence_id: str, file_path: str, case_id: str):
 
     # ── 1. Read file content ──────────────────────────────────────────────
     try:
-        with open(file_path, "r", encoding="utf-8", errors="replace") as f:
-            text_content = f.read()
+        import os
+        ext = os.path.splitext(file_path)[1].lower()
+        if ext == ".pdf":
+            try:
+                import pypdf
+                reader = pypdf.PdfReader(file_path)
+                text_content = "\n".join([page.extract_text() or "" for page in reader.pages])
+                if not text_content.strip():
+                    with open(file_path, "r", encoding="utf-8", errors="replace") as f:
+                        text_content = f.read()
+            except Exception as pdf_err:
+                logger.warning(f"pypdf extraction failed ({pdf_err}), falling back to text read")
+                with open(file_path, "r", encoding="utf-8", errors="replace") as f:
+                    text_content = f.read()
+        else:
+            with open(file_path, "r", encoding="utf-8", errors="replace") as f:
+                text_content = f.read()
     except FileNotFoundError:
         # File missing — don't retry, go straight to DLQ
         _update_evidence_status(evidence_id, "FAILED", f"File not found: {file_path}")
@@ -174,35 +194,131 @@ def process_structured_data_task(
 
             if source_type == "CDR":
                 # ── Call Detail Record ─────────────────────────────────
-                caller = row.get("caller", "")
-                receiver = row.get("receiver", "")
+                caller = (
+                    row.get("caller")
+                    or row.get("caller_id")
+                    or row.get("caller_number")
+                    or row.get("from")
+                    or row.get("source")
+                    or row.get("origin")
+                    or ""
+                )
+                receiver = (
+                    row.get("receiver")
+                    or row.get("receiver_id")
+                    or row.get("receiver_number")
+                    or row.get("to")
+                    or row.get("target")
+                    or row.get("destination")
+                    or ""
+                )
                 if not caller or not receiver:
                     continue
 
-                caller_id = add_entity(f"Phone_{caller}", "Phone", caller, {})
-                receiver_id = add_entity(f"Phone_{receiver}", "Phone", receiver, {})
+                duration = row.get("duration_seconds") or row.get("duration") or row.get("duration_sec") or "60"
+                timestamp = row.get("timestamp") or row.get("date") or row.get("datetime") or ""
+                tower = row.get("cell_tower_id") or row.get("tower_id") or row.get("cell_id") or ""
+                lat_raw = row.get("latitude") or row.get("lat") or ""
+                lng_raw = row.get("longitude") or row.get("lng") or row.get("lon") or ""
+
+                caller_id = add_entity(f"Phone_{caller}", "Phone", caller, {
+                    "phone_number": caller,
+                    "role": "Active Cellular Node",
+                    "status": "Target Intercept",
+                    "risk_score": 75,
+                })
+                receiver_id = add_entity(f"Phone_{receiver}", "Phone", receiver, {
+                    "phone_number": receiver,
+                    "role": "Telecom Intercept Target",
+                    "status": "Monitored",
+                    "risk_score": 70,
+                })
 
                 relationships.append(ExtractedRelation(
                     source_id=caller_id,
                     target_id=receiver_id,
                     type="COMMUNICATES_WITH",
-                    confidence=1.0,   # Explicit CDR data = certainty
+                    confidence=1.0,
                     properties={
-                        "timestamp": row.get("timestamp", ""),
-                        "duration_seconds": row.get("duration_seconds", ""),
-                        "cell_tower_id": row.get("cell_tower_id", ""),
+                        "timestamp": timestamp,
+                        "duration_seconds": duration,
+                        "cell_tower_id": tower,
+                        "interaction": f"Call Duration: {duration}s",
                     },
                 ))
 
+                # If tower or coordinates provided, create Location node and link call
+                lat, lng = None, None
+                if lat_raw and lng_raw:
+                    try:
+                        lat, lng = float(lat_raw), float(lng_raw)
+                    except ValueError:
+                        pass
+
+                if tower or (lat and lng):
+                    loc_name = tower if tower else f"Tower ({lat:.2f}, {lng:.2f})"
+                    loc_props = {"type": "Cell Tower", "cell_tower_id": tower}
+                    if lat and lng:
+                        loc_props["lat"] = lat
+                        loc_props["lng"] = lng
+                    else:
+                        from ml.nlp.extractor import resolve_coordinates
+                        coords = resolve_coordinates(tower)
+                        if coords:
+                            loc_props["lat"] = coords[0]
+                            loc_props["lng"] = coords[1]
+
+                    loc_id = add_entity(f"Location_{tower or f'{lat}_{lng}'}", "Location", loc_name, loc_props)
+                    relationships.append(ExtractedRelation(
+                        source_id=caller_id,
+                        target_id=loc_id,
+                        type="LOCATED_AT",
+                        confidence=0.95,
+                        properties={"timestamp": timestamp, "signal": "Cellular Triangulation"}
+                    ))
+
             elif source_type == "FINANCIAL":
                 # ── Financial Transaction ──────────────────────────────
-                sender = row.get("sender_account", "")
-                receiver = row.get("receiver_account", "")
+                sender = (
+                    row.get("sender_account")
+                    or row.get("account_source")
+                    or row.get("from_account")
+                    or row.get("source_account")
+                    or row.get("sender")
+                    or row.get("from")
+                    or ""
+                )
+                receiver = (
+                    row.get("receiver_account")
+                    or row.get("account_target")
+                    or row.get("to_account")
+                    or row.get("target_account")
+                    or row.get("receiver")
+                    or row.get("to")
+                    or ""
+                )
                 if not sender or not receiver:
                     continue
 
-                sender_id = add_entity(f"Account_{sender}", "Account", sender, {})
-                receiver_id = add_entity(f"Account_{receiver}", "Account", receiver, {})
+                amount = row.get("amount") or row.get("transaction_amount") or row.get("value") or "0"
+                currency = row.get("currency") or "INR"
+                timestamp = row.get("date") or row.get("timestamp") or row.get("time") or ""
+                reference = row.get("reference") or row.get("ref_no") or row.get("tx_id") or "TRANSFER"
+
+                sender_id = add_entity(f"Account_{sender}", "Account", sender, {
+                    "account_number": sender,
+                    "account_type": "Originating Account",
+                    "currency": currency,
+                    "status": "Monitored",
+                    "risk_score": 80,
+                })
+                receiver_id = add_entity(f"Account_{receiver}", "Account", receiver, {
+                    "account_number": receiver,
+                    "account_type": "Beneficiary Account",
+                    "currency": currency,
+                    "status": "Flagged",
+                    "risk_score": 85,
+                })
 
                 relationships.append(ExtractedRelation(
                     source_id=sender_id,
@@ -210,9 +326,10 @@ def process_structured_data_task(
                     type="ASSOCIATED_WITH",
                     confidence=1.0,
                     properties={
-                        "amount": row.get("amount", ""),
-                        "timestamp": row.get("timestamp", ""),
-                        "reference": row.get("reference", ""),
+                        "amount": f"{amount} {currency}",
+                        "timestamp": timestamp,
+                        "reference": reference,
+                        "relationship": f"Wire Transfer ({amount} {currency})",
                     },
                 ))
 

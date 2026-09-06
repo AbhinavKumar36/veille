@@ -165,8 +165,7 @@ class EntityResolver:
                 return []
                 
             from core.graph_db import get_graph_session
-            session = get_graph_session()
-            try:
+            with get_graph_session() as session:
                 result = session.run(
                     """
                     MATCH (n:{label})
@@ -187,8 +186,6 @@ class EntityResolver:
                     }
                     for record in result
                 ]
-            finally:
-                session.close()
         except Exception as e:
             logger.error(f"Failed to query Neo4j candidates for '{candidate_name}': {e}")
             return []
