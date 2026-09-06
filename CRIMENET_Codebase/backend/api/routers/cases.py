@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 from api.auth import get_current_user, log_action, require_role
 from core.database import get_db
 from core.graph_db import get_graph_session
-from db.models import Case, User, Evidence
+from db.models import Case, User, Evidence, case_investigators
 
 router = APIRouter(prefix="/api/v1/cases", tags=["cases"])
 
@@ -26,7 +26,7 @@ class CaseResponse(BaseModel):
     description: Optional[str]
     status: str
     priority: str
-    investigator_email: str
+    investigators: List[str]  # List of investigator emails
     created_at: str
 
     class Config:
@@ -41,6 +41,7 @@ class CreateCaseRequest(BaseModel):
 
 # ── Routes ──────────────────────────────────────────────────────────────────
 
+@router.get("", response_model=List[CaseResponse])
 @router.get("/", response_model=List[CaseResponse])
 def get_cases(
     skip: int = 0,
@@ -56,14 +57,15 @@ def get_cases(
     """
     log_action(db, current_user["id"], "QUERY_CASES")
 
-    if current_user["role"] in ("SUPERVISOR", "ADMIN", "AUDITOR"):
-        # Supervisors and auditors can see all cases
+    if current_user["role"] == "HEAD":
+        # HEAD can see all cases
         cases = db.query(Case).order_by(Case.created_at.desc()).offset(skip).limit(limit).all()
     else:
         # Investigators only see their assigned cases
         cases = (
             db.query(Case)
-            .filter(Case.primary_investigator_id == current_user["id"])
+            .join(case_investigators)
+            .filter(case_investigators.c.user_id == current_user["id"])
             .order_by(Case.created_at.desc())
             .offset(skip)
             .limit(limit)
@@ -77,7 +79,7 @@ def get_cases(
             description=c.description,
             status=c.status,
             priority=c.priority,
-            investigator_email=c.primary_investigator.email,
+            investigators=[inv.email for inv in c.investigators],
             created_at=c.created_at.isoformat(),
         )
         for c in cases
@@ -96,14 +98,13 @@ def get_case(
         raise HTTPException(status_code=404, detail="Case not found.")
 
     # Investigators can only access their own cases
-    if (
-        current_user["role"] == "INVESTIGATOR"
-        and str(case.primary_investigator_id) != current_user["id"]
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You do not have access to this case.",
-        )
+    if current_user["role"] == "INVESTIGATOR":
+        is_assigned = any(str(inv.id) == current_user["id"] for inv in case.investigators)
+        if not is_assigned:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have access to this case.",
+            )
 
     log_action(db, current_user["id"], "VIEW_CASE", case_id=case_id)
     return CaseResponse(
@@ -112,23 +113,25 @@ def get_case(
         description=case.description,
         status=case.status,
         priority=case.priority,
-        investigator_email=case.primary_investigator.email,
+        investigators=[inv.email for inv in case.investigators],
         created_at=case.created_at.isoformat(),
     )
 
 
+@router.post("", response_model=CaseResponse, status_code=status.HTTP_201_CREATED)
 @router.post("/", response_model=CaseResponse, status_code=status.HTTP_201_CREATED)
 def create_case(
     body: CreateCaseRequest,
-    current_user: dict = Depends(require_role("INVESTIGATOR", "SUPERVISOR", "ADMIN")),
+    current_user: dict = Depends(require_role("INVESTIGATOR", "HEAD")),
     db: Session = Depends(get_db),
 ):
-    """Create a new case. Assigns the current investigator as primary investigator."""
+    """Create a new case. Assigns the current investigator as an investigator."""
+    user = db.query(User).filter(User.id == current_user["id"]).first()
     new_case = Case(
         title=body.title,
         description=body.description,
         priority=body.priority,
-        primary_investigator_id=current_user["id"],
+        investigators=[user],
     )
     db.add(new_case)
     db.commit()
@@ -142,18 +145,18 @@ def create_case(
         description=new_case.description,
         status=new_case.status,
         priority=new_case.priority,
-        investigator_email=current_user["email"],
+        investigators=[current_user["email"]],
         created_at=new_case.created_at.isoformat(),
     )
 
 
-@router.patch("/{case_id}/close", dependencies=[Depends(require_role("SUPERVISOR", "ADMIN"))])
+@router.patch("/{case_id}/close", dependencies=[Depends(require_role("HEAD"))])
 def close_case(
     case_id: str,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Close a case. Requires SUPERVISOR or ADMIN role."""
+    """Close a case. Requires HEAD role."""
     case = db.query(Case).filter(Case.id == case_id).first()
     if not case:
         raise HTTPException(status_code=404, detail="Case not found.")
@@ -164,13 +167,13 @@ def close_case(
     return {"message": f"Case {case_id} closed successfully."}
 
 
-@router.delete("/{case_id}", dependencies=[Depends(require_role("ADMIN"))])
+@router.delete("/{case_id}", dependencies=[Depends(require_role("HEAD"))])
 def delete_case(
     case_id: str,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Delete a case completely (cascade). Requires ADMIN role."""
+    """Delete a case completely (cascade). Requires HEAD role."""
     import json
     from db.models import OutboxEvent
 
@@ -244,9 +247,9 @@ def get_case_stats(
         finally:
             pass
     except Exception:
-        # Neo4j unavailable — use fallback demo counts
-        node_count = 9
-        edge_count = 12
+        # Neo4j unavailable or empty — return 0
+        node_count = 0
+        edge_count = 0
 
     return {
         "case_id": case_id,
@@ -255,3 +258,27 @@ def get_case_stats(
         "evidence_count": evidence_count,
         "last_updated": case.updated_at.isoformat() if hasattr(case, "updated_at") and case.updated_at else case.created_at.isoformat(),
     }
+@router.post("/{case_id}/investigators/{user_id}", dependencies=[Depends(require_role("HEAD"))])
+def add_investigator_to_case(
+    case_id: str,
+    user_id: str,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Add an investigator to a case team. Requires HEAD role."""
+    case = db.query(Case).filter(Case.id == case_id).first()
+    if not case:
+        raise HTTPException(status_code=404, detail="Case not found.")
+
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found.")
+        
+    if user in case.investigators:
+        raise HTTPException(status_code=400, detail="User is already assigned to this case.")
+        
+    case.investigators.append(user)
+    db.commit()
+    
+    log_action(db, current_user["id"], "ASSIGN_INVESTIGATOR", case_id=case_id, extra_metadata=f"Assigned {user.email}")
+    return {"message": f"Investigator {user.email} added to case {case_id}."}

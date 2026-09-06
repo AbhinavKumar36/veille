@@ -75,7 +75,7 @@ def get_job_status(
 
 @router.get("/review-queue")
 def get_review_queue(
-    current_user: dict = Depends(require_role("INVESTIGATOR", "SUPERVISOR", "ADMIN")),
+    current_user: dict = Depends(require_role("INVESTIGATOR", "HEAD")),
 ):
     """
     Returns all pending entity merge decisions waiting for human review.
@@ -105,14 +105,16 @@ def get_review_queue(
 
 
 class ReviewDecisionRequest(BaseModel):
-    review_id: str
+    review_id: Optional[str] = None
+    task_id: Optional[str] = None
+    candidate_id: Optional[str] = None
     notes: str = ""
 
 
 @router.post("/review-queue/merge")
 def merge_entity(
     body: ReviewDecisionRequest,
-    current_user: dict = Depends(require_role("INVESTIGATOR", "SUPERVISOR", "ADMIN")),
+    current_user: dict = Depends(require_role("INVESTIGATOR", "HEAD")),
     db: Session = Depends(get_db),
 ):
     """
@@ -120,8 +122,9 @@ def merge_entity(
     Neo4j: all relationships of candidate_id are redirected to match_id,
            then candidate node is deleted.
     """
+    lookup_id = body.review_id or body.task_id or body.candidate_id or ""
     r = get_redis()
-    item = _find_review_item(r, body.review_id)
+    item = _find_review_item(r, lookup_id)
     if not item:
         raise HTTPException(status_code=404, detail="Review item not found.")
 
@@ -173,18 +176,19 @@ def merge_entity(
 @router.post("/review-queue/reject")
 def reject_merge(
     body: ReviewDecisionRequest,
-    current_user: dict = Depends(require_role("INVESTIGATOR", "SUPERVISOR", "ADMIN")),
+    current_user: dict = Depends(require_role("INVESTIGATOR", "HEAD")),
     db: Session = Depends(get_db),
 ):
     """
     Reject a merge: the candidate entity stays as a separate node in the graph.
     """
+    lookup_id = body.review_id or body.task_id or body.candidate_id or ""
     r = get_redis()
-    item = _find_review_item(r, body.review_id)
+    item = _find_review_item(r, lookup_id)
     if not item:
         raise HTTPException(status_code=404, detail="Review item not found.")
 
-    _remove_review_item(r, body.review_id)
+    _remove_review_item(r, lookup_id)
     log_action(db, current_user["id"], "REJECT_MERGE", case_id=item.get("case_id"))
 
     return {
@@ -197,9 +201,12 @@ def reject_merge(
 
 # ── Dead Letter Queue Admin (Task 2.7 / IMPL_15) ─────────────────────────────
 
-@router.get("/admin/dlq", dependencies=[Depends(require_role("SUPERVISOR", "ADMIN"))])
+@router.get("/admin/dlq", dependencies=[Depends(require_role("HEAD"))])
 def get_dlq(current_user: dict = Depends(get_current_user)):
-    """Returns all items currently in the Dead Letter Queue (SUPERVISOR+ only)."""
+    """
+    Inspect all failed jobs currently in the Dead Letter Queue.
+    Requires SUPERVISOR or HEAD role.
+    """
     r = get_redis()
     items_raw = r.lrange(DLQ_KEY, 0, -1)
     items = []
@@ -208,30 +215,32 @@ def get_dlq(current_user: dict = Depends(get_current_user)):
             items.append(json.loads(raw))
         except json.JSONDecodeError:
             continue
-
     return {
         "dlq_size": len(items),
+        "dlq_count": len(items),
         "items": items,
     }
 
 
-@router.post(
-    "/admin/dlq/{task_id}/retry",
-    dependencies=[Depends(require_role("ADMIN"))],
-)
-def retry_dlq_job(task_id: str, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
+
+@router.post("/admin/dlq/{task_id}/retry", dependencies=[Depends(require_role("HEAD"))])
+def retry_dlq_job(
+    task_id: str,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
     """
-    Manually requeue a failed DLQ job. Admin-only.
-    Finds the job in the DLQ, re-dispatches the appropriate Celery task,
-    and removes the entry from the DLQ.
+    Manually retry a failed Celery task from the DLQ.
+    Pulls the task payload from Redis and re-dispatches it.
+    Requires SUPERVISOR or HEAD role.
     """
-    from workers.tasks import extract_entities_task, process_structured_data_task
+    from workers.tasks import extract_entities_task
 
     r = get_redis()
     items_raw = r.lrange(DLQ_KEY, 0, -1)
 
     dlq_item = None
-    item_index = None
+    item_index = -1
     for i, raw in enumerate(items_raw):
         try:
             item = json.loads(raw)
@@ -276,7 +285,7 @@ def retry_dlq_job(task_id: str, db: Session = Depends(get_db), current_user: dic
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _find_review_item(r: redis.Redis, review_id: str) -> Optional[dict]:
-    """Find a review item by its review_id."""
+    """Find a review item by its review_id, candidate_id, or task_id."""
     import uuid as _uuid
     items_raw = r.lrange(REVIEW_QUEUE_KEY, 0, -1)
     for raw in items_raw:
@@ -286,7 +295,12 @@ def _find_review_item(r: redis.Redis, review_id: str) -> Optional[dict]:
                 _uuid.NAMESPACE_DNS,
                 f"{item.get('candidate_id', '')}{item.get('match_id', '')}"
             ))
-            if item_review_id == review_id:
+            if (
+                item_review_id == review_id
+                or item.get("candidate_id") == review_id
+                or item.get("task_id") == review_id
+                or item.get("id") == review_id
+            ):
                 item["_raw"] = raw
                 return item
         except Exception:
@@ -305,7 +319,12 @@ def _remove_review_item(r: redis.Redis, review_id: str) -> None:
                 _uuid.NAMESPACE_DNS,
                 f"{item.get('candidate_id', '')}{item.get('match_id', '')}"
             ))
-            if item_review_id == review_id:
+            if (
+                item_review_id == review_id
+                or item.get("candidate_id") == review_id
+                or item.get("task_id") == review_id
+                or item.get("id") == review_id
+            ):
                 r.lrem(REVIEW_QUEUE_KEY, 1, raw)
                 # Archive to history
                 r.lpush(REVIEW_HISTORY_KEY, raw)

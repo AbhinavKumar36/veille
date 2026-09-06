@@ -64,7 +64,7 @@ def test_merge_entity_success(client, mock_db_session):
          patch("core.graph_db.get_graph_session") as mock_get_graph:
         
         mock_graph_session = MagicMock()
-        mock_get_graph.return_value = mock_graph_session
+        mock_get_graph.return_value.__enter__.return_value = mock_graph_session
 
         response = client.post(
             "/api/v1/review-queue/merge",

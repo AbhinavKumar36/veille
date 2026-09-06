@@ -17,17 +17,17 @@ The system leverages AI-driven NLP to establish connections between entities (pe
     *   `react-force-graph-2d` / `3d`: For complex network topologies.
     *   `react-leaflet` / `leaflet`: Geospatial tracking and OSM rendering.
 *   **Core Modules**:
-    *   **Login Terminal**: Secure, terminal-styled authentication gate.
+    *   **Login Terminal**: Secure, functional authentication gate with Role-Based Access Control (HEAD vs INVESTIGATOR).
     *   **Dashboard / Executive Overview**: High-level KPIs, intelligence extraction metrics.
     *   **Network Explorer**: Interactive graph visualization of connected entities.
-    *   **AI Intel Assistant**: RAG-style chat interface with evidence citations.
+    *   **AI Intel Assistant**: Strictly constrained RAG-style chat interface with evidence citations and fallback rules.
     *   **System Health**: Real-time Kafka telemetry and pipeline metrics dashboard.
     *   **Live Intercept / Audit Logs**: Dense data tables for monitoring active transmissions and system security.
 
 ### 2.2 Backend (API Gateway)
 *   **Framework**: FastAPI (Python 3.11+)
 *   **Server**: Uvicorn
-*   **Current State**: Serves robust synthetic seed data via dedicated routers (`cases.py`, `graph.py`, `geospatial.py`) to decouple frontend development from heavy Docker infrastructure dependencies.
+*   **Current State**: Full production-like endpoints (`cases.py`, `users.py`, `graph.py`, `geospatial.py`, `ai.py`) with complete end-to-end integration with PostgreSQL and Neo4j. Handles authentication and token rotation.
 
 ### 2.3 Data Infrastructure (Dockerized)
 The underlying infrastructure relies on a heavy data pipeline, defined in `docker-compose.yml`:
@@ -45,13 +45,13 @@ The underlying infrastructure relies on a heavy data pipeline, defined in `docke
 ## 3. Directory Structure
 
 ```text
-VEILLE_Codebase/
+CRIMENET_Codebase/
 │
 ├── frontend/                     # React User Interface
 │   ├── src/
 │   │   ├── components/           # All UI Modules (Dashboard, NetworkExplorer, etc.)
-│   │   ├── App.jsx               # Main state routing and auth gate
-│   │   ├── Layout.jsx            # Main sidebar and shell layout
+│   │   ├── App.tsx               # Main state routing and auth gate
+│   │   ├── Layout.tsx            # Main sidebar and shell layout
 │   │   └── index.css             # Tailwind Directives
 │   ├── tailwind.config.js        # Design System tokens (Colors, Typography)
 │   └── postcss.config.js         # v3 PostCSS configuration
@@ -59,17 +59,15 @@ VEILLE_Codebase/
 ├── backend/                      # FastAPI Server
 │   ├── api/
 │   │   ├── main.py               # Application entrypoint & CORS config
-│   │   ├── routers/              # Endpoint definitions (cases, graph, geospatial)
-│   │   └── models.py             # Pydantic data schemas
-│   ├── core/                     # Configuration and Auth
-│   ├── services/                 # Business logic
-│   └── workers/                  # Celery tasks (NLP, Resolution)
+│   │   ├── routers/              # Endpoint definitions (cases, users, graph, ai, etc.)
+│   │   └── auth.py               # Authentication middleware and JWT issuance
+│   ├── core/                     # Configuration (database, telemetry)
+│   ├── db/                       # SQLAlchemy models and Alembic migrations
+│   └── workers/                  # Celery tasks (NLP, Resolution, Outbox)
 │
-├── infrastructure/               # DevOps & Docker
-│   └── docker/
-│       └── docker-compose.yml    # Main infrastructure deployment
+├── synthetic_data/               # Generators and samples for mock intelligence
 │
-└── synthetic_data/               # Generators for mock intelligence
+└── docker-compose.yml            # Infrastructure deployment (Postgres, Neo4j, Kafka, Redis)
 ```
 
 ---
@@ -77,35 +75,14 @@ VEILLE_Codebase/
 ## 4. Operational Status (v4.0 Progress)
     
 ### What is Working
-*   **Frontend UI Shell**: The complete Stitch Design System has been migrated. All 11 major UI modules are fully functional, interactive, and responsive. Components have been typed with TypeScript and wired directly to the real API endpoints and WebSocket channels for real-time telemetry.
-*   **Backend API & Real Data**: FastAPI is successfully integrated with real PostgreSQL (for auth and raw evidence) and Neo4j (for graphs). The Outbox pattern ensures DB synchronization.
-*   **ML & NLP Pipeline**: Real entity extraction via Gemini API integration and local resolution matching are functional via Celery workers.
-*   **Testing & Observability**: Test suite coverage is >70%. OpenTelemetry distributed tracing is configured for FastAPI, Celery, and DBs. GitHub Actions CI pipeline is active.
+*   **Frontend UI Shell**: The complete Stitch Design System has been migrated. All major UI modules are fully functional, interactive, and responsive. Components have been typed with TypeScript and wired directly to the real API endpoints and WebSocket channels for real-time telemetry.
+*   **Authentication & Roles**: Secure JWT `httpOnly` cookie rotation implemented. Role-Based Access Control enforced at the API layer with `HEAD` and `INVESTIGATOR` case-isolation.
+*   **Backend API & Real Data**: FastAPI is successfully integrated with real PostgreSQL (for auth and raw evidence) and Neo4j (for graphs). The Celery Outbox pattern ensures DB synchronization.
+*   **ML & NLP Pipeline**: Real entity extraction via Gemini API integration, rule-based fallback intelligence, and local resolution matching are functional via Celery workers.
 *   **Geospatial & Graph Visualizations**: Both Leaflet maps and Force-directed graphs render correctly within the clinical design aesthetic.
 
 ---
 
 ## 5. Setup & Running Instructions
 
-### 5.1 Running the Frontend (UI)
-```bash
-cd d:\project\VEILLE\VEILLE_Codebase\frontend
-npm install
-npm run dev
-```
-Access the UI at `http://localhost:5173`.
-
-### 5.2 Running the Backend (API Gateway)
-```powershell
-cd d:\project\VEILLE\VEILLE_Codebase\backend
-.\venv\Scripts\Activate.ps1
-uvicorn api.main:app --reload
-```
-Access the API documentation at `http://localhost:8000/docs`.
-
-### 5.3 Starting the Data Infrastructure (Optional / Work-in-Progress)
-```bash
-cd d:\project\VEILLE\VEILLE_Codebase\infrastructure\docker
-docker-compose up -d
-```
-*(Note: Troubleshooting may be required for Kafka/Zookeeper startup sequences).*
+Please refer to the comprehensive `README.md` in the `CRIMENET_Codebase` directory for detailed, step-by-step instructions on spinning up the full Docker infrastructure, running Celery workers, seeding the database, and starting the FastAPI and Vite servers.

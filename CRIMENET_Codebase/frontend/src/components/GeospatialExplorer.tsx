@@ -3,250 +3,323 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { api } from '../api/client';
 
-// Custom Glowing Tactical Pin Marker Factory
-const createTacticalIcon = (type, label) => {
-  const colors = {
-    sighting: { bg: '#ef4444', border: '#b91c1c', icon: 'visibility' },
-    event: { bg: '#f59e0b', border: '#d97706', icon: 'warning' },
-    location: { bg: '#00e5ff', border: '#0891b2', icon: 'shield' },
-    intercept: { bg: '#10b981', border: '#059669', icon: 'cell_tower' },
-    default: { bg: '#a855f7', border: '#7e22ce', icon: 'place' },
+export interface GeoLocation {
+  id: string;
+  lat: number;
+  lng: number;
+  label: string;
+  type: string;
+  timestamp: string;
+  details: string;
+}
+
+export const GeospatialExplorer: React.FC = () => {
+  const [cases, setCases] = useState<Array<{ id: string; title: string; case_number: string }>>([]);
+  const [selectedCaseId, setSelectedCaseId] = useState<string>('');
+  const [locations, setLocations] = useState<GeoLocation[]>([]);
+  const [selectedPin, setSelectedPin] = useState<GeoLocation | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<L.Map | null>(null);
+  const markersLayerRef = useRef<L.LayerGroup | null>(null);
+
+  const triggerToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 4000);
   };
 
-  const style = colors[type?.toLowerCase()] || colors.default;
-
-  return L.divIcon({
-    className: 'custom-leaflet-marker',
-    html: `
-      <div style="
-        position: relative;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        background: ${style.bg};
-        border: 2px solid ${style.border};
-        box-shadow: 0 0 14px ${style.bg};
-        cursor: pointer;
-        transition: transform 0.2s;
-      ">
-        <span class="material-symbols-outlined" style="font-size: 18px; color: #ffffff; line-height: 1; user-select: none;">${style.icon}</span>
-        <div style="
-          position: absolute;
-          bottom: -22px;
-          white-space: nowrap;
-          background: rgba(15, 23, 42, 0.9);
-          color: #e2e8f0;
-          font-family: 'JetBrains Mono', monospace;
-          font-size: 10px;
-          padding: 2px 6px;
-          border-radius: 3px;
-          border: 1px solid rgba(148, 163, 184, 0.35);
-          pointer-events: none;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.6);
-        ">
-          ${label}
-        </div>
-      </div>
-    `,
-    iconSize: [32, 32],
-    iconAnchor: [16, 16],
-    popupAnchor: [0, -18],
-  });
-};
-
-const DEFAULT_LOCATIONS = [
-  { id: '1', lat: 19.1136, lng: 72.8697, label: 'Rajesh Kumar Sighting (Andheri East)', type: 'sighting', timestamp: '2026-09-01 14:32:00', details: 'Target seen entering commercial basement in Black Fortuner.' },
-  { id: '2', lat: 19.0760, lng: 72.8777, label: 'Shadow Ring Meeting Point (Bandra)', type: 'event', timestamp: '2026-08-28 21:00:00', details: 'Intercepted encrypted transmission pin.' },
-  { id: '3', lat: 19.0330, lng: 73.0297, label: 'Port Terminal 4 Smuggling Drop', type: 'location', timestamp: '2026-08-15 03:15:00', details: 'Container #IN-9022 flagged for unauthorized offloading.' },
-  { id: '4', lat: 18.9220, lng: 72.8347, label: 'Hawala Financial Hub (Colaba)', type: 'intercept', timestamp: '2026-08-22 11:20:00', details: 'High-frequency transactions tied to Swiss account #9876.' },
-];
-
-const GeospatialExplorer = () => {
-  const mapContainerRef = useRef(null);
-  const mapInstanceRef = useRef(null);
-  const layerGroupRef = useRef(null);
-  const polylineRef = useRef(null);
-
-  const [locations, setLocations] = useState(DEFAULT_LOCATIONS);
-  const [filterType, setFilterType] = useState('ALL');
-  const [loading, setLoading] = useState(true);
-
-  // Fetch locations from backend API
+  // 1. Fetch Cases
   useEffect(() => {
-    api.get('/geospatial')
-      .then((data) => {
-        if (Array.isArray(data) && data.length > 0) {
-          setLocations(data);
+    api.get('/cases')
+      .then((data: any) => {
+        const caseList = Array.isArray(data) ? data : (data?.cases || []);
+        setCases(caseList);
+        if (caseList.length > 0) {
+          setSelectedCaseId(caseList[0].id);
+        } else {
+          setLoading(false);
         }
       })
-      .catch((err) => {
-        console.warn("Using fallback geospatial data:", err);
-      })
-      .finally(() => setLoading(false));
+      .catch(() => {
+        setLoading(false);
+      });
   }, []);
 
-  // Initialize Direct Leaflet Map
+  // 2. Initialize Leaflet Map
   useEffect(() => {
     if (!mapContainerRef.current) return;
 
     if (!mapInstanceRef.current) {
       const map = L.map(mapContainerRef.current, {
-        center: [19.0760, 72.8777],
-        zoom: 11,
+        center: [19.0760, 72.8777], // Default India / Mumbai
+        zoom: 6,
         zoomControl: true,
       });
 
-      // ESRI Dark Gray Canvas - No API key required, no watermarks
-      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
-        attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ',
-        maxZoom: 16,
+      // Tactical Dark Map Tile Layer
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap &copy; CartoDB',
+        subdomains: 'abcd',
+        maxZoom: 19,
       }).addTo(map);
 
-      // Detailed labels overlay
-      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
-        attribution: '',
-        maxZoom: 16,
-      }).addTo(map);
-
-      layerGroupRef.current = L.layerGroup().addTo(map);
+      const markersGroup = L.layerGroup().addTo(map);
+      markersLayerRef.current = markersGroup;
       mapInstanceRef.current = map;
-
-      // Use ResizeObserver to invalidateSize whenever container resizes
-      const ro = new ResizeObserver(() => {
-        map.invalidateSize();
-      });
-      ro.observe(mapContainerRef.current);
-
-      // Also invalidate after a short delay for initial flex layout
-      setTimeout(() => map.invalidateSize(), 100);
-      setTimeout(() => map.invalidateSize(), 400);
     }
 
     return () => {
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
-        mapInstanceRef.current = null;
-      }
+      // Map cleanup if container is unmounted
     };
   }, []);
 
-  // Update Markers and Polyline when filtered locations change
+  // 3. Fetch Locations for selected case
+  useEffect(() => {
+    setLoading(true);
+    const endpoint = selectedCaseId ? `/geospatial?case_id=${selectedCaseId}` : '/geospatial';
+    api.get(endpoint)
+      .then((data: any) => {
+        const items = Array.isArray(data) ? data : [];
+        setLocations(items);
+        if (items.length > 0) {
+          setSelectedPin(items[0]);
+        } else {
+          setSelectedPin(null);
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to load locations:', err);
+        setLocations([]);
+        setSelectedPin(null);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [selectedCaseId]);
+
+  // 4. Update Leaflet Map Markers
   useEffect(() => {
     const map = mapInstanceRef.current;
-    const layerGroup = layerGroupRef.current;
-    if (!map || !layerGroup) return;
+    const layer = markersLayerRef.current;
+    if (!map || !layer) return;
 
-    layerGroup.clearLayers();
-    if (polylineRef.current) {
-      map.removeLayer(polylineRef.current);
-      polylineRef.current = null;
+    layer.clearLayers();
+
+    if (locations.length === 0) {
+      return;
     }
 
-    const filtered = filterType === 'ALL'
-      ? locations
-      : locations.filter(l => l.type?.toLowerCase() === filterType.toLowerCase());
+    const latLngs: L.LatLngExpression[] = [];
 
-    if (filtered.length === 0) return;
+    locations.forEach((loc) => {
+      if (loc.lat && loc.lng) {
+        latLngs.push([loc.lat, loc.lng]);
 
-    const latLngs = [];
-
-    filtered.forEach((loc) => {
-      const latLng = [loc.lat, loc.lng];
-      latLngs.push(latLng);
-
-      const marker = L.marker(latLng, {
-        icon: createTacticalIcon(loc.type, loc.label),
-      });
-
-      const popupHtml = `
-        <div style="font-family: 'Inter', sans-serif; padding: 4px; min-width: 180px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(148,163,184,0.3); padding-bottom: 4px; margin-bottom: 6px;">
-            <span style="font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: bold; color: #00e5ff; text-transform: uppercase;">${loc.type || 'LOCATION'}</span>
-            <span style="font-family: 'JetBrains Mono', monospace; font-size: 9px; color: #94a3b8;">${loc.timestamp || 'RECENT'}</span>
+        // Custom HTML Marker Icon
+        const isSelected = selectedPin?.id === loc.id;
+        const iconHtml = `
+          <div style="
+            background-color: ${isSelected ? '#00e5ff' : '#00ff80'};
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 2px solid #000;
+            box-shadow: 0 0 12px ${isSelected ? '#00e5ff' : '#00ff80'};
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          ">
+            <div style="width: 4px; height: 4px; border-radius: 50%; background: #000;"></div>
           </div>
-          <h4 style="font-size: 13px; font-weight: bold; color: #f8fafc; margin: 0 0 4px 0;">${loc.label}</h4>
-          ${loc.details ? `<p style="font-size: 11px; color: #cbd5e1; line-height: 1.4; margin: 0 0 6px 0;">${loc.details}</p>` : ''}
-          <div style="font-family: 'JetBrains Mono', monospace; font-size: 9px; color: #00daf3;">
-            GPS: ${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)}
+        `;
+
+        const customIcon = L.divIcon({
+          html: iconHtml,
+          className: 'custom-geo-marker',
+          iconSize: [16, 16],
+          iconAnchor: [8, 8],
+        });
+
+        const marker = L.marker([loc.lat, loc.lng], { icon: customIcon }).addTo(layer);
+
+        // Triangulation / Geofence Circle
+        L.circle([loc.lat, loc.lng], {
+          radius: 1200,
+          color: isSelected ? '#00e5ff' : '#00ff80',
+          weight: 1,
+          fillOpacity: 0.1,
+          dashArray: '4, 4',
+        }).addTo(layer);
+
+        marker.on('click', () => {
+          setSelectedPin(loc);
+        });
+
+        marker.bindPopup(`
+          <div style="font-family: monospace; font-size: 11px; color: #000;">
+            <strong>${loc.label}</strong><br/>
+            <span>Type: ${loc.type.toUpperCase()}</span><br/>
+            <span>Coords: ${loc.lat.toFixed(4)}°, ${loc.lng.toFixed(4)}°</span>
           </div>
-        </div>
-      `;
-
-      marker.bindPopup(popupHtml, {
-        className: 'tactical-popup',
-      });
-
-      layerGroup.addLayer(marker);
+        `);
+      }
     });
 
-    // Draw tactical connection polyline
-    if (latLngs.length > 1) {
-      polylineRef.current = L.polyline(latLngs, {
-        color: '#00e5ff',
-        weight: 2.5,
-        dashArray: '6, 8',
-        opacity: 0.8,
-      }).addTo(map);
-    }
-
-    // Auto fit bounds
-    try {
+    if (latLngs.length > 0) {
       const bounds = L.latLngBounds(latLngs);
-      map.fitBounds(bounds, { padding: [60, 60], maxZoom: 13 });
-    } catch (e) {
-      // Ignore bounds error if single point
+      map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
     }
-  }, [locations, filterType]);
+  }, [locations, selectedPin]);
+
+  const handleExportKML = () => {
+    if (locations.length === 0) {
+      triggerToast('No geospatial coordinate points to export.');
+      return;
+    }
+    const placemarks = locations.map(l => `
+    <Placemark>
+      <name>${l.label}</name>
+      <description>${l.details}</description>
+      <Point><coordinates>${l.lng},${l.lat},0</coordinates></Point>
+    </Placemark>`).join('');
+
+    const kmlContent = `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+  <Document>
+    <name>VEILLE_GEOSPATIAL_EXPORT.kml</name>
+    ${placemarks}
+  </Document>
+</kml>`;
+    const blob = new Blob([kmlContent], { type: 'application/vnd.google-earth.kml+xml' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `VEILLE_GEOSPATIAL_${Date.now()}.kml`;
+    a.click();
+    URL.revokeObjectURL(url);
+    triggerToast('KML Track Exported successfully.');
+  };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-140px)] gap-4">
-      {/* Top Header Card */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-surface-container/80 p-4 rounded-lg border border-outline-variant/60 backdrop-blur-md shrink-0">
-        <div>
-          <div className="flex items-center gap-3">
-            <span className="material-symbols-outlined text-primary text-[28px]">map</span>
-            <h2 className="font-headline-md text-headline-md text-on-surface font-bold">Geospatial Intelligence</h2>
+    <div className="flex flex-col h-[calc(100vh-6.5rem)] bg-surface text-on-surface antialiased select-none overflow-hidden -m-4 lg:-m-8 min-w-0 border-t border-outline-variant font-sans">
+      {/* Toast Alert */}
+      {toastMessage && (
+        <div className="bg-primary/15 border-b border-primary/40 px-4 py-2 text-xs font-mono text-primary flex items-center justify-between animate-fade-in z-50">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-[16px]">satellite_alt</span>
+            <span className="font-bold">{toastMessage}</span>
           </div>
-          <p className="text-on-surface-variant font-body-sm mt-1">Tactical GIS tracking, sighting heatmaps & intercept telemetry</p>
+          <button onClick={() => setToastMessage(null)} className="text-outline hover:text-on-surface cursor-pointer">
+            <span className="material-symbols-outlined text-[14px]">close</span>
+          </button>
         </div>
+      )}
 
-        {/* Filter Toolbar */}
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1 bg-surface-container-low border border-outline-variant rounded p-1">
-            {['ALL', 'SIGHTING', 'EVENT', 'LOCATION', 'INTERCEPT'].map((t) => (
-              <button
-                key={t}
-                onClick={() => setFilterType(t)}
-                className={`px-3 py-1.5 text-xs font-label-caps rounded transition-colors cursor-pointer ${
-                  filterType === t
-                    ? 'bg-primary text-on-primary font-bold shadow-[0_0_8px_rgba(0,229,255,0.4)]'
-                    : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/40'
-                }`}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Main Map Canvas Area */}
-      <div className="flex-1 w-full rounded-lg border border-outline-variant overflow-hidden relative shadow-2xl bg-[#111318]" style={{ minHeight: '500px', height: '100%' }}>
-        <div
-          ref={mapContainerRef}
-          style={{ width: '100%', height: '100%', minHeight: '500px', position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
-        />
-
-        {/* Tactical Telemetry Overlay */}
-        <div className="absolute bottom-4 right-4 z-[1000] bg-surface-container/90 backdrop-blur-md border border-outline-variant px-3 py-2 rounded text-xs font-data-code text-on-surface-variant flex items-center gap-3 pointer-events-none shadow-xl">
-          <span className="flex items-center gap-1.5 text-status-success">
-            <span className="w-2 h-2 rounded-full bg-status-success animate-ping"></span> GPS ACTIVE
+      {/* Top Header Controls */}
+      <section className="border-b border-outline-variant bg-surface-container-lowest px-4 py-2 flex flex-wrap items-center justify-between gap-y-2 z-20 shrink-0 font-mono text-xs">
+        <div className="flex items-center space-x-2">
+          <span className="text-primary font-bold uppercase flex items-center gap-1.5">
+            <span className="material-symbols-outlined text-[16px]">explore</span>
+            GEOSPATIAL INTELLIGENCE &amp; CELL TRIANGULATION
           </span>
-          <span className="text-outline-variant">|</span>
-          <span>PLOTTED: {filterType === 'ALL' ? locations.length : locations.filter(l => l.type?.toLowerCase() === filterType.toLowerCase()).length} NODES</span>
+          <span className="text-outline">|</span>
+          <span className="text-outline">CASE:</span>
+          {cases.length > 0 ? (
+            <select
+              value={selectedCaseId}
+              onChange={(e) => setSelectedCaseId(e.target.value)}
+              className="bg-surface-container-low border border-outline-variant text-primary px-2 py-0.5 font-mono text-xs focus:outline-none cursor-pointer"
+            >
+              {cases.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.case_number} - {c.title}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <span className="text-outline italic">NO ACTIVE CASES</span>
+          )}
+        </div>
+
+        <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-1.5 text-secondary font-bold">
+            <span className="inline-block w-2 h-2 rounded-full bg-secondary animate-pulse" />
+            <span>MAP ENGINE: LIVE (OSM / CARTO DARK)</span>
+          </div>
+          <button
+            onClick={handleExportKML}
+            className="border border-outline-variant px-2.5 py-1 text-on-surface hover:border-primary bg-surface-container-low flex items-center gap-1 transition-colors cursor-pointer"
+          >
+            <span className="material-symbols-outlined text-xs">file_download</span>
+            <span>EXPORT KML</span>
+          </button>
+        </div>
+      </section>
+
+      {/* Main Dual Theater */}
+      <div className="flex-1 flex overflow-hidden min-h-0 bg-surface">
+        {/* Interactive Leaflet Map (65%) */}
+        <div className="w-full lg:w-[65%] border-r border-outline-variant flex flex-col relative overflow-hidden">
+          <div ref={mapContainerRef} className="w-full h-full z-10" />
+
+          {/* Overlay when 0 points exist */}
+          {!loading && locations.length === 0 && (
+            <div className="absolute top-4 left-4 z-20 bg-surface-container/90 border border-outline-variant p-3 max-w-sm rounded font-mono text-xs shadow-lg backdrop-blur-xs">
+              <div className="flex items-center gap-2 text-secondary font-bold mb-1">
+                <span className="material-symbols-outlined text-sm">my_location</span>
+                <span>NO TARGET COORDINATES FOUND</span>
+              </div>
+              <p className="text-[11px] text-outline leading-relaxed">
+                This case has no geo-tagged locations or cell tower pings in Neo4j. Ingest CDR telephony logs or FIR reports with coordinates to plot spatial paths.
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Right Telemetry Details Drawer (35%) */}
+        <div className="w-full lg:w-[35%] flex flex-col bg-surface-container-lowest overflow-y-auto p-4 font-mono text-xs">
+          {selectedPin ? (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between pb-2 border-b border-outline-variant">
+                <div>
+                  <div className="text-primary font-bold text-sm">{selectedPin.label}</div>
+                  <div className="text-outline text-[11px]">{selectedPin.type.toUpperCase()}</div>
+                </div>
+                <span className="px-2 py-0.5 border border-secondary text-secondary text-[10px] font-bold">
+                  GEO-LOCATED
+                </span>
+              </div>
+
+              <div className="p-3 bg-surface-container-low border border-outline-variant space-y-2 text-[11px]">
+                <div className="flex justify-between">
+                  <span className="text-outline">LATITUDE:</span>
+                  <span className="text-on-surface font-bold">{selectedPin.lat}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-outline">LONGITUDE:</span>
+                  <span className="text-on-surface font-bold">{selectedPin.lng}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-outline">LAST TELEMETRY FIX:</span>
+                  <span className="text-secondary font-bold">{selectedPin.timestamp || 'REAL-TIME'}</span>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <div className="text-[10px] uppercase font-bold text-outline">LOCATION SURVEILLANCE DETAILS</div>
+                <div className="p-3 bg-surface-container-low border border-outline-variant text-[11px] leading-relaxed text-on-surface-variant">
+                  {selectedPin.details || 'No intelligence notes attached to this location node.'}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-outline">
+              <span className="material-symbols-outlined text-3xl mb-2">map</span>
+              <div>Select a target pin on the interactive map to inspect coordinate details.</div>
+            </div>
+          )}
         </div>
       </div>
     </div>

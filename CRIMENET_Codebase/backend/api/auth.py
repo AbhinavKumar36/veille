@@ -191,6 +191,7 @@ def log_action(
     actor_id: str,
     action_type: str,
     case_id: Optional[str] = None,
+    extra_metadata: Optional[str] = None,
 ) -> None:
     """
     Write an immutable audit log entry. Call this in every route
@@ -205,6 +206,7 @@ def log_action(
             actor_id=actor_id,
             action_type=action_type,
             target_case_id=case_id,
+            extra_metadata=extra_metadata,
         )
         db.add(entry)
         db.commit()

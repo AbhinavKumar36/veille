@@ -1,7 +1,7 @@
 export interface User {
   id: string;
   email: string;
-  role: 'INVESTIGATOR' | 'SUPERVISOR' | 'AUDITOR' | 'ADMIN';
+  role: 'INVESTIGATOR' | 'HEAD';
 }
 
 export interface Case {

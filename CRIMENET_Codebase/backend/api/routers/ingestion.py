@@ -62,44 +62,6 @@ def get_all_evidence(
 ):
     """List all accessible evidence."""
     evidence_list = db.query(Evidence).offset(skip).limit(limit).all()
-    if not evidence_list:
-        if settings.DEMO_MODE:
-            # Provide demonstration evidence records
-            return [
-                EvidenceResponse(
-                    id="ev-101",
-                    case_id="11111111-1111-1111-1111-111111111111",
-                    source_type="FIR",
-                    original_filename="FIR_2024_098_Nightfall.pdf",
-                    status="PROCESSED",
-                    created_at="2024-09-01T10:15:00Z",
-                ),
-                EvidenceResponse(
-                    id="ev-102",
-                    case_id="11111111-1111-1111-1111-111111111111",
-                    source_type="CDR",
-                    original_filename="CDR_Dump_Airtel_August_Target9811.csv",
-                    status="PROCESSED",
-                    created_at="2024-09-01T11:45:00Z",
-                ),
-                EvidenceResponse(
-                    id="ev-103",
-                    case_id="11111111-1111-1111-1111-111111111111",
-                    source_type="FINANCIAL",
-                    original_filename="SwissBank_WireTransfer_Record_USD4.5M.pdf",
-                    status="PROCESSED",
-                    created_at="2024-09-01T14:30:00Z",
-                ),
-                EvidenceResponse(
-                    id="ev-104",
-                    case_id="22222222-2222-2222-2222-222222222222",
-                    source_type="REPORT",
-                    original_filename="Port_Terminal4_Container_Manifest_9022.pdf",
-                    status="PROCESSED",
-                    created_at="2024-08-25T09:00:00Z",
-                ),
-            ]
-        return []
     return [
         EvidenceResponse(
             id=str(e.id),
@@ -125,12 +87,7 @@ def get_evidence_for_case(
     List all evidence records for a given case.
     Enforces case access before returning data.
     """
-    try:
-        val_uuid = uuid.UUID(case_id)
-        case = db.query(Case).filter(Case.id == val_uuid).first()
-    except (ValueError, TypeError, AttributeError):
-        raise HTTPException(status_code=404, detail=f"Invalid case ID format: '{case_id}'. Must be a valid UUID.")
-
+    case = db.query(Case).filter(Case.id == case_id).first()
     if not case:
         raise HTTPException(status_code=404, detail=f"Case '{case_id}' not found.")
 
@@ -156,7 +113,7 @@ async def upload_evidence(
     file: UploadFile = File(...),
     case_id: str = Form(...),
     source_type: str = Form(...),
-    current_user: dict = Depends(require_role("INVESTIGATOR", "SUPERVISOR")),
+    current_user: dict = Depends(require_role("INVESTIGATOR", "HEAD")),
     db: Session = Depends(get_db),
 ):
     """
@@ -182,7 +139,7 @@ async def upload_evidence(
 
     if (
         current_user["role"] == "INVESTIGATOR"
-        and str(case.primary_investigator_id) != current_user["id"]
+        and not any(str(inv.id) == current_user["id"] for inv in getattr(case, "investigators", []))
     ):
         raise HTTPException(status_code=403, detail="Cannot upload evidence to another investigator's case.")
 
@@ -259,7 +216,7 @@ class CDRStreamPayload(BaseModel):
 @router.post("/stream", status_code=status.HTTP_202_ACCEPTED)
 async def stream_cdr(
     payload: CDRStreamPayload,
-    current_user: dict = Depends(require_role("INVESTIGATOR", "SUPERVISOR")),
+    current_user: dict = Depends(require_role("INVESTIGATOR", "HEAD")),
     db: Session = Depends(get_db),
 ):
     """

@@ -56,7 +56,11 @@ async function request(path: string, options: RequestInit = {}): Promise<any> {
     const refreshed = await tryRefreshToken();
     if (!refreshed) {
       localStorage.removeItem('access_token');
-      window.location.href = '/login';
+      localStorage.removeItem('veille_auth');
+      localStorage.removeItem('user');
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
       throw new APIError(401, 'Session expired');
     }
     

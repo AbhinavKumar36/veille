@@ -2,49 +2,61 @@ import React, { useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import NewInvestigationModal from './components/NewInvestigationModal';
 
-const Layout = ({ onLogout }) => {
+const Layout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
 
-  const handleLogout = () => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('veille_auth');
-    if (onLogout) {
-      onLogout();
-    } else {
-      window.location.href = '/login';
-    }
-  };
+  // Read current user from localStorage
+  const user = JSON.parse(localStorage.getItem('auth_user') || 'null');
 
   const navItems = [
-    { id: 'dashboard', path: '/dashboard', label: 'Dashboard', icon: 'dashboard' },
-    { id: 'executive_dashboard', path: '/executive-dashboard', label: 'Executive Dashboard', icon: 'monitoring' },
-    { id: 'network_explorer', path: '/network-explorer', label: 'Network Explorer', icon: 'hub' },
-    { id: 'review_queue', path: '/review-queue', label: 'Review Queue', icon: 'rule' },
-    { id: 'evidence_library', path: '/evidence-library', label: 'Evidence Library', icon: 'library_books' },
-    { id: 'geospatial_explorer', path: '/geospatial-explorer', label: 'Geospatial Explorer', icon: 'map' },
-    { id: 'audit_logs', path: '/audit-logs', label: 'Audit Logs', icon: 'history_edu' },
-    { id: 'ai_intel_assistant', path: '/ai-assistant', label: 'AI Intel Assistant', icon: 'robot_2' },
-    { id: 'communications_intercept', path: '/communications-intercept', label: 'Live Intercept Feed', icon: 'graphic_eq' },
-    { id: 'export_report', path: '/export-report', label: 'Export Report', icon: 'picture_as_pdf' },
+    { id: 'dashboard', label: 'Command Center', icon: 'dashboard', path: '/dashboard' },
+    { id: 'network', label: 'Network Explorer', icon: 'hub', path: '/network-explorer' },
+    { id: 'review', label: 'Review Queue', icon: 'rule', path: '/review-queue' },
+    { id: 'evidence', label: 'Evidence Library', icon: 'inventory_2', path: '/evidence-library' },
+    { id: 'geospatial', label: 'Geospatial Explorer', icon: 'explore', path: '/geospatial-explorer' },
+    { id: 'ai-assistant', label: 'AI Assistant', icon: 'smart_toy', path: '/ai-assistant' },
+    { id: 'comms', label: 'Comms Intercept', icon: 'phone_in_talk', path: '/communications-intercept' },
+    { id: 'pki', label: 'PKI Revocation', icon: 'key_off', path: '/pki-revocation' },
+    { id: 'keyvault', label: 'HSM Key Vault', icon: 'lock', path: '/key-vault' },
+    { id: 'audit', label: 'Audit Logs', icon: 'history', path: '/audit-logs' },
   ];
 
-  const isActiveRoute = (path) => location.pathname === path || (path === '/dashboard' && location.pathname === '/');
+  const isActiveRoute = (path: string) => {
+    return location.pathname === path;
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('auth_user');
+    navigate('/login');
+  };
+
+  const handleCaseCreated = () => {
+    window.dispatchEvent(new Event('case-created'));
+    navigate('/dashboard');
+  };
 
   return (
-    <div className="bg-background text-on-surface font-body-md h-screen w-screen overflow-hidden flex selection:bg-primary selection:text-on-primary">
-      {/* SideNavBar */}
-      <aside className="bg-surface-container-low text-primary font-label-caps text-label-caps fixed left-0 top-0 h-full w-[280px] flex flex-col border-r border-outline-variant shadow-none z-50">
-        {/* Header */}
-        <div className="p-4 border-b border-outline-variant flex items-center gap-3">
+    <div className="flex h-screen w-screen bg-background overflow-hidden text-on-surface">
+      {/* Sidebar Navigation */}
+      <aside className="w-[280px] h-full bg-surface-container border-r border-outline-variant flex flex-col justify-between shrink-0 fixed left-0 top-0 bottom-0 z-30 shadow-lg">
+        {/* Workspace Brand / Header */}
+        <div 
+          onClick={() => navigate('/')}
+          className="p-4 border-b border-outline-variant flex items-center gap-3 cursor-pointer hover:bg-surface-variant/30 transition-colors"
+          title="Return to VEILLE Landing Page"
+        >
           <div className="w-10 h-10 rounded bg-surface-variant flex items-center justify-center shrink-0 border border-outline-variant overflow-hidden">
-            <span className="material-symbols-outlined text-[24px]">shield_person</span>
+            <span className="material-symbols-outlined text-[24px] text-primary">shield_person</span>
           </div>
           <div>
             <h1 className="font-headline-sm text-headline-sm font-black text-primary tracking-tight">Intelligence Fusion</h1>
-            <div className="text-on-surface-variant font-data-code text-[10px] uppercase">Operator 0921-X</div>
+            <div className="text-on-surface-variant font-data-code text-[10px] uppercase">
+              {user ? `Operator ${user.role}` : 'Operator 0921-X'}
+            </div>
           </div>
         </div>
         
@@ -102,16 +114,13 @@ const Layout = ({ onLogout }) => {
         {/* TopAppBar */}
         <header className="bg-surface-container text-primary font-headline-sm text-headline-sm font-semibold w-full h-16 flex items-center px-4 border-b border-outline-variant shadow-none sticky top-0 z-40 justify-between">
           <div className="flex items-center gap-6">
-            <div className="font-headline-md text-headline-md font-black tracking-wider text-primary flex items-center gap-2">
+            <div 
+              onClick={() => navigate('/')}
+              className="font-headline-md text-headline-md font-black tracking-wider text-primary flex items-center gap-2 cursor-pointer hover:opacity-85 transition-opacity"
+              title="Return to VEILLE Landing Page"
+            >
               <span className="material-symbols-outlined text-[26px]">visibility</span>
               VEILLE
-            </div>
-            <div className="hidden md:flex items-center gap-2 text-on-surface-variant font-data-code text-data-code">
-              <span className="px-2 py-1 bg-surface-variant/50 rounded text-on-surface-variant opacity-75 border border-outline-variant/30">Case: 2026-ALPHA-09</span>
-              <span className="material-symbols-outlined text-[16px] text-outline-variant">chevron_right</span>
-              <span className="px-2 py-1 bg-surface-variant/50 rounded text-status-critical opacity-90 border border-outline-variant/30">Priority: High</span>
-              <span className="material-symbols-outlined text-[16px] text-outline-variant">chevron_right</span>
-              <span className="px-2 py-1 bg-surface-variant/50 rounded text-status-success opacity-90 border border-outline-variant/30">Status: Active</span>
             </div>
           </div>
           
@@ -134,21 +143,25 @@ const Layout = ({ onLogout }) => {
             {showUserMenu && (
               <div className="absolute right-0 top-12 w-56 bg-surface-container border border-outline-variant rounded-lg shadow-2xl p-2 z-50 animate-fade-in">
                 <div className="px-3 py-2 border-b border-outline-variant/60">
-                  <div className="font-bold text-xs text-on-surface">admin@veille.gov.in</div>
-                  <div className="text-[10px] font-data-code text-status-success uppercase">ROLE: ADMIN (CLEARANCE 5)</div>
+                  <div className="font-bold text-xs text-on-surface">{user ? user.email : 'Unknown User'}</div>
+                  <div className="text-[10px] font-data-code text-status-success uppercase">ROLE: {user ? user.role : 'UNKNOWN'} {user?.role === 'HEAD' ? '(CLEARANCE 5)' : '(CLEARANCE 3)'}</div>
                 </div>
-                <button
-                  onClick={() => { setShowUserMenu(false); navigate('/audit-logs'); }}
-                  className="w-full text-left px-3 py-2 text-xs text-on-surface-variant hover:bg-surface-variant rounded flex items-center gap-2 cursor-pointer mt-1"
-                >
-                  <span className="material-symbols-outlined text-[16px]">history_edu</span> Audit Logs
-                </button>
-                <button
-                  onClick={handleLogout}
-                  className="w-full text-left px-3 py-2 text-xs text-status-critical hover:bg-status-critical/10 rounded flex items-center gap-2 cursor-pointer mt-1 font-bold"
-                >
-                  <span className="material-symbols-outlined text-[16px]">logout</span> Sign Out / Switch User
-                </button>
+                <div className="p-1">
+                  <button 
+                    onClick={() => { setShowUserMenu(false); navigate('/system-health'); }}
+                    className="w-full text-left px-3 py-2 text-xs font-body-md hover:bg-surface-variant rounded flex items-center gap-2 text-on-surface cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">monitor_heart</span>
+                    System Diagnostics
+                  </button>
+                  <button 
+                    onClick={handleLogout}
+                    className="w-full text-left px-3 py-2 text-xs font-body-md text-status-critical hover:bg-status-critical/10 rounded flex items-center gap-2 cursor-pointer font-data-code"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">logout</span>
+                    Sign Out
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -181,6 +194,7 @@ const Layout = ({ onLogout }) => {
       <NewInvestigationModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+        onCaseCreated={handleCaseCreated}
       />
     </div>
   );

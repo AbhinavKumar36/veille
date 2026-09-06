@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 import uuid
 from typing import List, Optional
 
-from sqlalchemy import String, Boolean, DateTime, ForeignKey, Text, func
+from sqlalchemy import String, Boolean, DateTime, ForeignKey, Text, func, Table, Column
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
 
@@ -16,10 +16,19 @@ class Base(DeclarativeBase):
     pass
 
 
+# Many-to-Many association table for Cases and Investigators (Team)
+case_investigators = Table(
+    "case_investigators",
+    Base.metadata,
+    Column("case_id", UUID(as_uuid=True), ForeignKey("cases.id", ondelete="CASCADE"), primary_key=True),
+    Column("user_id", UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True),
+)
+
+
 class User(Base):
     """
     Manages investigator identity and Role-Based Access Control (RBAC).
-    Roles: INVESTIGATOR | SUPERVISOR | AUDITOR | ADMIN
+    Roles: INVESTIGATOR | HEAD
     """
     __tablename__ = "users"
 
@@ -31,13 +40,13 @@ class User(Base):
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
     role: Mapped[str] = mapped_column(
         String(50), nullable=False, default="INVESTIGATOR"
-    )  # INVESTIGATOR | SUPERVISOR | AUDITOR | ADMIN
+    )  # INVESTIGATOR | HEAD
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
 
-    cases: Mapped[List["Case"]] = relationship(back_populates="primary_investigator")
+    cases: Mapped[List["Case"]] = relationship(secondary=case_investigators, back_populates="investigators")
     audit_logs: Mapped[List["AuditLog"]] = relationship(back_populates="actor")
 
 
@@ -59,21 +68,17 @@ class Case(Base):
     priority: Mapped[str] = mapped_column(
         String(50), nullable=False, default="MEDIUM"
     )  # CRITICAL | HIGH | MEDIUM | LOW
-    primary_investigator_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("users.id"), nullable=False
+    investigators: Mapped[List["User"]] = relationship(secondary=case_investigators, back_populates="cases")
+    evidence: Mapped[List["Evidence"]] = relationship(
+        back_populates="case", cascade="all, delete-orphan"
     )
+    audit_logs: Mapped[List["AuditLog"]] = relationship(back_populates="target_case")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
-
-    primary_investigator: Mapped["User"] = relationship(back_populates="cases")
-    evidence: Mapped[List["Evidence"]] = relationship(
-        back_populates="case", cascade="all, delete-orphan"
-    )
-    audit_logs: Mapped[List["AuditLog"]] = relationship(back_populates="target_case")
 
 
 class Evidence(Base):

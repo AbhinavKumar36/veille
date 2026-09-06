@@ -14,16 +14,9 @@ def test_upload_evidence_success(client, mock_db_session):
     mock_user = User(id="user_inv", email="inv@example.com", role="INVESTIGATOR", is_active=True)
     
     # 2. Setup mock case that belongs to the investigator
-    mock_case = Case(id="case_123", primary_investigator_id="user_inv")
+    mock_case = Case(id="case_123", investigators=[mock_user])
     
     # 3. Configure mock DB to return user then case
-    # get_current_user calls: query(User).filter(User.id == ...).first()
-    # upload_evidence calls: query(Case).filter(Case.id == ...).first()
-    def mock_first(*args, **kwargs):
-        # We can just return different objects based on what's being queried
-        # For simplicity, we use side_effect on first()
-        pass
-        
     mock_db_session.query.return_value.filter.return_value.first.side_effect = [
         mock_user, # For get_current_user
         mock_case  # For upload_evidence
@@ -69,9 +62,10 @@ def test_upload_evidence_unauthorized_case(client, mock_db_session):
     
     token = create_access_token("user_inv", "inv@example.com", "INVESTIGATOR")
     mock_user = User(id="user_inv", email="inv@example.com", role="INVESTIGATOR", is_active=True)
+    other_user = User(id="other_investigator", email="other@example.com", role="INVESTIGATOR", is_active=True)
     
     # Case belongs to a DIFFERENT investigator
-    mock_case = Case(id="case_123", primary_investigator_id="other_investigator")
+    mock_case = Case(id="case_123", investigators=[other_user])
     
     mock_db_session.query.return_value.filter.return_value.first.side_effect = [
         mock_user, 
@@ -151,9 +145,9 @@ def test_get_evidence_for_case(client, mock_db_session):
     from db.models import User, Case, Evidence
     from datetime import datetime
     
-    token = create_access_token("sup_1", "sup@example.com", "SUPERVISOR")
-    mock_user = User(id="sup_1", email="sup@example.com", role="SUPERVISOR", is_active=True)
-    mock_case = Case(id="case_123")
+    token = create_access_token("sup_1", "sup@example.com", "HEAD")
+    mock_user = User(id="sup_1", email="sup@example.com", role="HEAD", is_active=True)
+    mock_case = Case(id="case_123", investigators=[mock_user])
     mock_ev = Evidence(
         id="ev_1", case_id="case_123", source_type="FIR", 
         original_filename="dummy.pdf", status="COMPLETED", created_at=datetime.utcnow()
@@ -163,7 +157,7 @@ def test_get_evidence_for_case(client, mock_db_session):
         mock_user,
         mock_case
     ]
-    mock_db_session.query.return_value.filter.return_value.all.return_value = [mock_ev]
+    mock_db_session.query.return_value.filter.return_value.offset.return_value.limit.return_value.all.return_value = [mock_ev]
     
     response = client.get("/api/v1/evidence/case_123", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == status.HTTP_200_OK
@@ -174,8 +168,8 @@ def test_get_evidence_status(client, mock_db_session):
     from db.models import User, Evidence
     from datetime import datetime
     
-    token = create_access_token("sup_1", "sup@example.com", "SUPERVISOR")
-    mock_user = User(id="sup_1", email="sup@example.com", role="SUPERVISOR", is_active=True)
+    token = create_access_token("sup_1", "sup@example.com", "HEAD")
+    mock_user = User(id="sup_1", email="sup@example.com", role="HEAD", is_active=True)
     mock_ev = Evidence(
         id="ev_1", case_id="case_123", source_type="FIR", 
         status="COMPLETED", updated_at=datetime.utcnow()

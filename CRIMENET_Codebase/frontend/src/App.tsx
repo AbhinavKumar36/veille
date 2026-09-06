@@ -11,14 +11,28 @@ import Login from './components/Login';
 import SystemHealth from './components/SystemHealth';
 import AIAssistant from './components/AIAssistant';
 import AuditLogs from './components/AuditLogs';
-import ExecutiveDashboard from './components/ExecutiveDashboard';
 import CommunicationsIntercept from './components/CommunicationsIntercept';
 import ExportReport from './components/ExportReport';
+import KeyVaultHSM from './components/KeyVaultHSM';
+import PKIRevocation from './components/PKIRevocation';
+import LandingPage from './components/LandingPage';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import './index.css';
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    const token = localStorage.getItem('access_token');
+    const localAuth = localStorage.getItem('veille_auth') === 'true';
+    if (token && localAuth) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        if (payload.exp && payload.exp * 1000 > Date.now()) {
+          return true;
+        }
+      } catch {}
+    }
+    return false;
+  });
   const [authChecked, setAuthChecked] = useState<boolean>(false);
 
   useEffect(() => {
@@ -46,11 +60,14 @@ function App() {
         } else {
           localStorage.removeItem('access_token');
           localStorage.removeItem('veille_auth');
+          localStorage.removeItem('user');
           setIsAuthenticated(false);
         }
       } else {
         localStorage.removeItem('access_token');
         localStorage.removeItem('veille_auth');
+        localStorage.removeItem('user');
+        setIsAuthenticated(false);
       }
       setAuthChecked(true);
     };
@@ -58,15 +75,15 @@ function App() {
     initializeAuth();
   }, []);
 
-  useEffect(() => {
-    localStorage.setItem('veille_auth', isAuthenticated ? 'true' : 'false');
-  }, [isAuthenticated]);
-
-  const handleLogin = () => setIsAuthenticated(true);
+  const handleLogin = () => {
+    localStorage.setItem('veille_auth', 'true');
+    setIsAuthenticated(true);
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('access_token');
     localStorage.removeItem('veille_auth');
+    localStorage.removeItem('user');
     setIsAuthenticated(false);
   };
 
@@ -82,29 +99,51 @@ function App() {
     );
   }
 
-  if (!isAuthenticated) {
-    return <Login onLogin={handleLogin} />;
-  }
-
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={<Login onLogin={handleLogin} />} />
-        <Route path="/" element={<Layout onLogout={handleLogout} />}>
-          <Route index element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
-          <Route path="dashboard" element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
-          <Route path="network-explorer" element={<ErrorBoundary><NetworkExplorer /></ErrorBoundary>} />
-          <Route path="review-queue" element={<ErrorBoundary><ReviewQueue /></ErrorBoundary>} />
-          <Route path="evidence-library" element={<ErrorBoundary><EvidenceLibrary /></ErrorBoundary>} />
-          <Route path="geospatial-explorer" element={<ErrorBoundary><GeospatialExplorer /></ErrorBoundary>} />
-          <Route path="system-health" element={<ErrorBoundary><SystemHealth /></ErrorBoundary>} />
-          <Route path="ai-assistant" element={<ErrorBoundary><AIAssistant /></ErrorBoundary>} />
-          <Route path="audit-logs" element={<ErrorBoundary><AuditLogs /></ErrorBoundary>} />
-          <Route path="executive-dashboard" element={<ErrorBoundary><ExecutiveDashboard /></ErrorBoundary>} />
-          <Route path="communications-intercept" element={<ErrorBoundary><CommunicationsIntercept /></ErrorBoundary>} />
-          <Route path="export-report" element={<ErrorBoundary><ExportReport /></ErrorBoundary>} />
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        {/* Default Homepage: Always show Landing Page on root / and /landing */}
+        <Route path="/" element={<LandingPage isAuthenticated={isAuthenticated} />} />
+        <Route path="/landing" element={<LandingPage isAuthenticated={isAuthenticated} />} />
+
+        {/* Login Route */}
+        <Route
+          path="/login"
+          element={
+            isAuthenticated ? (
+              <Navigate to="/dashboard" replace />
+            ) : (
+              <Login onLogin={handleLogin} />
+            )
+          }
+        />
+
+        {/* Protected Application Workspace */}
+        <Route
+          element={
+            isAuthenticated ? (
+              <Layout onLogout={handleLogout} />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        >
+          <Route path="/dashboard" element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
+          <Route path="/network-explorer" element={<ErrorBoundary><NetworkExplorer /></ErrorBoundary>} />
+          <Route path="/review-queue" element={<ErrorBoundary><ReviewQueue /></ErrorBoundary>} />
+          <Route path="/evidence-library" element={<ErrorBoundary><EvidenceLibrary /></ErrorBoundary>} />
+          <Route path="/geospatial-explorer" element={<ErrorBoundary><GeospatialExplorer /></ErrorBoundary>} />
+          <Route path="/system-health" element={<ErrorBoundary><SystemHealth /></ErrorBoundary>} />
+          <Route path="/ai-assistant" element={<ErrorBoundary><AIAssistant /></ErrorBoundary>} />
+          <Route path="/audit-logs" element={<ErrorBoundary><AuditLogs /></ErrorBoundary>} />
+          <Route path="/communications-intercept" element={<ErrorBoundary><CommunicationsIntercept /></ErrorBoundary>} />
+          <Route path="/pki-revocation" element={<ErrorBoundary><PKIRevocation /></ErrorBoundary>} />
+          <Route path="/key-vault" element={<ErrorBoundary><KeyVaultHSM /></ErrorBoundary>} />
+          <Route path="/export-report" element={<ErrorBoundary><ExportReport /></ErrorBoundary>} />
         </Route>
+
+        {/* Fallback */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );

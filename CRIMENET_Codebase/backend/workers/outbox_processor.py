@@ -32,93 +32,92 @@ def process_outbox_events():
     Runs every 2 seconds via Celery Beat.
     """
     db = SessionLocal()
-    graph_session = get_graph_session()
     
     try:
-        # Fetch up to 100 unprocessed events
-        events = (
-            db.query(OutboxEvent)
-            .filter(OutboxEvent.status == "PENDING")
-            .filter(OutboxEvent.retries < MAX_RETRIES)
-            .order_by(OutboxEvent.created_at)
-            .limit(100)
-            .with_for_update(skip_locked=True)  # Prevent concurrent workers from grabbing the same rows
-            .all()
-        )
-
-        if not events:
-            return
-
-        logger.info(f"Processing {len(events)} outbox events...")
-        modified_case_ids = set()
-
-        for event in events:
+        with get_graph_session() as graph_session:
+            # Fetch up to 100 unprocessed events
+            events = (
+                db.query(OutboxEvent)
+                .filter(OutboxEvent.status == "PENDING")
+                .filter(OutboxEvent.retries < MAX_RETRIES)
+                .order_by(OutboxEvent.created_at)
+                .limit(100)
+                .with_for_update(skip_locked=True)  # Prevent concurrent workers from grabbing the same rows
+                .all()
+            )
+    
+            if not events:
+                return
+    
+            logger.info(f"Processing {len(events)} outbox events...")
+            modified_case_ids = set()
+    
+            for event in events:
+                try:
+                    payload = json.loads(event.payload)
+                    
+                    if event.event_type == "NODE_UPSERT":
+                        _apply_node_upsert(graph_session, payload)
+                    elif event.event_type == "EDGE_CREATE":
+                        _apply_edge_create(graph_session, payload)
+                    elif event.event_type == "CASE_DELETE":
+                        _apply_case_delete(graph_session, payload)
+                    else:
+                        raise ValueError(f"Unknown event_type: {event.event_type}")
+    
+                    if "case_id" in payload:
+                        modified_case_ids.add(payload["case_id"])
+                        
+                    event.status = "PROCESSED"
+                    event.error_message = None
+                    
+                except Exception as e:
+                    event.retries += 1
+                    event.error_message = str(e)
+                    logger.error(f"Outbox event {event.id} failed (attempt {event.retries}): {e}")
+    
+                    if event.retries >= MAX_RETRIES:
+                        event.status = "FAILED"
+                        # Route to DLQ
+                        dlq_payload = {
+                            "task_id": f"outbox_{event.id}",
+                            "task_name": "process_outbox_events",
+                            "evidence_id": payload.get("source_evidence_id") or payload.get("case_id"),
+                            "error_type": type(e).__name__,
+                            "error": str(e),
+                            "failed_at": datetime.now(timezone.utc).isoformat(),
+                            "args": f"event_type={event.event_type}",
+                            "kwargs": event.payload,
+                        }
+                        try:
+                            _get_redis_client().lpush(DLQ_KEY, json.dumps(dlq_payload))
+                            logger.critical(f"Outbox event {event.id} moved to DLQ after {MAX_RETRIES} failures")
+                        except Exception as redis_err:
+                            logger.error(f"Could not push to DLQ: {redis_err}")
+    
+            db.commit()
+            
+            # ── Invalidate Redis Cache for modified case_ids ──────────────────────
             try:
-                payload = json.loads(event.payload)
-                
-                if event.event_type == "NODE_UPSERT":
-                    _apply_node_upsert(graph_session, payload)
-                elif event.event_type == "EDGE_CREATE":
-                    _apply_edge_create(graph_session, payload)
-                elif event.event_type == "CASE_DELETE":
-                    _apply_case_delete(graph_session, payload)
-                else:
-                    raise ValueError(f"Unknown event_type: {event.event_type}")
-
-                if "case_id" in payload:
-                    modified_case_ids.add(payload["case_id"])
-                    
-                event.status = "PROCESSED"
-                event.error_message = None
-                
-            except Exception as e:
-                event.retries += 1
-                event.error_message = str(e)
-                logger.error(f"Outbox event {event.id} failed (attempt {event.retries}): {e}")
-
-                if event.retries >= MAX_RETRIES:
-                    event.status = "FAILED"
-                    # Route to DLQ
-                    dlq_payload = {
-                        "task_id": f"outbox_{event.id}",
-                        "task_name": "process_outbox_events",
-                        "evidence_id": payload.get("source_evidence_id") or payload.get("case_id"),
-                        "error_type": type(e).__name__,
-                        "error": str(e),
-                        "failed_at": datetime.now(timezone.utc).isoformat(),
-                        "args": f"event_type={event.event_type}",
-                        "kwargs": event.payload,
-                    }
-                    try:
-                        _get_redis_client().lpush(DLQ_KEY, json.dumps(dlq_payload))
-                        logger.critical(f"Outbox event {event.id} moved to DLQ after {MAX_RETRIES} failures")
-                    except Exception as redis_err:
-                        logger.error(f"Could not push to DLQ: {redis_err}")
-
-        db.commit()
-        
-        # ── Invalidate Redis Cache for modified case_ids ──────────────────────
-        try:
-            redis_client = _get_redis_client()
-            for case_id in modified_case_ids:
-                # Invalidate graph data
-                redis_client.delete(f"graph_data:{case_id}")
-                # Invalidate analytics for this case
-                keys = redis_client.keys(f"graph_analytics:{case_id}:*")
-                if keys:
-                    redis_client.delete(*keys)
-                    
-                # Broadcast WS update
-                redis_client.publish("graph_updates", json.dumps({
-                    "case_id": case_id,
-                    "event": "graph_updated"
-                }))
-        except Exception as redis_err:
-            logger.error(f"Failed to invalidate cache: {redis_err}")
+                redis_client = _get_redis_client()
+                for case_id in modified_case_ids:
+                    # Invalidate graph data
+                    redis_client.delete(f"graph_data:{case_id}")
+                    # Invalidate analytics for this case
+                    keys = redis_client.keys(f"graph_analytics:{case_id}:*")
+                    if keys:
+                        redis_client.delete(*keys)
+                        
+                    # Broadcast WS update
+                    redis_client.publish("graph_updates", json.dumps({
+                        "case_id": case_id,
+                        "event": "graph_updated"
+                    }))
+            except Exception as redis_err:
+                logger.error(f"Failed to invalidate cache: {redis_err}")
 
     finally:
         db.close()
-        graph_session.close()
 
 
 def _apply_node_upsert(session, payload: dict):

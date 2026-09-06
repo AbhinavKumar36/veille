@@ -1,575 +1,414 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
-import ForceGraph2D from 'react-force-graph-2d';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
-import { GraphSkeleton } from './skeletons/GraphSkeleton';
 
-interface NetworkExplorerProps {
-  caseId?: string;
+export interface GraphNode {
+  id: string;
+  name: string;
+  alias: string;
+  type: 'PERSON' | 'ORG' | 'COMMS' | 'FINANCIAL' | 'LOCATION';
+  role: string;
+  riskScore: number;
+  confidence: number;
+  color: string;
+  borderClass: string;
+  textClass: string;
+  icon: string;
+  coords: { x: string; y: string };
+  pagerank: number;
+  betweenness: number;
+  degree: number;
+  community: string;
+  evidenceId: string;
+  details: string;
+  associates: Array<{
+    id: string;
+    name: string;
+    type: string;
+    strength: string;
+    meta: string;
+    color: string;
+  }>;
 }
 
-const TYPE_COLORS: Record<string, { color: string, type: 'polaroid' | 'sticky' }> = {
-  person: { color: '#ffffff', type: 'polaroid' },
-  organization: { color: '#fef08a', type: 'sticky' }, // Yellow
-  phone: { color: '#bfdbfe', type: 'sticky' }, // Blue
-  account: { color: '#bfdbfe', type: 'sticky' },
-  vehicle: { color: '#bbf7d0', type: 'sticky' }, // Green
-  location: { color: '#fef08a', type: 'sticky' }, // Yellow
-  event: { color: '#fbcfe8', type: 'sticky' }, // Pink
-  default: { color: '#fef08a', type: 'sticky' },
-};
+export interface GraphEdge {
+  id: string;
+  source: string;
+  target: string;
+  label: string;
+  confidence: number;
+}
 
-const DEFAULT_FALLBACK_GRAPH = {
-  nodes: [
-    { id: 'Person_RajeshKumar', name: 'Rajesh Kumar (Leader)', type: 'person', data: { properties: { role: 'Cartel Boss', threat: 'CRITICAL', status: 'WANTED' } } },
-    { id: 'Person_VikramMalhotra', name: 'Vikram Malhotra', type: 'person', data: { properties: { role: 'Hawala Operator', threat: 'HIGH', status: 'MONITORED' } } },
-    { id: 'Person_AmitabhSen', name: 'Amitabh Sen', type: 'person', data: { properties: { role: 'Port Logistics Head', threat: 'MEDIUM', status: 'ACTIVE' } } },
-    { id: 'Org_ShadowRing', name: 'Shadow Ring Syndicate', type: 'organization', data: { properties: { sector: 'Narcotics & Smuggling', jurisdiction: 'West Zone' } } },
-    { id: 'Acc_Swiss9876', name: 'Swiss Acct #9876', type: 'account', data: { properties: { bank: 'Geneva Private', balance: 'USD 4.5M' } } },
-    { id: 'Phone_9811099231', name: '+91-9811099231', type: 'phone', data: { properties: { carrier: 'Airtel', status: 'Intercept Active' } } },
-    { id: 'Veh_MH02DX9912', name: 'Black Fortuner (MH02DX9912)', type: 'vehicle', data: { properties: { registered_to: 'Amitabh Sen', color: 'Black' } } },
-    { id: 'Loc_SafehouseAlpha', name: 'Safehouse Alpha (Andheri)', type: 'location', data: { properties: { coordinates: '19.1136, 72.8697' } } },
-    { id: 'Evt_HawalaTransfer', name: 'Hawala Transfer INR 4.5 Cr', type: 'event', data: { properties: { date: '2026-08-15', amount: 'INR 45,000,000' } } },
-  ],
-  links: [
-    { source: 'Person_RajeshKumar', target: 'Org_ShadowRing', label: 'LEADS', confidence: 0.98 },
-    { source: 'Person_VikramMalhotra', target: 'Org_ShadowRing', label: 'FINANCES', confidence: 0.94 },
-    { source: 'Person_AmitabhSen', target: 'Org_ShadowRing', label: 'LOGISTICS', confidence: 0.89 },
-    { source: 'Person_RajeshKumar', target: 'Person_VikramMalhotra', label: 'COMMUNICATES_WITH', confidence: 0.96 },
-    { source: 'Person_VikramMalhotra', target: 'Acc_Swiss9876', label: 'OWNS', confidence: 0.95 },
-    { source: 'Person_RajeshKumar', target: 'Phone_9811099231', label: 'OWNS', confidence: 0.99 },
-    { source: 'Person_AmitabhSen', target: 'Veh_MH02DX9912', label: 'OWNS', confidence: 0.92 },
-    { source: 'Org_ShadowRing', target: 'Loc_SafehouseAlpha', label: 'LOCATED_AT', confidence: 0.88 },
-    { source: 'Person_VikramMalhotra', target: 'Evt_HawalaTransfer', label: 'PARTICIPATED_IN', confidence: 0.97 },
-  ]
-};
+export const NetworkExplorer: React.FC = () => {
+  const navigate = useNavigate();
 
-const NetworkExplorer: React.FC<NetworkExplorerProps> = ({ caseId: propCaseId }) => {
-  const location = useLocation();
-  const routeCaseId = (location.state as any)?.caseId;
-  const initialCaseId = propCaseId || routeCaseId || '11111111-1111-1111-1111-111111111111';
+  const [cases, setCases] = useState<Array<{ id: string; title: string; case_number: string }>>([]);
+  const [selectedCaseId, setSelectedCaseId] = useState<string>('');
+  const [nodes, setNodes] = useState<GraphNode[]>([]);
+  const [edges, setEdges] = useState<GraphEdge[]>([]);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
-  const [casesList, setCasesList] = useState<any[]>([]);
-  const [selectedCaseId, setSelectedCaseId] = useState<string>(initialCaseId);
-  const [caseTitle, setCaseTitle] = useState<string>((location.state as any)?.caseTitle || '');
-  const [graphData, setGraphData] = useState<any>(null);
-  const [selectedNode, setSelectedNode] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState<string>('ALL');
-  const fgRef = useRef<any>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [dimensions, setDimensions] = useState({ width: 900, height: 600 });
-  const [hoverNode, setHoverNode] = useState<any>(null);
-  const [highlightNodes, setHighlightNodes] = useState(new Set());
-  const [highlightLinks, setHighlightLinks] = useState(new Set());
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  // Filter toolbar states
+  const [entityFilters, setEntityFilters] = useState({
+    PERSONS: true,
+    ORGS: true,
+    LOCATIONS: true,
+    COMMS: true,
+    FINANCIAL: true
+  });
 
-  // Handle Fullscreen
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
-  }, []);
+  const [minConfidence, setMinConfidence] = useState<number>(50);
+  const [activeTab, setActiveTab] = useState<'CANVAS' | 'CENTRALITY_MATRIX'>('CANVAS');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      containerRef.current?.requestFullscreen().catch(err => {
-        console.error(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
-      });
-    } else {
-      document.exitFullscreen();
-    }
+  const triggerToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 4000);
   };
 
-  // Load available cases
+  // Load Cases
   useEffect(() => {
     api.get('/cases')
       .then((data: any) => {
-        if (Array.isArray(data) && data.length > 0) {
-          setCasesList(data);
-          if (!propCaseId && !routeCaseId) {
-            // Only auto-select first case if none was passed in
-            // (don't override the one we got from router state)
-          }
-        }
-      })
-      .catch(() => {
-        setCasesList([
-          { id: '11111111-1111-1111-1111-111111111111', title: 'Operation Nightfall Syndicate' },
-          { id: '22222222-2222-2222-2222-222222222222', title: 'Port Authority Smuggling' },
-          { id: '33333333-3333-3333-3333-333333333333', title: 'Unidentified Network Intrusion - Sector 7' }
-        ]);
-      });
-  }, [propCaseId, routeCaseId]);
-
-  // Handle resizing for full-viewport canvas using ResizeObserver
-  useEffect(() => {
-    if (!containerRef.current) return;
-    const observer = new ResizeObserver((entries) => {
-      for (let entry of entries) {
-        setDimensions({
-          width: entry.contentRect.width,
-          height: entry.contentRect.height,
-        });
-      }
-    });
-    observer.observe(containerRef.current);
-    return () => observer.disconnect();
-  }, []);
-
-  const fetchGraphData = (cId: string) => {
-    setLoading(true);
-    api.get(`/graph/${cId}`)
-      .then((data: any) => {
-        if (data && data.nodes && data.nodes.length > 0) {
-          const formattedData = {
-            nodes: data.nodes.map((n: any) => ({
-              id: n.id,
-              name: n.data?.label || n.name || n.label || n.id,
-              type: (n.data?.type || n.type || 'default').toLowerCase(),
-              properties: n.data?.properties || n.properties || {},
-            })),
-            links: (data.edges || []).map((e: any) => ({
-              id: e.id,
-              source: e.source_id || e.source,
-              target: e.target_id || e.target,
-              label: e.label || e.type || '',
-              confidence: e.data?.confidence || e.confidence || 0.9,
-            }))
-          };
-          setGraphData(formattedData);
+        const caseList = Array.isArray(data) ? data : (data?.cases || []);
+        setCases(caseList);
+        if (caseList.length > 0) {
+          setSelectedCaseId(caseList[0].id);
         } else {
-          setGraphData({ nodes: [], links: [] });
+          setLoading(false);
         }
       })
       .catch((err) => {
-        console.warn('Backend graph API fallback:', err);
-        setGraphData({ nodes: [], links: [] });
-      })
-      .finally(() => setLoading(false));
-  };
+        console.error('Failed to load cases:', err);
+        setLoading(false);
+      });
+  }, []);
 
+  // Fetch Graph for selected case
   useEffect(() => {
-    if (selectedCaseId) {
-      fetchGraphData(selectedCaseId);
+    if (!selectedCaseId) {
+      setNodes([]);
+      setEdges([]);
+      setSelectedNodeId(null);
+      setLoading(false);
+      return;
     }
+
+    setLoading(true);
+    api.get(`/graph/${selectedCaseId}`)
+      .then((data: any) => {
+        const rawNodes = data.nodes || [];
+        const rawEdges = data.edges || [];
+
+        const formattedNodes: GraphNode[] = rawNodes.map((n: any, idx: number) => {
+          const typeUpper = (n.type || n.label || 'PERSON').toUpperCase();
+          const angle = (idx / (rawNodes.length || 1)) * 2 * Math.PI;
+          const radiusX = 35;
+          const radiusY = 32;
+          const posX = 50 + radiusX * Math.cos(angle);
+          const posY = 50 + radiusY * Math.sin(angle);
+
+          return {
+            id: n.id || `node-${idx}`,
+            name: n.name || n.properties?.name || `Entity #${idx + 1}`,
+            alias: n.properties?.alias || typeUpper,
+            type: (['PERSON', 'ORG', 'COMMS', 'FINANCIAL', 'LOCATION'].includes(typeUpper)
+              ? typeUpper
+              : 'PERSON') as any,
+            role: n.properties?.role || 'Identified Node in Network',
+            riskScore: n.properties?.risk_score || 75,
+            confidence: Math.round((n.properties?.confidence || 0.9) * 100),
+            color: typeUpper === 'PERSON' ? '#F43F5E' : typeUpper === 'ORG' ? '#38BDF8' : typeUpper === 'LOCATION' ? '#4EDEA3' : '#F59E0B',
+            borderClass: typeUpper === 'PERSON' ? 'border-error' : typeUpper === 'ORG' ? 'border-primary' : typeUpper === 'LOCATION' ? 'border-secondary' : 'border-amber-400',
+            textClass: typeUpper === 'PERSON' ? 'text-error' : typeUpper === 'ORG' ? 'text-primary' : typeUpper === 'LOCATION' ? 'text-secondary' : 'text-amber-400',
+            icon: typeUpper === 'PERSON' ? 'person' : typeUpper === 'ORG' ? 'corporate_fare' : typeUpper === 'LOCATION' ? 'location_on' : 'cell_tower',
+            coords: { x: `${posX.toFixed(1)}%`, y: `${posY.toFixed(1)}%` },
+            pagerank: n.properties?.pagerank || 0.05,
+            betweenness: n.properties?.betweenness || 0.35,
+            degree: n.properties?.degree || 4,
+            community: n.properties?.community || 'CLUSTER_01',
+            evidenceId: n.properties?.source_evidence_id || `ENT-${1000 + idx}`,
+            details: n.properties?.details || 'Extracted via NLP pipeline from seized evidence.',
+            associates: []
+          };
+        });
+
+        setNodes(formattedNodes);
+        setEdges(rawEdges);
+        if (formattedNodes.length > 0) {
+          setSelectedNodeId(formattedNodes[0].id);
+        } else {
+          setSelectedNodeId(null);
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to load case graph:', err);
+        setNodes([]);
+        setEdges([]);
+        setSelectedNodeId(null);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, [selectedCaseId]);
 
-  const handleNodeHover = (node: any) => {
-    setHoverNode(node || null);
-    const newHighlightNodes = new Set();
-    const newHighlightLinks = new Set();
-    
-    if (node) {
-      newHighlightNodes.add(node.id);
-      if (filteredGraph?.links) {
-        filteredGraph.links.forEach((link: any) => {
-          const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
-          const targetId = typeof link.target === 'object' ? link.target.id : link.target;
-          if (sourceId === node.id || targetId === node.id) {
-            newHighlightLinks.add(link.id || `${sourceId}-${targetId}`);
-            newHighlightNodes.add(sourceId);
-            newHighlightNodes.add(targetId);
-          }
-        });
-      }
-    }
-    
-    setHighlightNodes(newHighlightNodes);
-    setHighlightLinks(newHighlightLinks);
+  const currentNode = nodes.find(n => n.id === selectedNodeId) || nodes[0] || null;
+
+  const handleToggleFilter = (key: keyof typeof entityFilters) => {
+    setEntityFilters(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const handleLinkHover = (link: any) => {
-    const newHighlightNodes = new Set();
-    const newHighlightLinks = new Set();
-
-    if (link) {
-      const sourceId = typeof link.source === 'object' ? link.source.id : link.source;
-      const targetId = typeof link.target === 'object' ? link.target.id : link.target;
-      newHighlightLinks.add(link.id || `${sourceId}-${targetId}`);
-      newHighlightNodes.add(sourceId);
-      newHighlightNodes.add(targetId);
-    }
-
-    setHighlightNodes(newHighlightNodes);
-    setHighlightLinks(newHighlightLinks);
+  const handleExportCypher = () => {
+    if (!currentNode) return;
+    const cypher = `MATCH (t {id: '${currentNode.id}'})-[r]-(n) RETURN t, r, n LIMIT 50;`;
+    navigator.clipboard?.writeText(cypher);
+    triggerToast(`NEO4J CYPHER COPIED: "${cypher}"`);
   };
 
-  // Node rendering
-  const paintNode = (node: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
-    const nodeType = (node.type || 'default').toLowerCase();
-    const style = TYPE_COLORS[nodeType] || TYPE_COLORS.default;
-    const isSelected = selectedNode && selectedNode.id === node.id;
-    const isHovered = hoverNode && hoverNode.id === node.id;
-
-    // We can add a slight random rotation to each node to make it look like haphazardly pinned paper
-    // Use node.id to generate a deterministic pseudo-random angle
-    const seed = node.id.split('').reduce((a: number, b: string) => a + b.charCodeAt(0), 0);
-    const angle = ((seed % 20) - 10) * (Math.PI / 180);
-
-    const baseSize = (isSelected || isHovered) ? 55 : 45; // Restored massive sizes
-    const label = node.name || node.id;
-    
-    // Dim unconnected nodes on hover
-    let opacity = 1;
-    if (hoverNode && !highlightNodes.has(node.id)) {
-      opacity = 0.4;
+  const isNodeVisible = (node: GraphNode) => {
+    if (node.type === 'PERSON' && !entityFilters.PERSONS) return false;
+    if (node.type === 'ORG' && !entityFilters.ORGS) return false;
+    if (node.type === 'LOCATION' && !entityFilters.LOCATIONS) return false;
+    if (node.type === 'COMMS' && !entityFilters.COMMS) return false;
+    if (node.type === 'FINANCIAL' && !entityFilters.FINANCIAL) return false;
+    if (node.confidence < minConfidence) return false;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const match =
+        node.name.toLowerCase().includes(q) ||
+        node.alias.toLowerCase().includes(q) ||
+        node.evidenceId.toLowerCase().includes(q);
+      if (!match) return false;
     }
-
-    ctx.save();
-    ctx.globalAlpha = opacity;
-    
-    // Translate and rotate for the pinned paper effect
-    ctx.translate(node.x, node.y);
-    ctx.rotate(angle);
-
-    // Draw Drop Shadow for the paper
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
-    ctx.shadowBlur = 6;
-    ctx.shadowOffsetX = 2;
-    ctx.shadowOffsetY = 3;
-
-    if (style.type === 'polaroid') {
-      // Draw Polaroid Frame
-      ctx.fillStyle = '#f8fafc'; // slightly off-white photo paper
-      ctx.fillRect(-baseSize, -baseSize, baseSize * 2, baseSize * 2.5);
-      
-      // Draw Inner Photo area (dark grey placeholder)
-      ctx.shadowColor = 'transparent'; // reset shadow for inner drawing
-      ctx.fillStyle = '#334155';
-      ctx.fillRect(-baseSize + 2, -baseSize + 2, baseSize * 2 - 4, baseSize * 1.6);
-      
-      // Silhouette placeholder (simple circle + arc)
-      ctx.fillStyle = '#475569';
-      ctx.beginPath();
-      ctx.arc(0, -baseSize + 6, baseSize * 0.4, 0, 2 * Math.PI);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.arc(0, -baseSize + 16, baseSize * 0.7, Math.PI, 0);
-      ctx.fill();
-      
-      // Draw text on polaroid bottom margin
-      const fontSize = Math.max(16 / globalScale, 5);
-      ctx.font = `bold ${fontSize}px Kalam, "Permanent Marker", cursive`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillStyle = '#1e293b'; // dark ink
-      ctx.fillText(label, 0, baseSize * 1.2 + 2);
-    } else {
-      // Draw Sticky Note
-      ctx.fillStyle = style.color;
-      ctx.fillRect(-baseSize * 1.2, -baseSize * 0.8, baseSize * 2.4, baseSize * 1.6);
-      
-      // Write text on sticky note
-      ctx.shadowColor = 'transparent';
-      const fontSize = Math.max(16 / globalScale, 6);
-      ctx.font = `${fontSize}px Kalam, "Permanent Marker", cursive`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillStyle = '#1e293b'; // dark ink
-
-      // Simple text wrapping hack (split in middle if too long)
-      const words = label.split(' ');
-      if (words.length > 2) {
-        ctx.fillText(words.slice(0, 2).join(' '), 0, -2);
-        ctx.fillText(words.slice(2).join(' '), 0, fontSize);
-      } else {
-        ctx.fillText(label, 0, 0);
-      }
-    }
-
-    // Draw the Pin at the top center
-    ctx.shadowColor = 'rgba(0,0,0,0.3)';
-    ctx.shadowBlur = 2;
-    ctx.shadowOffsetX = 1;
-    ctx.shadowOffsetY = 1;
-    ctx.beginPath();
-    ctx.arc(0, -baseSize * 0.9 + 1, 1.5, 0, 2 * Math.PI);
-    ctx.fillStyle = '#dc2626'; // red pin head
-    ctx.fill();
-    // pin shine
-    ctx.beginPath();
-    ctx.arc(-0.5, -baseSize * 0.9 + 0.5, 0.4, 0, 2 * Math.PI);
-    ctx.fillStyle = 'rgba(255,255,255,0.6)';
-    ctx.fill();
-    
-    ctx.restore();
+    return true;
   };
 
-  // Draw edge relationship labels on the canvas
-  const paintLink = (link: any, ctx: CanvasRenderingContext2D, globalScale: number) => {
-    const sourceNode = typeof link.source === 'object' ? link.source : null;
-    const targetNode = typeof link.target === 'object' ? link.target : null;
-    if (!sourceNode || !targetNode || !link.label) return;
-
-    const linkId = link.id || `${sourceNode.id}-${targetNode.id}`;
-    const isHovered = highlightLinks.has(linkId);
-
-    if (!isHovered && globalScale < 1.0) return;
-
-    let opacity = 1;
-    if (hoverNode) {
-      opacity = isHovered ? 1 : 0.2;
-    }
-
-    const midX = (sourceNode.x + targetNode.x) / 2;
-    const midY = (sourceNode.y + targetNode.y) / 2;
-    const fontSize = Math.max(12 / globalScale, 4);
-
-    ctx.save();
-    ctx.globalAlpha = opacity;
-    
-    // Draw string label like a tiny scrap of paper stuck to the string
-    ctx.font = `${fontSize}px Kalam, "Permanent Marker", cursive`;
-    const textWidth = ctx.measureText(link.label).width;
-    ctx.fillStyle = '#fef08a'; // yellow sticky paper
-    ctx.shadowColor = 'rgba(0,0,0,0.3)';
-    ctx.shadowBlur = 3;
-    ctx.shadowOffsetY = 1;
-    ctx.fillRect(midX - textWidth / 2 - 2, midY - fontSize / 2 - 1, textWidth + 4, fontSize + 2);
-
-    ctx.shadowColor = 'transparent';
-    ctx.fillStyle = '#1e293b';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(link.label, midX, midY);
-    ctx.restore();
-  };
-
-  const filteredGraph = React.useMemo(() => {
-    if (!graphData) return null;
-    if (filterType === 'ALL') return graphData;
-    const matchedNodes = graphData.nodes.filter((n: any) => n.type === filterType.toLowerCase());
-    const matchedNodeIds = new Set(matchedNodes.map((n: any) => n.id));
-    const matchedLinks = graphData.links.filter((l: any) => 
-      matchedNodeIds.has(typeof l.source === 'object' ? l.source.id : l.source) &&
-      matchedNodeIds.has(typeof l.target === 'object' ? l.target.id : l.target)
-    );
-    return { nodes: matchedNodes, links: matchedLinks };
-  }, [graphData, filterType]);
-
-  // Adjust physics simulation to prevent overlap on the corkboard
-  useEffect(() => {
-    if (fgRef.current && filteredGraph) {
-      fgRef.current.d3Force('charge').strength(-3500); // Much stronger repulsion for massive nodes
-      fgRef.current.d3Force('link').distance(400);     // Much longer links
-    }
-  }, [filteredGraph]);
-
+  const visibleNodes = nodes.filter(isNodeVisible);
 
   return (
-    <div className="flex flex-col h-full overflow-hidden p-6 gap-4 bg-surface-container-lowest">
-      {/* Top Controls Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-surface-container/60 p-4 rounded-lg border border-outline-variant/50 backdrop-blur-md">
-        <div>
-          <div className="flex items-center gap-3">
-            <span className="material-symbols-outlined text-primary text-[28px]">hub</span>
-            <h2 className="font-headline-md text-headline-md text-on-surface font-bold">Network Explorer</h2>
+    <div className="flex flex-col h-[calc(100vh-6.5rem)] -m-4 lg:-m-8 bg-surface text-on-surface antialiased select-none overflow-hidden border-t border-outline-variant font-sans">
+      {/* Toast Alert */}
+      {toastMessage && (
+        <div className="bg-primary/10 border-b border-primary/40 px-4 py-2 text-xs font-mono text-primary flex items-center justify-between animate-fade-in z-50 shrink-0">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-[16px]">hub</span>
+            <span>{toastMessage}</span>
           </div>
-          <p className="text-on-surface-variant font-body-sm mt-1">Multi-entity relationship & intelligence link analysis</p>
+          <button onClick={() => setToastMessage(null)} className="text-outline hover:text-on-surface">
+            <span className="material-symbols-outlined text-[14px]">close</span>
+          </button>
         </div>
+      )}
 
-        {/* Case Selector and Actions */}
-        <div className="flex flex-wrap items-center gap-3">
-          {casesList.length > 0 && (
-            <div className="flex items-center gap-2 bg-surface-container-low border border-outline-variant rounded px-3 py-1.5">
-              <span className="material-symbols-outlined text-[18px] text-primary">folder</span>
+      {/* ================= TOP OPERATIONAL SUB-BAR ================= */}
+      <header className="flex justify-between items-center w-full px-4 h-10 border-b border-outline-variant bg-surface-container-lowest z-40 shrink-0">
+        <div className="flex items-center space-x-3 overflow-hidden">
+          <span className="text-xs font-mono font-semibold tracking-wider text-primary uppercase flex items-center gap-1.5 shrink-0">
+            <span className="material-symbols-outlined text-primary text-[18px]">hub</span>
+            VEILLE // KNOWLEDGE GRAPH EXPLORER
+          </span>
+          <div className="h-4 w-px bg-outline-variant hidden sm:block" />
+          
+          {/* Case Selector Dropdown */}
+          <div className="flex items-center space-x-2 text-[11px] font-mono">
+            <span className="text-outline">CASE FILE:</span>
+            {cases.length > 0 ? (
               <select
                 value={selectedCaseId}
                 onChange={(e) => setSelectedCaseId(e.target.value)}
-                className="bg-transparent text-on-surface font-body-sm focus:outline-none cursor-pointer pr-2"
+                className="bg-surface-container-low border border-outline-variant text-primary px-2 py-0.5 font-mono text-xs focus:outline-none"
               >
-                {casesList.map((c: any) => (
-                  <option key={c.id} value={c.id} className="bg-surface-container text-on-surface">
-                    {c.title}
+                {cases.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.case_number} - {c.title}
                   </option>
                 ))}
               </select>
+            ) : (
+              <span className="text-outline italic">NO ACTIVE CASES</span>
+            )}
+          </div>
+        </div>
+
+        {/* Central Search & Query */}
+        <div className="flex items-center w-64 lg:w-80 h-7 bg-surface-container-lowest border border-outline-variant px-2 focus-within:border-primary">
+          <span className="text-outline text-[10px] font-mono mr-1.5 shrink-0">QUERY://</span>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="FILTER ENTITY BY NAME OR UID..."
+            className="bg-transparent border-none p-0 text-[11px] font-mono text-on-surface focus:ring-0 w-full placeholder:text-outline-variant outline-none"
+          />
+        </div>
+      </header>
+
+      {/* ================= FILTER TOOLBAR STRIP ================= */}
+      <section className="flex flex-wrap items-center justify-between px-4 py-2 border-b border-outline-variant bg-surface-container-low gap-2 text-xs font-mono shrink-0">
+        <div className="flex items-center space-x-2 flex-wrap gap-y-1">
+          <span className="text-[10px] text-outline font-bold uppercase">ENTITY FILTERS:</span>
+          {(['PERSONS', 'ORGS', 'LOCATIONS', 'COMMS', 'FINANCIAL'] as const).map((cat) => (
+            <button
+              key={cat}
+              onClick={() => handleToggleFilter(cat)}
+              className={`px-2 py-0.5 border text-[10px] font-bold transition-colors cursor-pointer ${
+                entityFilters[cat]
+                  ? 'border-primary text-primary bg-primary/10'
+                  : 'border-outline-variant text-outline bg-surface-container-lowest'
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+
+        <div className="flex items-center space-x-3 text-[11px]">
+          <span className="text-outline">NODES: <strong className="text-on-surface">{visibleNodes.length}</strong></span>
+          <span className="text-outline">EDGES: <strong className="text-on-surface">{edges.length}</strong></span>
+        </div>
+      </section>
+
+      {/* ================= MAIN SPLIT CANVAS / MATRIX ================= */}
+      <div className="flex-1 flex overflow-hidden min-h-0 bg-surface">
+        {/* Graph Canvas Theater (65%) */}
+        <div className="w-full lg:w-[65%] border-r border-outline-variant flex flex-col bg-surface-container-lowest relative overflow-hidden">
+          {loading ? (
+            <div className="flex-1 flex flex-col items-center justify-center p-8 text-outline font-mono text-xs">
+              <span className="material-symbols-outlined text-3xl animate-spin mb-2 text-primary">progress_activity</span>
+              <div>LOADING CASE KNOWLEDGE GRAPH FROM NEO4J...</div>
+            </div>
+          ) : visibleNodes.length === 0 ? (
+            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-outline font-mono">
+              <div className="w-14 h-14 rounded-full border border-outline-variant bg-surface-container-low flex items-center justify-center text-outline mb-3">
+                <span className="material-symbols-outlined text-3xl">hub</span>
+              </div>
+              <div className="text-sm font-bold text-on-surface uppercase">KNOWLEDGE GRAPH IS EMPTY</div>
+              <p className="text-xs text-outline mt-1.5 max-w-md">
+                No entities or relationship edges have been extracted for this case file yet. Ingest raw FIR documents, wiretap audio, or CDR files to populate the graph.
+              </p>
+              <button
+                onClick={() => navigate('/evidence-library')}
+                className="mt-4 px-4 py-2 bg-primary text-surface-container-lowest text-xs font-mono font-bold hover:bg-primary-fixed-dim transition-colors cursor-pointer"
+              >
+                OPEN EVIDENCE VAULT
+              </button>
+            </div>
+          ) : (
+            <div className="flex-1 relative overflow-hidden bg-[#0a0e17]">
+              {/* Tactical Grid Background */}
+              <div
+                className="absolute inset-0 opacity-15 pointer-events-none"
+                style={{
+                  backgroundImage: 'radial-gradient(circle, #38BDF8 1px, transparent 1px)',
+                  backgroundSize: '24px 24px'
+                }}
+              />
+
+              {/* Dynamic SVG Nodes and Connections */}
+              <svg className="absolute inset-0 w-full h-full pointer-events-none">
+                {edges.map((e, idx) => {
+                  const srcNode = nodes.find(n => n.id === e.source);
+                  const tgtNode = nodes.find(n => n.id === e.target);
+                  if (!srcNode || !tgtNode) return null;
+                  return (
+                    <line
+                      key={idx}
+                      x1={srcNode.coords.x}
+                      y1={srcNode.coords.y}
+                      x2={tgtNode.coords.x}
+                      y2={tgtNode.coords.y}
+                      stroke="#38BDF8"
+                      strokeWidth="1.5"
+                      strokeDasharray="4 4"
+                      className="opacity-40"
+                    />
+                  );
+                })}
+              </svg>
+
+              {/* Node Badges */}
+              {visibleNodes.map((n) => {
+                const isSelected = selectedNodeId === n.id;
+                return (
+                  <div
+                    key={n.id}
+                    onClick={() => setSelectedNodeId(n.id)}
+                    style={{ left: n.coords.x, top: n.coords.y }}
+                    className={`absolute -translate-x-1/2 -translate-y-1/2 p-2 rounded-sm border cursor-pointer transition-all duration-200 shadow-lg ${
+                      isSelected
+                        ? 'border-primary bg-primary/20 scale-110 ring-2 ring-primary/50'
+                        : 'border-outline-variant bg-surface-container hover:scale-105'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-1.5 font-mono text-[11px]">
+                      <span className="material-symbols-outlined text-[14px]" style={{ color: n.color }}>
+                        {n.icon}
+                      </span>
+                      <span className="font-bold text-on-surface">{n.name}</span>
+                    </div>
+                    <div className="text-[9px] font-mono text-outline">{n.alias}</div>
+                  </div>
+                );
+              })}
             </div>
           )}
-
-          {/* Search Filter */}
-          <div className="relative">
-            <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-on-surface-variant text-[16px]">search</span>
-            <input
-              type="text"
-              placeholder="Search entity..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="bg-surface-container-low border border-outline-variant rounded pl-8 pr-3 py-1.5 font-body-sm text-on-surface focus:border-primary focus:outline-none w-44"
-            />
-          </div>
-
-          {/* Entity Type Filter */}
-          <div className="flex items-center gap-1 bg-surface-container-low border border-outline-variant rounded p-1">
-            {['ALL', 'PERSON', 'ORGANIZATION', 'PHONE', 'ACCOUNT'].map((t) => (
-              <button
-                key={t}
-                onClick={() => setFilterType(t)}
-                className={`px-2.5 py-1 text-[11px] rounded font-label-caps transition-colors ${
-                  filterType === t 
-                    ? 'bg-primary text-on-primary font-bold shadow-[0_0_8px_rgba(0,229,255,0.4)]' 
-                    : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/40'
-                }`}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
-
-          <button
-            onClick={() => fgRef.current?.zoomToFit(400, 40)}
-            className="bg-surface-variant text-on-surface px-3 py-2 rounded font-label-caps text-label-caps hover:bg-surface-variant/80 transition-colors flex items-center gap-1.5"
-            title="Recenter Camera"
-          >
-            <span className="material-symbols-outlined text-[16px]">center_focus_strong</span>
-            CENTER
-          </button>
-
-          <button
-            onClick={toggleFullscreen}
-            className="bg-surface-variant text-on-surface px-3 py-2 rounded font-label-caps text-label-caps hover:bg-surface-variant/80 transition-colors flex items-center gap-1.5"
-            title="Toggle Fullscreen"
-          >
-            <span className="material-symbols-outlined text-[16px]">
-              {isFullscreen ? 'fullscreen_exit' : 'fullscreen'}
-            </span>
-            {isFullscreen ? 'EXIT' : 'FULLSCREEN'}
-          </button>
-
-          <button
-            onClick={() => fetchGraphData(selectedCaseId)}
-            className="bg-primary text-on-primary px-3.5 py-2 rounded font-label-caps text-label-caps hover:bg-primary-fixed transition-colors flex items-center gap-1.5 shadow-[0_0_12px_rgba(0,229,255,0.2)]"
-          >
-            <span className="material-symbols-outlined text-[16px]">sync</span>
-            SYNC
-          </button>
-        </div>
-      </div>
-
-      {/* Main Graph Canvas Area */}
-      <div className="flex-1 flex gap-4 min-h-0 relative">
-        <div 
-          ref={containerRef}
-          className="flex-1 border border-outline-variant rounded-lg relative overflow-hidden shadow-inner"
-          style={{
-            backgroundColor: '#d6d3d1',
-            backgroundImage: 'url(/corkboard.jpg)',
-            backgroundSize: '300px', 
-            backgroundRepeat: 'repeat',
-            boxShadow: 'inset 0 0 100px rgba(0,0,0,0.6)'
-          }}
-        >
-          {loading ? (
-            <GraphSkeleton />
-          ) : filteredGraph ? (
-            <ForceGraph2D
-              ref={fgRef}
-              width={dimensions.width}
-              height={dimensions.height}
-              graphData={filteredGraph}
-              nodeCanvasObject={paintNode}
-              nodeRelSize={55}
-              nodeLabel={() => ''} // Tooltips are not strictly needed with labels, but disable native tooltip to avoid clutter
-              linkColor={(link: any) => {
-                const sId = typeof link.source === 'object' ? link.source.id : link.source;
-                const tId = typeof link.target === 'object' ? link.target.id : link.target;
-                const linkId = link.id || `${sId}-${tId}`;
-                const isHigh = hoverNode ? highlightLinks.has(linkId) : false;
-                const isDimmed = hoverNode && !isHigh;
-                const baseColor = 'rgba(220, 38, 38, 0.85)'; // Dark red string
-                
-                if (isDimmed) return 'rgba(220, 38, 38, 0.15)';
-                if (isHigh) return 'rgba(239, 68, 68, 1)'; // Brighter red when highlighted
-                return baseColor;
-              }}
-              linkWidth={(link: any) => {
-                const sId = typeof link.source === 'object' ? link.source.id : link.source;
-                const tId = typeof link.target === 'object' ? link.target.id : link.target;
-                const linkId = link.id || `${sId}-${tId}`;
-                return (hoverNode && highlightLinks.has(linkId)) ? 2.5 : 1.5;
-              }}
-              linkLineDash={(link: any) => []} // Real strings are solid
-              linkDirectionalParticles={0} // No particles on corkboard
-              linkCanvasObjectMode={() => 'after'}
-              linkCanvasObject={paintLink}
-              backgroundColor="transparent"
-              cooldownTicks={120}
-              onNodeClick={(node: any) => setSelectedNode(node)}
-              onNodeHover={handleNodeHover}
-              onLinkHover={handleLinkHover}
-              onBackgroundClick={() => {
-                setSelectedNode(null);
-                setHoverNode(null);
-                setHighlightNodes(new Set());
-                setHighlightLinks(new Set());
-              }}
-              onEngineStop={() => fgRef.current?.zoomToFit(400, 50)}
-            />
-          ) : null}
-
-          {/* Graph Legend Overlay */}
-          <div className="absolute bottom-3 left-3 bg-[#fdfbf7]/90 backdrop-blur-md border-2 border-stone-300 rounded p-3 flex flex-col gap-2 shadow-[2px_3px_5px_rgba(0,0,0,0.2)] font-['Kalam'] text-sm text-stone-800 rotate-1">
-            <span className="flex items-center gap-2"><span className="w-3 h-3 bg-white border border-stone-300 shadow-sm"></span> People</span>
-            <span className="flex items-center gap-2"><span className="w-3 h-3 bg-[#fef08a] shadow-sm"></span> Organizations & Locations</span>
-            <span className="flex items-center gap-2"><span className="w-3 h-3 bg-[#bfdbfe] shadow-sm"></span> Devices & Accounts</span>
-            <span className="flex items-center gap-2"><span className="w-3 h-3 bg-[#fbcfe8] shadow-sm"></span> Events</span>
-            <span className="flex items-center gap-2 mt-1 border-t border-stone-300 pt-2"><span className="w-4 h-0.5 bg-red-600"></span> Connection</span>
-            <div className="absolute top-1 right-2 w-1.5 h-1.5 rounded-full bg-red-600 shadow-[1px_1px_2px_rgba(0,0,0,0.4)]"></div>
-          </div>
         </div>
 
-        {/* Selected Node Details Drawer */}
-        {selectedNode && (
-          <aside className="w-80 bg-surface-container border border-outline-variant rounded-lg p-4 flex flex-col gap-3 shadow-2xl animate-in slide-in-from-right duration-200 overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-outline-variant pb-3">
-              <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-primary text-[20px]">fingerprint</span>
-                <h3 className="font-headline-sm text-headline-sm font-bold text-on-surface">Entity Dossier</h3>
+        {/* Right Inspector Drawer (35%) */}
+        <div className="w-full lg:w-[35%] flex flex-col bg-surface-container-low overflow-y-auto p-4 font-mono text-xs">
+          {currentNode ? (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between pb-2 border-b border-outline-variant">
+                <div>
+                  <div className="text-primary font-bold text-sm">{currentNode.name}</div>
+                  <div className="text-outline text-[11px]">{currentNode.alias}</div>
+                </div>
+                <span className={`px-2 py-0.5 border text-[10px] font-bold ${currentNode.borderClass} ${currentNode.textClass}`}>
+                  {currentNode.type}
+                </span>
               </div>
-              <button 
-                onClick={() => setSelectedNode(null)}
-                className="text-on-surface-variant hover:text-on-surface"
-              >
-                <span className="material-symbols-outlined text-[18px]">close</span>
-              </button>
-            </div>
 
-            <div>
-              <div className="text-[10px] font-label-caps uppercase text-primary tracking-wider">Entity Name</div>
-              <div className="text-body-md font-bold text-on-surface mt-0.5">{selectedNode.name}</div>
-            </div>
-
-            <div>
-              <div className="text-[10px] font-label-caps uppercase text-on-surface-variant tracking-wider">Classification</div>
-              <div className="inline-block mt-1 px-2.5 py-0.5 rounded text-[11px] font-data-code uppercase font-bold bg-primary/20 text-primary border border-primary/30">
-                {selectedNode.type}
-              </div>
-            </div>
-
-            <div>
-              <div className="text-[10px] font-label-caps uppercase text-on-surface-variant tracking-wider">Unique Node ID</div>
-              <div className="text-data-code font-data-code text-on-surface-variant mt-0.5 break-all">{selectedNode.id}</div>
-            </div>
-
-            {selectedNode.properties && Object.keys(selectedNode.properties).length > 0 && (
-              <div className="border-t border-outline-variant/60 pt-3">
-                <div className="text-[10px] font-label-caps uppercase text-on-surface-variant tracking-wider mb-2">Properties & Intelligence</div>
-                <div className="space-y-1.5">
-                  {Object.entries(selectedNode.properties).map(([key, val]: any) => (
-                    <div key={key} className="bg-surface-container-low p-2 rounded border border-outline-variant/40 flex flex-col gap-0.5 text-xs">
-                      <span className="text-on-surface-variant font-label-caps text-[10px] uppercase">{key.replace(/_/g, ' ')}</span>
-                      <span className="text-on-surface font-data-code break-words">{String(val)}</span>
-                    </div>
-                  ))}
+              <div className="p-3 bg-surface-container-lowest border border-outline-variant space-y-2 text-[11px]">
+                <div className="flex justify-between">
+                  <span className="text-outline">RISK SCORE:</span>
+                  <span className="text-error font-bold">{currentNode.riskScore} / 100</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-outline">CONFIDENCE:</span>
+                  <span className="text-secondary font-bold">{currentNode.confidence}%</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-outline">EVIDENCE SOURCE:</span>
+                  <span className="text-primary font-bold">{currentNode.evidenceId}</span>
                 </div>
               </div>
-            )}
-          </aside>
-        )}
+
+              <div className="space-y-1">
+                <div className="text-[10px] uppercase font-bold text-outline">INVESTIGATIVE NOTES</div>
+                <div className="p-3 bg-surface-container-lowest border border-outline-variant text-[11px] leading-relaxed text-on-surface-variant">
+                  {currentNode.details}
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <button
+                  onClick={handleExportCypher}
+                  className="w-full py-2 bg-surface-container-high border border-outline-variant hover:border-primary text-on-surface font-mono text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-xs">terminal</span>
+                  <span>EXPORT CYPHER QUERY</span>
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-outline">
+              <span className="material-symbols-outlined text-3xl mb-2">find_in_page</span>
+              <div>Select a graph node to inspect intelligence telemetry.</div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -82,12 +82,16 @@ Thumbs.db
 # --- Local uploads / temp files ---
 CRIMENET_Codebase/backend/tmp/
 *.sqlite3
+*.zip
+chat*.txt
 
 # --- Test artifacts ---
 .pytest_cache/
 htmlcov/
 *.coveragerc
+.coverage
 
 # --- Alembic ---
 # Keep versions tracked, but not compiled caches
 CRIMENET_Codebase/backend/alembic/__pycache__/
+

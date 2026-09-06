@@ -7,20 +7,19 @@ def test_get_cases_supervisor(client, mock_db_session):
     from api.auth import create_access_token
     from db.models import User, Case
     
-    token = create_access_token("sup_1", "sup@example.com", "SUPERVISOR")
-    mock_user = User(id="sup_1", email="sup@example.com", role="SUPERVISOR", is_active=True)
+    token = create_access_token("sup_1", "sup@example.com", "HEAD")
+    mock_user = User(id="sup_1", email="sup@example.com", role="HEAD", is_active=True)
     
     mock_case = Case(
         id="case_1", 
         title="Test Case", 
-        primary_investigator_id="inv_1",
         status="OPEN",
         priority="HIGH",
-        created_at=datetime.utcnow()
+        created_at=datetime.utcnow(),
+        investigators=[mock_user]
     )
-    mock_case.primary_investigator = MagicMock(email="inv@example.com")
     
-    mock_db_session.query.return_value.order_by.return_value.all.return_value = [mock_case]
+    mock_db_session.query.return_value.order_by.return_value.offset.return_value.limit.return_value.all.return_value = [mock_case]
     mock_db_session.query.return_value.filter.return_value.first.return_value = mock_user
     
     response = client.get("/api/v1/cases/", headers={"Authorization": f"Bearer {token}"})
@@ -34,12 +33,13 @@ def test_get_case_unauthorized_investigator(client, mock_db_session):
     
     token = create_access_token("inv_1", "inv1@example.com", "INVESTIGATOR")
     mock_user = User(id="inv_1", email="inv1@example.com", role="INVESTIGATOR", is_active=True)
+    other_user = User(id="inv_2", email="inv2@example.com", role="INVESTIGATOR", is_active=True)
     
     mock_case = Case(
         id="case_1", 
         title="Test Case", 
-        primary_investigator_id="inv_2",
-        created_at=datetime.utcnow()
+        created_at=datetime.utcnow(),
+        investigators=[other_user]
     )
     
     mock_db_session.query.return_value.filter.return_value.first.side_effect = [
@@ -64,6 +64,7 @@ def test_create_case(client, mock_db_session):
         obj.id = "new_case_1"
         obj.created_at = datetime.utcnow()
         obj.status = "OPEN"
+        obj.investigators = [mock_user]
         
     mock_db_session.refresh.side_effect = mock_refresh
     
@@ -73,7 +74,6 @@ def test_create_case(client, mock_db_session):
         json={"title": "New Case", "priority": "HIGH"}
     )
     
-    print(response.json())
     assert response.status_code == status.HTTP_201_CREATED
     assert response.json()["title"] == "New Case"
 
@@ -81,8 +81,8 @@ def test_close_case(client, mock_db_session):
     from api.auth import create_access_token
     from db.models import User, Case
     
-    token = create_access_token("sup_1", "sup@example.com", "SUPERVISOR")
-    mock_user = User(id="sup_1", email="sup@example.com", role="SUPERVISOR", is_active=True)
+    token = create_access_token("sup_1", "sup@example.com", "HEAD")
+    mock_user = User(id="sup_1", email="sup@example.com", role="HEAD", is_active=True)
     
     mock_case = Case(id="case_1", title="Test Case", status="OPEN")
     
@@ -101,8 +101,8 @@ def test_delete_case(client, mock_db_session):
     from api.auth import create_access_token
     from db.models import User, Case
     
-    token = create_access_token("admin_1", "admin@example.com", "ADMIN")
-    mock_user = User(id="admin_1", email="admin@example.com", role="ADMIN", is_active=True)
+    token = create_access_token("admin_1", "admin@example.com", "HEAD")
+    mock_user = User(id="admin_1", email="admin@example.com", role="HEAD", is_active=True)
     
     mock_case = Case(id="case_1", title="Test Case")
     

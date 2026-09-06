@@ -1,214 +1,381 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from './api/client';
+import NewInvestigationModal from './components/NewInvestigationModal';
 
-const Dashboard = () => {
+interface TargetItem {
+  id: string;
+  name: string;
+  classification: string;
+  threatLevel: 'CRITICAL' | 'HIGH' | 'TRACKED' | 'COLD';
+  threatClass: string;
+  dotColor: string;
+  knownAssociates: string;
+  lastIntercept: string;
+  caseId: string;
+}
+
+interface ActionTask {
+  id: string;
+  type: string;
+  typeColor: string;
+  timeLeft: string;
+  description: string;
+  actionLabel: string;
+  status: 'PENDING' | 'AUTHORIZED' | 'DISMISSED';
+}
+
+const Dashboard: React.FC = () => {
   const navigate = useNavigate();
-  const [cases, setCases] = useState([]);
-  const [caseStats, setCaseStats] = useState({});
+  const [cases, setCases] = useState<any[]>([]);
+  const [caseStats, setCaseStats] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('ALL');
+  const [targetFilter, setTargetFilter] = useState<'ALL' | 'CRITICAL' | 'HIGH' | 'TRACKED'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+  const [actionNotice, setActionNotice] = useState<string | null>(null);
+  const [reviewTasks, setReviewTasks] = useState<any[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  useEffect(() => {
+  const fetchDashboardData = () => {
+    setLoading(true);
     api.get('/cases')
-      .then(data => {
-        const caseList = Array.isArray(data) && data.length > 0 ? data : FALLBACK_CASES;
+      .then((data) => {
+        const caseList = Array.isArray(data) ? data : [];
         setCases(caseList);
-        setLoading(false);
-        // Fetch stats for each case in parallel
-        caseList.forEach(c => {
+        caseList.forEach((c) => {
           api.get(`/cases/${c.id}/stats`)
-            .then(stats => setCaseStats(prev => ({ ...prev, [c.id]: stats })))
-            .catch(() => setCaseStats(prev => ({ ...prev, [c.id]: { node_count: 9, edge_count: 12, evidence_count: 3 } })));
+            .then((stats) => setCaseStats((prev) => ({ ...prev, [c.id]: stats })))
+            .catch(() => setCaseStats((prev) => ({ ...prev, [c.id]: { node_count: 0, edge_count: 0, evidence_count: 0 } })));
         });
       })
-      .catch(() => {
-        setCases(FALLBACK_CASES);
-        setLoading(false);
-        FALLBACK_CASES.forEach(c => {
-          setCaseStats(prev => ({ ...prev, [c.id]: { node_count: 9, edge_count: 12, evidence_count: 3 } }));
-        });
-      });
+      .catch((err) => {
+        console.error("Failed to load cases:", err);
+        setCases([]);
+      })
+      .finally(() => setLoading(false));
+
+    api.get('/review-queue')
+      .then((data) => {
+        const items = Array.isArray(data) ? data : (data?.items || []);
+        setReviewTasks(items);
+      })
+      .catch(() => setReviewTasks([]));
+  };
+
+  useEffect(() => {
+    fetchDashboardData();
+
+    const handleCaseCreatedEvent = () => {
+      fetchDashboardData();
+    };
+
+    window.addEventListener('case-created', handleCaseCreatedEvent);
+    return () => window.removeEventListener('case-created', handleCaseCreatedEvent);
   }, []);
 
-  const FALLBACK_CASES = [
-    { id: '11111111-1111-1111-1111-111111111111', case_number: '2026-ALPHA-09', title: 'Operation Nightfall Syndicate', priority: 'CRITICAL', investigator: 'admin@veille.gov.in', status: 'ACTIVE' },
-    { id: '22222222-2222-2222-2222-222222222222', case_number: '2026-ECHO-44', title: 'Port Authority Smuggling', priority: 'HIGH', investigator: 'admin@veille.gov.in', status: 'ACTIVE' },
-    { id: '33333333-3333-3333-3333-333333333333', case_number: '2019-DELTA-02', title: 'Unidentified Network Intrusion - Sector 7', priority: 'LOW', investigator: 'Unassigned', status: 'COLD' },
-  ];
+  const targets: TargetItem[] = cases.map((c) => {
+    const p = c.priority || 'MEDIUM';
+    const threatLevel: TargetItem['threatLevel'] =
+      p === 'CRITICAL' ? 'CRITICAL' : p === 'HIGH' ? 'HIGH' : c.status === 'COLD' ? 'COLD' : 'TRACKED';
+    const threatClass =
+      threatLevel === 'CRITICAL'
+        ? 'border-error text-error bg-error/10'
+        : threatLevel === 'HIGH'
+        ? 'border-amber-400 text-amber-400 bg-amber-400/10'
+        : threatLevel === 'COLD'
+        ? 'border-outline text-outline bg-surface-container-high'
+        : 'border-primary text-primary bg-primary/10';
+    const dotColor =
+      threatLevel === 'CRITICAL'
+        ? 'bg-error'
+        : threatLevel === 'HIGH'
+        ? 'bg-amber-400'
+        : threatLevel === 'COLD'
+        ? 'bg-outline'
+        : 'bg-primary';
 
-  const filteredCases = cases.filter(c => {
-    const matchesSearch = !searchQuery ||
-      (c.title && c.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (c.case_number && c.case_number.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (c.id && c.id.toLowerCase().includes(searchQuery.toLowerCase()));
-    if (!matchesSearch) return false;
-    if (filter === 'ALL') return true;
-    if (filter === 'ACTIVE') return c.status === 'ACTIVE' || c.status === 'OPEN';
-    if (filter === 'COLD') return c.status === 'COLD' || c.status === 'ARCHIVED';
-    if (filter === 'RESOLVED') return c.status === 'RESOLVED' || c.status === 'CLOSED';
+    const stats = caseStats[c.id] || { node_count: 0, edge_count: 0, evidence_count: 0 };
+
+    return {
+      id: `CASE-${c.id.slice(0, 8)}`,
+      name: c.title,
+      classification: `Case // ${c.status || 'ACTIVE'} Priority: ${c.priority || 'MEDIUM'}`,
+      threatLevel,
+      threatClass,
+      dotColor,
+      knownAssociates: `${stats.node_count} Nodes / ${stats.edge_count} Edges`,
+      lastIntercept: stats.evidence_count > 0 ? `${stats.evidence_count} Evidence Blobs` : 'No Evidence Ingested',
+      caseId: c.id
+    };
+  });
+
+  const tasks: ActionTask[] = reviewTasks.map((t, idx) => ({
+    id: t.id || `task-${idx}`,
+    type: `ENTITY COLLISION: ${t.source_entity_name || 'IDENT_NODE'}`,
+    typeColor: (t.confidence_score || 0) > 0.9 ? 'text-error' : 'text-amber-400',
+    timeLeft: `${Math.round((t.confidence_score || 0.8) * 100)}% MATCH`,
+    description: `Resolve match with '${t.target_entity_name || 'TARGET_NODE'}' in Case ${t.case_id?.slice(0, 8) || 'N/A'}.`,
+    actionLabel: 'MERGE ENTITY',
+    status: 'PENDING'
+  }));
+
+  const handleTaskAction = async (taskId: string, actionType: 'AUTHORIZE' | 'DISMISS') => {
+    try {
+      if (actionType === 'AUTHORIZE') {
+        await api.post('/review-queue/merge', { task_id: taskId });
+        setActionNotice(`DISPATCH EXECUTED: Task ${taskId} merged into knowledge graph.`);
+      } else {
+        await api.post('/review-queue/reject', { task_id: taskId });
+        setActionNotice(`ACTION DISMISSED: Task ${taskId} rejected from review queue.`);
+      }
+      setReviewTasks(prev => prev.filter(t => t.id !== taskId));
+    } catch (err: any) {
+      setActionNotice(`Action failed: ${err.message}`);
+    }
+    setTimeout(() => setActionNotice(null), 4000);
+  };
+
+  const filteredTargets = targets.filter(t => {
+    if (targetFilter !== 'ALL' && t.threatLevel !== targetFilter) return false;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      return t.name.toLowerCase().includes(q) || t.id.toLowerCase().includes(q) || t.classification.toLowerCase().includes(q);
+    }
     return true;
   });
 
-  const activeCases = filteredCases.filter(c => c.status === 'ACTIVE' || c.status === 'OPEN');
-  const coldCases = filteredCases.filter(c => c.status !== 'ACTIVE' && c.status !== 'OPEN');
-
-  const getPriorityColor = (priority) => {
-    switch (priority) {
-      case 'CRITICAL': return { bg: 'bg-error-container', text: 'text-on-error-container', border: 'border-status-critical/30', dot: 'bg-status-critical', shadow: 'shadow-[0_0_8px_#FF3D00]', glow: '0_0_20px_rgba(255,61,0,0.15)' };
-      case 'HIGH': return { bg: 'bg-status-warning/20', text: 'text-status-warning', border: 'border-status-warning/30', dot: 'bg-status-warning', shadow: 'shadow-[0_0_8px_#FFB300]', glow: '0_0_20px_rgba(255,179,0,0.15)' };
-      default: return { bg: 'bg-surface-variant', text: 'text-on-surface', border: 'border-outline-variant', dot: 'bg-primary', shadow: 'shadow-[0_0_8px_#00daf3]', glow: '0_0_20px_rgba(0,218,243,0.1)' };
-    }
-  };
+  const criticalCases = cases.filter(c => c.priority === 'CRITICAL').length;
+  const highCases = cases.filter(c => c.priority === 'HIGH').length;
+  const totalNodes = Object.values(caseStats).reduce((acc: number, curr: any) => acc + (curr.node_count || 0), 0);
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Section Header: Search & Filters */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
-        <div>
-          <h2 className="font-headline-lg text-headline-lg text-on-surface mb-2 font-bold">Case Registry</h2>
-          <p className="text-on-surface-variant font-body-md">Select an active investigation to open network intelligence or initialize a new workspace.</p>
-        </div>
-        <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
-          {/* Search Bar */}
-          <div className="relative w-full sm:w-64">
-            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[18px]">search</span>
-            <input
-              className="w-full bg-surface-container-low border border-outline-variant text-on-surface font-body-md rounded pl-10 pr-3 py-2 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-outline transition-colors"
-              placeholder="Search ID, Subject, Lead..."
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+    <div className="space-y-4 pb-12 antialiased select-none font-sans">
+      {/* Toast Notice */}
+      {actionNotice && (
+        <div className="bg-primary/15 border-b border-primary/40 px-4 py-2 text-xs font-mono text-primary flex items-center justify-between animate-fade-in z-50">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-[16px]">verified</span>
+            <span className="font-bold">{actionNotice}</span>
           </div>
-          {/* Filters */}
-          <div className="flex items-center gap-1 bg-surface-container p-1 rounded border border-outline-variant shrink-0 overflow-x-auto w-full sm:w-auto">
-            {['ALL', 'ACTIVE', 'COLD', 'RESOLVED'].map((f) => (
-              <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={`px-3 py-1.5 rounded-sm font-label-caps text-label-caps whitespace-nowrap transition-colors ${
-                  filter === f
-                    ? 'bg-primary text-on-primary font-bold shadow-[0_0_8px_rgba(0,229,255,0.3)]'
-                    : 'text-on-surface-variant hover:bg-surface-variant/50'
-                }`}
-              >
-                {f}
-              </button>
-            ))}
+          <button onClick={() => setActionNotice(null)} className="text-outline hover:text-on-surface cursor-pointer">
+            <span className="material-symbols-outlined text-[14px]">close</span>
+          </button>
+        </div>
+      )}
+
+      {/* Header Bar */}
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 border-b border-outline-variant pb-3 bg-surface-container-lowest p-4">
+        <div>
+          <div className="flex items-center space-x-2 font-mono text-xs text-primary mb-1">
+            <span className="inline-block w-2 h-2 rounded-full bg-secondary animate-pulse" />
+            <span className="font-bold uppercase tracking-wider">COMMAND CENTER // EXECUTIVE INTEL FEED</span>
+          </div>
+          <h1 className="text-xl lg:text-2xl font-black tracking-tight text-on-surface uppercase">
+            Operations &amp; Multi-Source Fusion Matrix
+          </h1>
+        </div>
+
+        <div className="flex items-center space-x-2.5 self-start lg:self-center shrink-0">
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="bg-primary text-surface-container-lowest hover:bg-primary-fixed-dim px-3.5 py-2 text-xs font-mono font-bold flex items-center space-x-1.5 transition-colors cursor-pointer shadow-sm"
+          >
+            <span className="material-symbols-outlined text-[16px]">add_circle</span>
+            <span>+ NEW INVESTIGATION</span>
+          </button>
+          <button
+            onClick={() => navigate('/communications-intercept')}
+            className="border border-outline-variant bg-surface-container-high hover:bg-surface-container-highest px-3.5 py-2 text-xs font-mono font-bold text-on-surface hover:text-primary flex items-center space-x-1.5 transition-colors cursor-pointer"
+          >
+            <span className="material-symbols-outlined text-[16px]">broadcast_on_personal</span>
+            <span>PIPELINE TELEMETRY</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Top Metric Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+        <div className="border border-outline-variant bg-surface-container-low p-4 flex flex-col justify-between">
+          <span className="text-[10px] font-mono font-bold uppercase text-on-surface-variant">TOTAL ACTIVE CASES</span>
+          <div className="text-2xl font-mono text-primary font-bold my-2">{cases.length}</div>
+          <div className="pt-2 border-t border-outline-variant text-[11px] font-mono text-secondary">
+            PostgreSQL System of Record
+          </div>
+        </div>
+
+        <div className="border border-outline-variant bg-surface-container-low p-4 flex flex-col justify-between">
+          <span className="text-[10px] font-mono font-bold uppercase text-on-surface-variant">CRITICAL / HIGH THREATS</span>
+          <div className="text-2xl font-mono text-error font-bold my-2">{criticalCases + highCases}</div>
+          <div className="pt-2 border-t border-outline-variant text-[11px] font-mono text-on-surface-variant">
+            {criticalCases} Critical / {highCases} High
+          </div>
+        </div>
+
+        <div className="border border-outline-variant bg-surface-container-low p-4 flex flex-col justify-between">
+          <span className="text-[10px] font-mono font-bold uppercase text-on-surface-variant">NEO4J GRAPH ENTITIES</span>
+          <div className="text-2xl font-mono text-secondary font-bold my-2">{totalNodes}</div>
+          <div className="pt-2 border-t border-outline-variant text-[11px] font-mono text-secondary">
+            Knowledge Graph Synced
+          </div>
+        </div>
+
+        <div className="border border-outline-variant bg-surface-container-low p-4 flex flex-col justify-between">
+          <span className="text-[10px] font-mono font-bold uppercase text-on-surface-variant">PENDING REVIEW TASKS</span>
+          <div className="text-2xl font-mono text-amber-400 font-bold my-2">{reviewTasks.length}</div>
+          <div className="pt-2 border-t border-outline-variant text-[11px] font-mono text-outline">
+            Entity Resolution Collision
           </div>
         </div>
       </div>
 
-      {loading ? (
-        <div className="flex justify-center items-center py-20 text-primary font-label-caps tracking-widest gap-2">
-          <span className="material-symbols-outlined animate-spin text-[20px]">progress_activity</span>
-          LOADING CASE REGISTRY...
-        </div>
-      ) : (
-        <>
-          {/* Active Investigations Grid */}
-          <div className="mb-12">
-            <div className="flex items-center gap-3 mb-4">
-              <span className="material-symbols-outlined text-primary text-[20px]">folder_open</span>
-              <h3 className="font-label-caps text-label-caps text-outline uppercase tracking-widest">Active Manifest</h3>
-              <div className="h-px bg-outline-variant flex-1 ml-4"></div>
-              <span className="text-outline font-data-code text-[11px]">{activeCases.length} CASES</span>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {activeCases.map(c => {
-                const colors = getPriorityColor(c.priority);
-                const stats = caseStats[c.id] || {};
-                return (
-                  <div
-                    key={c.id}
-                    onClick={() => navigate('/network-explorer', { state: { caseId: c.id, caseTitle: c.title } })}
-                    className="bg-surface-card border border-outline-variant rounded-lg p-5 flex flex-col gap-4 hover:border-primary hover:bg-surface-elevated transition-all group cursor-pointer relative overflow-hidden shadow-lg hover:shadow-[0_0_20px_rgba(0,229,255,0.15)]"
-                  >
-                    {/* Priority accent bar */}
-                    <div className={`absolute top-0 left-0 w-full h-[2px] ${colors.dot} opacity-50 group-hover:opacity-100 transition-opacity`}></div>
-
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <div className="font-data-code text-data-code text-on-surface-variant mb-1 flex items-center gap-2">
-                          <span className={`w-2 h-2 rounded-full ${colors.dot} ${colors.shadow} animate-pulse`}></span>
-                          {c.case_number || c.id?.slice(0, 8)}
-                        </div>
-                        <h4 className="font-headline-sm text-headline-sm text-on-surface group-hover:text-primary transition-colors">{c.title}</h4>
-                      </div>
-                      <div className={`${colors.bg} ${colors.text} font-label-caps text-[10px] px-2 py-1 rounded-sm border ${colors.border}`}>
-                        {c.priority}
-                      </div>
-                    </div>
-
-                    {/* Case Stats Row */}
-                    <div className="grid grid-cols-3 gap-2">
-                      <div className="bg-surface-container-low border border-outline-variant/40 rounded p-2 text-center">
-                        <div className="font-data-code text-primary text-[18px] font-bold leading-none">{stats.node_count ?? '—'}</div>
-                        <div className="font-label-caps text-[9px] text-on-surface-variant mt-0.5">NODES</div>
-                      </div>
-                      <div className="bg-surface-container-low border border-outline-variant/40 rounded p-2 text-center">
-                        <div className="font-data-code text-primary text-[18px] font-bold leading-none">{stats.edge_count ?? '—'}</div>
-                        <div className="font-label-caps text-[9px] text-on-surface-variant mt-0.5">EDGES</div>
-                      </div>
-                      <div className="bg-surface-container-low border border-outline-variant/40 rounded p-2 text-center">
-                        <div className="font-data-code text-primary text-[18px] font-bold leading-none">{stats.evidence_count ?? '—'}</div>
-                        <div className="font-label-caps text-[9px] text-on-surface-variant mt-0.5">EVIDENCE</div>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <div className="font-label-caps text-[10px] text-outline mb-1">LEAD INVESTIGATOR</div>
-                        <div className="font-body-sm text-on-surface flex items-center gap-1.5">
-                          <span className="material-symbols-outlined text-[14px] text-primary">person</span>
-                          {c.investigator_email || c.investigator || 'admin@veille.gov.in'}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="font-label-caps text-[10px] text-outline mb-1">ACTION</div>
-                        <div className="font-data-code text-data-code text-primary flex items-center gap-1">
-                          OPEN GRAPH <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Archived Cases Section */}
-          {coldCases.length > 0 && (
-            <div>
-              <div className="flex items-center gap-3 mb-4">
-                <span className="material-symbols-outlined text-outline text-[20px]" style={{ fontVariationSettings: "'FILL' 0" }}>inventory_2</span>
-                <h3 className="font-label-caps text-label-caps text-outline uppercase tracking-widest">Archived & Cold</h3>
-                <div className="h-px bg-outline-variant/50 flex-1 ml-4"></div>
+      {/* Main Content Split */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Left: Case Watchlist Table (2/3) */}
+        <div className="lg:col-span-2 space-y-4">
+          <div className="border border-outline-variant bg-surface-container-low overflow-hidden">
+            <div className="h-9 bg-surface-container px-4 border-b border-outline-variant flex items-center justify-between">
+              <div className="flex items-center space-x-2 font-mono text-xs font-bold text-on-surface">
+                <span className="material-symbols-outlined text-[16px] text-primary">folder</span>
+                <span>ACTIVE CASE DOSSIERS</span>
               </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 opacity-70 hover:opacity-100 transition-opacity">
-                {coldCases.map(c => (
-                  <div key={c.id} className="bg-surface-container-low border border-outline-variant/50 rounded flex items-center p-3 gap-4 hover:bg-surface-variant/30 cursor-pointer transition-colors">
-                    <div className="bg-surface-variant p-2 rounded text-outline">
-                      <span className="material-symbols-outlined text-[20px]">{c.status === 'RESOLVED' ? 'check_circle' : 'ac_unit'}</span>
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <span className="font-data-code text-data-code text-outline text-[11px]">{c.case_number}</span>
-                        <span className="px-1.5 py-0.5 bg-surface-variant rounded-sm text-outline font-label-caps text-[9px]">{c.status}</span>
-                      </div>
-                      <h4 className="font-body-md text-on-surface-variant">{c.title}</h4>
-                    </div>
-                  </div>
+              <div className="flex items-center space-x-1 bg-surface-container-lowest p-0.5 border border-outline-variant text-[10px] font-mono">
+                {(['ALL', 'CRITICAL', 'HIGH', 'TRACKED'] as const).map(f => (
+                  <button
+                    key={f}
+                    onClick={() => setTargetFilter(f)}
+                    className={`px-2 py-0.5 font-bold transition-colors cursor-pointer ${
+                      targetFilter === f ? 'bg-primary text-surface-container-lowest' : 'text-on-surface-variant hover:text-on-surface'
+                    }`}
+                  >
+                    {f}
+                  </button>
                 ))}
               </div>
             </div>
-          )}
-        </>
-      )}
+
+            {loading ? (
+              <div className="p-8 text-center bg-surface-container-lowest font-mono text-xs text-outline">
+                <span className="material-symbols-outlined text-2xl animate-spin mb-1 text-primary">progress_activity</span>
+                <div>LOADING CASE DOSSIERS...</div>
+              </div>
+            ) : filteredTargets.length === 0 ? (
+              <div className="p-10 text-center bg-surface-container-lowest font-mono flex flex-col items-center justify-center">
+                <span className="material-symbols-outlined text-outline text-3xl mb-2">folder_off</span>
+                <div className="text-xs font-bold text-on-surface uppercase">NO ACTIVE CASES IN WATCHLIST</div>
+                <p className="text-[11px] text-outline mt-1 max-w-sm">
+                  Click "+ NEW INVESTIGATION" to create an operational case file and begin evidence extraction.
+                </p>
+                <button
+                  onClick={() => setIsModalOpen(true)}
+                  className="mt-4 px-4 py-2 bg-primary text-surface-container-lowest font-mono text-xs font-bold hover:bg-primary-fixed-dim transition-colors cursor-pointer"
+                >
+                  + CREATE FIRST CASE
+                </button>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse font-mono text-xs">
+                  <thead>
+                    <tr className="bg-surface-container-lowest border-b border-outline-variant text-[10px] text-outline h-7">
+                      <th className="px-4 font-semibold">CASE TITLE</th>
+                      <th className="px-4 font-semibold">PRIORITY</th>
+                      <th className="px-4 font-semibold">GRAPH TOPOLOGY</th>
+                      <th className="px-4 font-semibold">EVIDENCE</th>
+                      <th className="px-4 text-right font-semibold">ACTION</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-surface-container-high">
+                    {filteredTargets.map((target) => (
+                      <tr
+                        key={target.id}
+                        className="bg-surface-container-low hover:bg-surface-container-high transition-colors group cursor-pointer"
+                        onClick={() => navigate('/network-explorer', { state: { caseId: target.caseId } })}
+                      >
+                        <td className="px-4 py-2.5 font-bold text-on-surface group-hover:text-primary transition-colors flex items-center space-x-2">
+                          <span className={`w-2 h-2 rounded-full ${target.dotColor}`} />
+                          <span>{target.name}</span>
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <span className={`border text-[9px] px-1.5 py-0.5 font-bold ${target.threatClass}`}>
+                            {target.threatLevel}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2.5 text-on-surface-variant">{target.knownAssociates}</td>
+                        <td className="px-4 py-2.5 text-outline text-[11px]">{target.lastIntercept}</td>
+                        <td className="px-4 py-2.5 text-right">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate('/network-explorer', { state: { caseId: target.caseId } });
+                            }}
+                            className="border border-outline-variant hover:border-primary text-primary px-2 py-0.5 text-[10px] font-bold transition-colors cursor-pointer"
+                          >
+                            EXPLORE GRAPH
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Right: Operational Action Tasks (1/3) */}
+        <div className="space-y-4 font-mono text-xs">
+          <div className="border border-outline-variant bg-surface-container-low overflow-hidden">
+            <div className="h-9 bg-surface-container px-4 border-b border-outline-variant flex items-center justify-between">
+              <span className="font-bold uppercase text-on-surface flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[16px] text-amber-400">rule</span>
+                CRITICAL ACTION QUEUE
+              </span>
+              <span className="text-[10px] text-outline font-bold">{tasks.length} PENDING</span>
+            </div>
+
+            <div className="p-3 space-y-2.5 bg-surface-container-lowest">
+              {tasks.length === 0 ? (
+                <div className="p-8 text-center text-outline">
+                  <span className="material-symbols-outlined text-2xl mb-1 text-secondary">check_circle</span>
+                  <div className="font-bold text-on-surface">ALL TASKS RESOLVED</div>
+                  <p className="text-[11px] mt-1 text-outline">No pending entity resolution conflicts.</p>
+                </div>
+              ) : (
+                tasks.map((task) => (
+                  <div key={task.id} className="p-3 bg-surface-container-low border border-outline-variant space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className={`font-bold text-[11px] ${task.typeColor}`}>{task.type}</span>
+                      <span className="text-[10px] text-outline font-bold">{task.timeLeft}</span>
+                    </div>
+                    <p className="text-[11px] text-on-surface-variant leading-relaxed">{task.description}</p>
+                    <div className="flex justify-end space-x-2 pt-1">
+                      <button
+                        onClick={() => handleTaskAction(task.id, 'DISMISS')}
+                        className="px-2 py-1 text-[10px] border border-outline-variant hover:border-error text-outline hover:text-error transition-colors cursor-pointer"
+                      >
+                        REJECT
+                      </button>
+                      <button
+                        onClick={() => handleTaskAction(task.id, 'AUTHORIZE')}
+                        className="px-2.5 py-1 text-[10px] bg-primary text-surface-container-lowest font-bold hover:bg-primary-fixed-dim transition-colors cursor-pointer"
+                      >
+                        {task.actionLabel}
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* New Investigation Modal */}
+      <NewInvestigationModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onCaseCreated={() => fetchDashboardData()}
+      />
     </div>
   );
 };

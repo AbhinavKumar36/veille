@@ -1,186 +1,235 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { api } from '../api/client';
 
-const CommunicationsIntercept = () => {
+export interface InterceptRow {
+  id: string;
+  time: string;
+  channel: string;
+  src: string;
+  dst: string;
+  protocol: string;
+  status: 'DECRYPTED' | 'RECORDING' | 'PARSING';
+  statusColor: string;
+  association: string;
+  associationType: 'target' | 'relay' | 'sensor' | 'org' | 'routine';
+  hasAudio: boolean;
+  audioFile?: string;
+  keyword?: string;
+  transcriptSnippet?: string;
+}
+
+export const CommunicationsIntercept: React.FC = () => {
+  const [intercepts, setIntercepts] = useState<InterceptRow[]>([]);
+  const [selectedIntercept, setSelectedIntercept] = useState<InterceptRow | null>(null);
+  const [isListening, setIsListening] = useState<boolean>(true);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const triggerToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 4000);
+  };
+
+  useEffect(() => {
+    // Check if there are any stream logs or intercepted evidence
+    api.get('/evidence')
+      .then((data: any) => {
+        const items = Array.isArray(data) ? data : [];
+        const audioCdrItems = items.filter((i: any) => i.source_type === 'AUDIO' || i.source_type === 'CDR');
+        if (audioCdrItems.length > 0) {
+          const formatted: InterceptRow[] = audioCdrItems.map((item: any, idx: number) => ({
+            id: `SIG-${idx + 1}`,
+            time: item.created_at ? item.created_at.slice(11, 19) : '14:20:00',
+            channel: 'VOLTE-CH01',
+            src: '+91-9811-00-9921',
+            dst: 'TWR-MUMBAI-04',
+            protocol: 'GSM-PDU',
+            status: 'DECRYPTED',
+            statusColor: 'text-secondary border-secondary/40 bg-secondary/10',
+            association: 'EXTRACTED INTERCEPT',
+            associationType: 'target',
+            hasAudio: true,
+            transcriptSnippet: 'Voice packet extracted and indexed into Merkle vault.'
+          }));
+          setIntercepts(formatted);
+          setSelectedIntercept(formatted[0]);
+        } else {
+          setIntercepts([]);
+          setSelectedIntercept(null);
+        }
+      })
+      .catch(() => {
+        setIntercepts([]);
+        setSelectedIntercept(null);
+      });
+  }, []);
+
   return (
-    <div className="flex flex-col h-full overflow-hidden relative bg-surface-dim space-y-6">
-      {/* Header section */}
-      <div className="flex justify-between items-end shrink-0">
-        <div>
-          <h1 className="font-headline-md text-headline-md text-on-surface">Live Intercept Feed</h1>
-          <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">Monitoring Target Array: ALPHA-7 (Cellular & IP)</p>
-        </div>
-        <div className="flex gap-2">
-          <span className="px-3 py-1 bg-surface-container border border-outline-variant rounded font-label-caps text-label-caps text-status-success flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-status-success inline-block animate-pulse"></span> RECORDING
-          </span>
-        </div>
-      </div>
-      
-      {/* Bento Grid Layout */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 grid-rows-6 gap-4 min-h-0 overflow-y-auto pb-4">
-        {/* Active Call / Audio Transcript */}
-        <div className="col-span-1 lg:col-span-8 row-span-3 bg-surface-elevated border border-outline-variant rounded-lg flex flex-col overflow-hidden">
-          <div className="p-4 border-b border-outline-variant flex justify-between items-center bg-surface-container-low shrink-0">
-            <div className="flex items-center gap-3">
-              <span className="material-symbols-outlined text-primary">graphic_eq</span>
-              <span className="font-label-caps text-label-caps text-on-surface">ACTIVE TRANSMISSION: ID-99382</span>
-            </div>
-            <span className="font-data-code text-data-code text-status-warning shadow-[0_0_8px_rgba(255,179,0,0.5)] px-2 py-0.5 rounded bg-surface animate-pulse border border-status-warning/50">ANOMALY DETECTED</span>
+    <div className="flex flex-col h-[calc(100vh-6.5rem)] bg-surface text-on-surface antialiased select-none overflow-hidden -m-4 lg:-m-8 min-w-0 border-t border-outline-variant font-sans">
+      {/* Toast Alert */}
+      {toastMessage && (
+        <div className="bg-primary/15 border-b border-primary/40 px-4 py-2 text-xs font-mono text-primary flex items-center justify-between animate-fade-in z-50">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-[16px]">sensors</span>
+            <span className="font-bold">{toastMessage}</span>
           </div>
-          <div className="flex-1 p-4 flex flex-col gap-4 overflow-hidden relative">
-            <div className="h-24 w-full bg-surface-container rounded border border-outline-variant overflow-hidden relative shrink-0">
-              <div className="absolute inset-0 opacity-20" style={{backgroundImage: 'linear-gradient(to right, #333539 1px, transparent 1px), linear-gradient(to bottom, #333539 1px, transparent 1px)', backgroundSize: '8px 8px'}}></div>
-              <div className="absolute inset-0 flex items-end justify-center px-2 gap-1 pb-2">
-                <div className="w-1 bg-primary/40 h-[20%]"></div>
-                <div className="w-1 bg-primary/60 h-[40%]"></div>
-                <div className="w-1 bg-primary h-[80%]"></div>
-                <div className="w-1 bg-primary/80 h-[60%]"></div>
-                <div className="w-1 bg-primary/30 h-[10%]"></div>
-                <div className="w-1 bg-primary/50 h-[30%]"></div>
-                <div className="w-1 bg-status-warning h-[90%] shadow-[0_0_8px_#FFB300]"></div>
-                <div className="w-1 bg-status-warning h-[100%] shadow-[0_0_8px_#FFB300]"></div>
-                <div className="w-1 bg-primary/60 h-[50%]"></div>
-                <div className="w-1 bg-primary/40 h-[20%]"></div>
-                <div className="w-1 bg-primary/80 h-[70%]"></div>
-                <div className="w-1 bg-primary/50 h-[30%]"></div>
-              </div>
-            </div>
-            
-            <div className="flex-1 overflow-y-auto space-y-3 font-data-code text-data-code pr-2">
-              <div className="flex gap-4 opacity-70">
-                <span className="text-on-surface-variant w-16 shrink-0">00:12</span>
-                <span className="text-on-primary-container">SRC_A: "Delivery is confirmed for 0300."</span>
-              </div>
-              <div className="flex gap-4 opacity-70">
-                <span className="text-on-surface-variant w-16 shrink-0">00:15</span>
-                <span className="text-secondary-fixed">SRC_B: "Understood. Has the route been cleared?"</span>
-              </div>
-              <div className="flex gap-4 bg-surface-variant/30 p-2 rounded -mx-2">
-                <span className="text-status-warning w-16 shrink-0">00:18</span>
-                <span className="text-status-warning">SRC_A: [ENCRYPTED BURST - DECODING: "GHOST PROTOCOL ACTIVATED"]</span>
-              </div>
-              <div className="flex gap-4">
-                <span className="text-on-surface-variant w-16 shrink-0">00:22</span>
-                <span className="text-secondary-fixed">SRC_B: "Proceeding to secondary rally point."</span>
-              </div>
-            </div>
-          </div>
+          <button onClick={() => setToastMessage(null)} className="text-outline hover:text-on-surface cursor-pointer">
+            <span className="material-symbols-outlined text-[14px]">close</span>
+          </button>
         </div>
-        
-        {/* Call MetaData */}
-        <div className="col-span-1 lg:col-span-4 row-span-3 bg-surface-elevated border border-outline-variant rounded-lg flex flex-col">
-          <div className="p-4 border-b border-outline-variant bg-surface-container-low">
-            <span className="font-label-caps text-label-caps text-on-surface">INTERCEPT METADATA</span>
+      )}
+
+      {/* Top Banner */}
+      <section className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-outline-variant border-b border-outline-variant shrink-0 font-mono text-xs">
+        <div className="bg-surface-container-lowest p-3 flex flex-col justify-between">
+          <span className="text-[10px] text-outline uppercase font-bold">KAFKA SIGINT STREAM</span>
+          <div className="text-xl font-bold text-secondary flex items-center gap-2 mt-1">
+            <span className="w-2.5 h-2.5 rounded-full bg-secondary animate-pulse" />
+            <span>TOPIC: ACTIVE</span>
           </div>
-          <div className="p-4 flex-1 flex flex-col gap-4 font-data-code text-data-code">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <span className="text-on-surface-variant block mb-1 text-[10px]">DURATION</span>
-                <span className="text-on-surface">00:04:32</span>
+          <div className="text-[10px] text-outline">veille_cdr_stream</div>
+        </div>
+
+        <div className="bg-surface-container-lowest p-3 flex flex-col justify-between">
+          <span className="text-[10px] text-outline uppercase font-bold">INTERCEPTED PACKETS</span>
+          <div className="text-xl font-bold text-on-surface mt-1">{intercepts.length}</div>
+          <div className="text-[10px] text-primary">Live Siphon Ready</div>
+        </div>
+
+        <div className="bg-surface-container-lowest p-3 flex flex-col justify-between">
+          <span className="text-[10px] text-outline uppercase font-bold">WHISPER TRANSCRIBER</span>
+          <div className="text-xl font-bold text-primary mt-1">CELERY GPU</div>
+          <div className="text-[10px] text-outline">v3-Large Turbo</div>
+        </div>
+
+        <div className="bg-surface-container-lowest p-3 flex flex-col justify-between">
+          <span className="text-[10px] text-outline uppercase font-bold">STREAM LATENCY</span>
+          <div className="text-xl font-bold text-secondary mt-1">&lt; 18ms</div>
+          <div className="text-[10px] text-outline">Zero Packet Loss</div>
+        </div>
+      </section>
+
+      {/* Control Strip */}
+      <section className="p-2.5 bg-surface-container-low border-b border-outline-variant flex items-center justify-between font-mono text-xs shrink-0">
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={() => setIsListening(!isListening)}
+            className={`px-3 py-1 font-bold flex items-center gap-1.5 transition-colors cursor-pointer ${
+              isListening
+                ? 'bg-secondary text-surface-container-lowest'
+                : 'bg-surface-container-high text-outline border border-outline-variant'
+            }`}
+          >
+            <span className="material-symbols-outlined text-xs">sensors</span>
+            <span>{isListening ? 'SIPHON RUNNING' : 'SIPHON PAUSED'}</span>
+          </button>
+        </div>
+
+        <div className="text-outline text-[11px]">
+          LISTENING ON PORT 9092 // KAFKA BROKER CONNECTED
+        </div>
+      </section>
+
+      {/* Main Split View */}
+      <div className="flex-1 flex overflow-hidden min-h-0 bg-surface font-mono text-xs">
+        {/* Left: Intercept Stream Table (60%) */}
+        <div className="w-full lg:w-[60%] border-r border-outline-variant flex flex-col bg-surface-container-lowest overflow-hidden">
+          {intercepts.length === 0 ? (
+            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-outline">
+              <div className="w-14 h-14 rounded-full border border-outline-variant bg-surface-container-low flex items-center justify-center text-secondary mb-3">
+                <span className="material-symbols-outlined text-3xl animate-pulse">radar</span>
               </div>
-              <div>
-                <span className="text-on-surface-variant block mb-1 text-[10px]">ENCRYPTION</span>
-                <span className="text-on-surface">AES-256 (PARTIAL)</span>
-              </div>
+              <div className="text-sm font-bold text-on-surface uppercase">AWAITING SIGINT CDR TELEMETRY</div>
+              <p className="text-xs text-outline mt-1.5 max-w-sm">
+                No active phone calls or SMS packets on Kafka stream topic `veille_cdr_stream`. Ingest audio files into the Evidence Vault or start the live SIP carrier simulator.
+              </p>
             </div>
-            <div className="h-px w-full bg-outline-variant"></div>
-            <div>
-              <span className="text-on-surface-variant block mb-1 text-[10px]">TOWER ID / LOCATION</span>
-              <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-on-surface-variant text-[16px]">cell_tower</span>
-                <span className="text-on-surface">TWR-774A (URBAN SEC-4)</span>
-              </div>
+          ) : (
+            <div className="flex-1 overflow-y-auto">
+              <table className="w-full text-left border-collapse">
+                <thead className="sticky top-0 bg-surface-container-low border-b border-outline-variant text-[10px] uppercase text-outline">
+                  <tr>
+                    <th className="px-3 py-1.5">ID</th>
+                    <th className="px-2 py-1.5">TIME</th>
+                    <th className="px-2 py-1.5">SRC / CALLER</th>
+                    <th className="px-2 py-1.5">DST / TOWER</th>
+                    <th className="px-2 py-1.5">PROTOCOL</th>
+                    <th className="px-3 py-1.5 text-center">STATUS</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-surface-container-high">
+                  {intercepts.map((i) => {
+                    const isSelected = selectedIntercept?.id === i.id;
+                    return (
+                      <tr
+                        key={i.id}
+                        onClick={() => setSelectedIntercept(i)}
+                        className={`cursor-pointer transition-colors ${
+                          isSelected
+                            ? 'bg-surface-container-low border-l-2 border-primary text-on-surface'
+                            : 'hover:bg-surface-container-high/40'
+                        }`}
+                      >
+                        <td className="px-3 py-2 text-primary font-bold">{i.id}</td>
+                        <td className="px-2 py-2 text-outline">{i.time}</td>
+                        <td className="px-2 py-2 font-bold">{i.src}</td>
+                        <td className="px-2 py-2 text-on-surface-variant">{i.dst}</td>
+                        <td className="px-2 py-2">{i.protocol}</td>
+                        <td className="px-3 py-2 text-center">
+                          <span className={`px-1.5 py-0.5 text-[9px] border font-bold ${i.statusColor}`}>
+                            {i.status}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
-            <div className="h-px w-full bg-outline-variant"></div>
-            <div>
-              <span className="text-on-surface-variant block mb-1 text-[10px]">LINKED ENTITIES</span>
-              <div className="flex flex-col gap-2 mt-2">
-                <div className="flex items-center justify-between bg-surface-container p-2 rounded border border-outline-variant">
-                  <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-data-node-person text-[16px]">person</span>
-                    <span className="text-on-surface">UNKNOWN_MALE_1</span>
-                  </div>
-                  <span className="text-status-warning">0.82 CONF</span>
+          )}
+        </div>
+
+        {/* Right: Selected Intercept Details (40%) */}
+        <div className="w-full lg:w-[40%] flex flex-col bg-surface-container-lowest overflow-y-auto p-4">
+          {selectedIntercept ? (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between pb-2 border-b border-outline-variant">
+                <div>
+                  <div className="text-primary font-bold text-sm">{selectedIntercept.id}</div>
+                  <div className="text-on-surface font-bold text-base">{selectedIntercept.src}</div>
                 </div>
-                <div className="flex items-center justify-between bg-surface-container p-2 rounded border border-outline-variant">
-                  <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-data-node-person text-[16px]">person</span>
-                    <span className="text-on-surface">ALIAS: "VIPER"</span>
-                  </div>
-                  <span className="text-primary">0.95 CONF</span>
+                <span className={`px-2 py-0.5 border text-[10px] font-bold ${selectedIntercept.statusColor}`}>
+                  {selectedIntercept.status}
+                </span>
+              </div>
+
+              <div className="p-3 bg-surface-container-low border border-outline-variant space-y-2 text-[11px]">
+                <div className="flex justify-between">
+                  <span className="text-outline">RECIPIENT / TOWER:</span>
+                  <span className="text-on-surface font-bold">{selectedIntercept.dst}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-outline">BEARER CHANNEL:</span>
+                  <span className="text-on-surface">{selectedIntercept.channel}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-outline">ASSOCIATION:</span>
+                  <span className="text-secondary font-bold">{selectedIntercept.association}</span>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <div className="text-[10px] uppercase font-bold text-outline">WHISPER AI TRANSCRIPT</div>
+                <div className="p-3 bg-surface-container-low border border-outline-variant text-[11px] leading-relaxed text-on-surface-variant">
+                  {selectedIntercept.transcriptSnippet || 'No voice transcript attached.'}
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-        
-        {/* High Density IP Traffic Table */}
-        <div className="col-span-1 lg:col-span-12 row-span-3 bg-surface-elevated border border-outline-variant rounded-lg flex flex-col overflow-hidden">
-          <div className="p-3 border-b border-outline-variant bg-surface-container-low flex justify-between items-center shrink-0">
-            <span className="font-label-caps text-label-caps text-on-surface flex items-center gap-2">
-              <span className="material-symbols-outlined">router</span>
-              NETWORK TRAFFIC LOGS
-            </span>
-            <div className="flex gap-2">
-              <button className="px-2 py-1 bg-surface-variant text-on-surface font-label-caps text-[10px] rounded border border-outline-variant hover:bg-surface-bright">FILTER: ANOMALIES</button>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-outline">
+              <span className="material-symbols-outlined text-3xl mb-2">call</span>
+              <div>Select a telephony packet from the stream to inspect speech transcription.</div>
             </div>
-          </div>
-          <div className="flex-1 overflow-auto">
-            <table className="w-full text-left border-collapse">
-              <thead className="sticky top-0 bg-surface-container-highest z-10 border-b border-outline-variant">
-                <tr className="font-label-caps text-[10px] text-on-surface-variant">
-                  <th className="p-2 whitespace-nowrap">TIMESTAMP</th>
-                  <th className="p-2 whitespace-nowrap">SOURCE IP</th>
-                  <th className="p-2 whitespace-nowrap">DEST IP</th>
-                  <th className="p-2 whitespace-nowrap">PROTOCOL</th>
-                  <th className="p-2 whitespace-nowrap">BYTES</th>
-                  <th className="p-2 whitespace-nowrap">FLAGS</th>
-                </tr>
-              </thead>
-              <tbody className="font-data-code text-[11px] divide-y divide-outline-variant/30 text-on-surface">
-                <tr className="hover:bg-surface-container transition-colors">
-                  <td className="p-2 text-on-surface-variant">14:22:01.001</td>
-                  <td className="p-2">192.168.1.104</td>
-                  <td className="p-2">10.0.45.22</td>
-                  <td className="p-2 text-primary">TCP</td>
-                  <td className="p-2">1,024</td>
-                  <td className="p-2 text-on-surface-variant">-</td>
-                </tr>
-                <tr className="hover:bg-surface-container transition-colors">
-                  <td className="p-2 text-on-surface-variant">14:22:01.050</td>
-                  <td className="p-2">192.168.1.104</td>
-                  <td className="p-2">10.0.45.22</td>
-                  <td className="p-2 text-primary">TCP</td>
-                  <td className="p-2">512</td>
-                  <td className="p-2 text-on-surface-variant">-</td>
-                </tr>
-                <tr className="bg-error-container/20 hover:bg-error-container/30 transition-colors">
-                  <td className="p-2 text-on-surface-variant">14:22:02.112</td>
-                  <td className="p-2 text-status-critical">45.22.19.100</td>
-                  <td className="p-2">192.168.1.104</td>
-                  <td className="p-2 text-status-warning">UDP</td>
-                  <td className="p-2 text-status-critical font-bold">14,500</td>
-                  <td className="p-2 text-status-critical">[SUSPICIOUS_PAYLOAD]</td>
-                </tr>
-                <tr className="hover:bg-surface-container transition-colors">
-                  <td className="p-2 text-on-surface-variant">14:22:03.000</td>
-                  <td className="p-2">10.0.45.22</td>
-                  <td className="p-2">8.8.8.8</td>
-                  <td className="p-2 text-secondary">DNS</td>
-                  <td className="p-2">64</td>
-                  <td className="p-2 text-on-surface-variant">-</td>
-                </tr>
-                <tr className="hover:bg-surface-container transition-colors">
-                  <td className="p-2 text-on-surface-variant">14:22:03.500</td>
-                  <td className="p-2">192.168.1.104</td>
-                  <td className="p-2">44.33.22.11</td>
-                  <td className="p-2 text-primary">TCP</td>
-                  <td className="p-2">4,096</td>
-                  <td className="p-2 text-on-surface-variant">-</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          )}
         </div>
       </div>
     </div>

@@ -8,11 +8,14 @@ from db.models import OutboxEvent
 
 @patch("workers.outbox_processor.SessionLocal")
 @patch("workers.outbox_processor.get_graph_session")
-def test_outbox_sync_node_upsert(mock_get_graph_session, mock_session_local):
+@patch("workers.outbox_processor._get_redis_client")
+def test_outbox_sync_node_upsert(mock_get_redis, mock_get_graph_session, mock_session_local):
     """Test outbox processor successfully applies a NODE_UPSERT event."""
     # 1. Setup mock database
     mock_db = MagicMock()
     mock_session_local.return_value = mock_db
+    mock_redis = MagicMock()
+    mock_get_redis.return_value = mock_redis
     
     # Setup mock event
     event = OutboxEvent(
@@ -37,7 +40,7 @@ def test_outbox_sync_node_upsert(mock_get_graph_session, mock_session_local):
     
     # 2. Setup mock graph session
     mock_graph = MagicMock()
-    mock_get_graph_session.return_value = mock_graph
+    mock_get_graph_session.return_value.__enter__.return_value = mock_graph
     
     # 3. Call the processor
     process_outbox_events()
@@ -85,7 +88,7 @@ def test_outbox_sync_failure_and_dlq(mock_get_redis, mock_get_graph_session, moc
     # Setup graph to fail
     mock_graph = MagicMock()
     mock_graph.run.side_effect = Exception("Neo4j is down")
-    mock_get_graph_session.return_value = mock_graph
+    mock_get_graph_session.return_value.__enter__.return_value = mock_graph
     
     mock_redis = MagicMock()
     mock_get_redis.return_value = mock_redis

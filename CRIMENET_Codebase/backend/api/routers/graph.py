@@ -33,8 +33,8 @@ def _verify_case_access(case_id: str, current_user: dict, db: Session) -> Case:
 
     if (
         current_user.get("role") == "INVESTIGATOR"
-        and str(case.primary_investigator_id) != current_user.get("id")
-        and current_user.get("role") != "ADMIN"
+        and not any(str(inv.id) == current_user.get("id") for inv in getattr(case, "investigators", []))
+        and current_user.get("role") != "HEAD"
     ):
         raise HTTPException(
             status_code=403,

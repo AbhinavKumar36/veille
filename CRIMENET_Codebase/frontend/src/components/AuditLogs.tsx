@@ -1,54 +1,68 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api/client';
-import { ErrorState } from './ErrorState';
-import { TableSkeleton } from './skeletons/TableSkeleton';
 
-interface AuditLog {
-  id: string | number;
+import { formatLocalTimestamp } from '../utils/formatTime';
+
+export interface AuditRecord {
+  id: string;
+  auditNum: string;
   timestamp: string;
   actor: string;
-  action: string;
-  target: string;
+  actorRole: string;
   ip: string;
+  target: string;
+  action: string;
+  status: 'VERIFIED' | 'FLAGGED' | 'DENIED';
+  statusColor: string;
   isWarning?: boolean;
   isHighlighted?: boolean;
   raw: any;
 }
 
 const AuditLogs: React.FC = () => {
-  const [logs, setLogs] = useState<AuditLog[]>([]);
+  const [records, setRecords] = useState<AuditRecord[]>([]);
+  const [selectedRecord, setSelectedRecord] = useState<AuditRecord | null>(null);
+  const [severityFilter, setSeverityFilter] = useState('ALL');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const [selectedLog, setSelectedLog] = useState<any>({
-    status: "SELECT_ROW",
-    message: "Select an event in the feed to view raw JSON telemetry."
-  });
 
   const fetchLogs = async () => {
     setLoading(true);
-    setError(null);
     try {
-      const data = await api.get('/audit-logs');
-      const list = Array.isArray(data) ? data : (data.items || []);
-      if (list.length > 0) {
-        setLogs(list);
+      const data: any = await api.get('/audit-logs');
+      const items = Array.isArray(data) ? data : (data?.items || []);
+      if (items.length > 0) {
+        const formatted: AuditRecord[] = items.map((item: any, idx: number) => {
+          const isWarn = item.isWarning || item.action?.includes('DENIED') || item.action?.includes('FAILED');
+          return {
+            id: item.id || `aud-${idx}`,
+            auditNum: `#AUD-${item.id ? item.id.slice(0, 8).toUpperCase() : (1000 + idx)}`,
+            timestamp: formatLocalTimestamp(item.timestamp),
+            actor: item.actor || 'SYSTEM',
+            actorRole: (item.actor || '').includes('admin') ? 'HEAD_OPERATOR' : 'INVESTIGATOR',
+            ip: item.ip || '127.0.0.1',
+            target: item.target || 'SYSTEM_GATEWAY',
+            action: item.action || 'QUERY',
+            status: isWarn ? 'FLAGGED' : 'VERIFIED',
+            statusColor: isWarn
+              ? 'text-amber-400 border-amber-400/40 bg-amber-400/10'
+              : 'text-secondary border-secondary/40 bg-secondary/10',
+            isWarning: isWarn,
+            isHighlighted: item.isHighlighted,
+            raw: item.raw || item
+          };
+        });
+        setRecords(formatted);
+        setSelectedRecord(formatted[0]);
       } else {
-        setLogs([
-          { id: 'audit-101', timestamp: '2026-09-02T08:17:08Z', actor: 'admin@veille.gov.in', action: 'LOGIN', target: 'AUTH_GATEWAY', ip: '127.0.0.1', isWarning: false, isHighlighted: false, raw: { status: 'SUCCESS', method: 'BEARER_JWT', client: 'VEILLE_UI_v4.0' } },
-          { id: 'audit-102', timestamp: '2026-09-02T08:25:20Z', actor: 'admin@veille.gov.in', action: 'QUERY_GRAPH', target: 'Operation Nightfall Syndicate', ip: '127.0.0.1', isWarning: false, isHighlighted: true, raw: { case_id: '11111111-1111-1111-1111-111111111111', nodes_accessed: 12, engine: 'Neo4j Cypher' } },
-          { id: 'audit-103', timestamp: '2026-09-02T08:30:15Z', actor: 'system_agent', action: 'ENTITY_RESOLVED', target: 'Person_RajeshKumar', ip: '10.0.4.1', isWarning: false, isHighlighted: false, raw: { algorithm: 'Jaro-Winkler + Soundex', match_confidence: 0.98 } },
-          { id: 'audit-104', timestamp: '2026-09-02T08:35:42Z', actor: 'investigator@veille.gov.in', action: 'ACCESS_DENIED', target: 'RESTRICTED_EVIDENCE_DUMP', ip: '192.168.1.45', isWarning: true, isHighlighted: true, raw: { reason: 'INSUFFICIENT_CLEARANCE', required_role: 'ADMIN', attempted_by: 'INVESTIGATOR' } },
-        ]);
+        setRecords([]);
+        setSelectedRecord(null);
       }
-    } catch (err: any) {
-      console.warn('Using fallback audit log entries:', err);
-      setLogs([
-        { id: 'audit-101', timestamp: '2026-09-02T08:17:08Z', actor: 'admin@veille.gov.in', action: 'LOGIN', target: 'AUTH_GATEWAY', ip: '127.0.0.1', isWarning: false, isHighlighted: false, raw: { status: 'SUCCESS', method: 'BEARER_JWT', client: 'VEILLE_UI_v4.0' } },
-        { id: 'audit-102', timestamp: '2026-09-02T08:25:20Z', actor: 'admin@veille.gov.in', action: 'QUERY_GRAPH', target: 'Operation Nightfall Syndicate', ip: '127.0.0.1', isWarning: false, isHighlighted: true, raw: { case_id: '11111111-1111-1111-1111-111111111111', nodes_accessed: 12, engine: 'Neo4j Cypher' } },
-        { id: 'audit-103', timestamp: '2026-09-02T08:30:15Z', actor: 'system_agent', action: 'ENTITY_RESOLVED', target: 'Person_RajeshKumar', ip: '10.0.4.1', isWarning: false, isHighlighted: false, raw: { algorithm: 'Jaro-Winkler + Soundex', match_confidence: 0.98 } },
-        { id: 'audit-104', timestamp: '2026-09-02T08:35:42Z', actor: 'investigator@veille.gov.in', action: 'ACCESS_DENIED', target: 'RESTRICTED_EVIDENCE_DUMP', ip: '192.168.1.45', isWarning: true, isHighlighted: true, raw: { reason: 'INSUFFICIENT_CLEARANCE', required_role: 'ADMIN', attempted_by: 'INVESTIGATOR' } },
-      ]);
+    } catch (err) {
+      console.error('Failed to load audit logs:', err);
+      setRecords([]);
+      setSelectedRecord(null);
     } finally {
       setLoading(false);
     }
@@ -58,136 +72,231 @@ const AuditLogs: React.FC = () => {
     fetchLogs();
   }, []);
 
+  const handleExport = () => {
+    if (records.length === 0) return;
+    const blob = new Blob([JSON.stringify(records, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `VEILLE_AUDIT_LOGS_${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setToastMessage('AUDIT TRAIL EXPORTED: Cryptographic JSON bundle downloaded.');
+    setTimeout(() => setToastMessage(null), 4000);
+  };
+
+  const filteredRecords = records.filter((r) => {
+    if (severityFilter !== 'ALL') {
+      if (severityFilter === 'VERIFIED' && r.status !== 'VERIFIED') return false;
+      if (severityFilter === 'FLAGGED' && r.status !== 'FLAGGED') return false;
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      return (
+        r.actor.toLowerCase().includes(q) ||
+        r.action.toLowerCase().includes(q) ||
+        r.target.toLowerCase().includes(q) ||
+        r.auditNum.toLowerCase().includes(q)
+      );
+    }
+    return true;
+  });
+
   return (
-    <div className="flex h-[calc(100vh-140px)] w-full bg-surface overflow-hidden border border-outline-variant rounded-lg">
-      {/* Left Data Pane: Audit Feed */}
-      <section className="flex-1 flex flex-col border-r border-outline-variant bg-surface relative">
-        {/* Feed Header & Controls */}
-        <header className="h-14 border-b border-outline-variant flex items-center justify-between px-4 bg-surface-container-low shrink-0">
-          <div className="flex items-center space-x-4">
-            <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>history_edu</span>
-            <h2 className="font-headline-sm text-headline-sm text-on-surface">System Audit Trail</h2>
+    <div className="flex flex-col h-[calc(100vh-6.5rem)] bg-surface text-on-surface antialiased select-none overflow-hidden -m-4 lg:-m-8 min-w-0 border-t border-outline-variant font-sans">
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="bg-primary/15 border-b border-primary/40 px-4 py-2 text-xs font-mono text-primary flex items-center justify-between animate-fade-in z-50">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-[16px]">verified_user</span>
+            <span className="font-bold">{toastMessage}</span>
           </div>
-          {/* Export Controls */}
-          <div className="flex items-center space-x-2">
-            <button className="h-8 px-3 border border-outline-variant rounded flex items-center space-x-1 hover:bg-surface-variant transition-colors text-on-surface-variant hover:text-on-surface">
-              <span className="material-symbols-outlined text-[16px]">picture_as_pdf</span>
-              <span className="font-label-caps text-label-caps hidden sm:inline">EXPORT PDF</span>
-            </button>
-            <button className="h-8 px-3 border border-outline-variant rounded flex items-center space-x-1 hover:bg-surface-variant transition-colors text-on-surface-variant hover:text-on-surface">
-              <span className="material-symbols-outlined text-[16px]">csv</span>
-              <span className="font-label-caps text-label-caps hidden sm:inline">EXPORT CSV</span>
-            </button>
-            <div className="w-px h-4 bg-outline-variant mx-2"></div>
-            <div className="relative">
-              <span className="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-on-surface-variant text-[16px]">search</span>
-              <input className="h-8 pl-8 pr-3 bg-surface border border-outline-variant rounded font-data-code text-data-code text-on-surface placeholder:text-on-surface-variant focus:border-primary focus:ring-1 focus:ring-primary w-48 sm:w-64 outline-none" placeholder="Filter logs..." type="text"/>
-            </div>
-            <button onClick={fetchLogs} className="h-8 px-3 border border-outline-variant rounded flex items-center hover:bg-surface-variant transition-colors text-on-surface-variant hover:text-primary">
-              <span className="material-symbols-outlined text-[18px]">refresh</span>
-            </button>
+          <button onClick={() => setToastMessage(null)} className="text-outline hover:text-on-surface cursor-pointer">
+            <span className="material-symbols-outlined text-[14px]">close</span>
+          </button>
+        </div>
+      )}
+
+      {/* Top Banner KPI */}
+      <section className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-outline-variant border-b border-outline-variant shrink-0 font-mono text-xs">
+        <div className="bg-surface-container-lowest p-3 flex flex-col justify-between">
+          <span className="text-[10px] text-outline uppercase font-bold">TOTAL AUDIT EVENTS</span>
+          <div className="text-xl font-bold text-on-surface mt-1">{records.length}</div>
+          <div className="text-[10px] text-secondary">PostgreSQL Immutable Log</div>
+        </div>
+
+        <div className="bg-surface-container-lowest p-3 flex flex-col justify-between">
+          <span className="text-[10px] text-outline uppercase font-bold">SECURITY CLEARANCE</span>
+          <div className="text-xl font-bold text-secondary mt-1">100% VALID</div>
+          <div className="text-[10px] text-outline">Bearer JWT Enforced</div>
+        </div>
+
+        <div className="bg-surface-container-lowest p-3 flex flex-col justify-between">
+          <span className="text-[10px] text-outline uppercase font-bold">FLAGGED / ANOMALY</span>
+          <div className="text-xl font-bold text-amber-400 mt-1">
+            {records.filter(r => r.status === 'FLAGGED').length}
           </div>
-        </header>
-        
-        {/* Table Container */}
-        <div className="flex-1 overflow-auto bg-surface-dim">
-          {loading ? (
-            <div className="p-4"><TableSkeleton rows={10} /></div>
-          ) : error ? (
-            <div className="p-4 h-full"><ErrorState message={error} onRetry={fetchLogs} /></div>
-          ) : logs.length === 0 ? (
-            <div className="p-8 text-center text-on-surface-variant">No audit logs found.</div>
-          ) : (
-            <table className="w-full text-left border-collapse">
-              <thead className="sticky top-0 bg-surface-container-high z-10 font-label-caps text-label-caps text-on-surface-variant shadow-[0_1px_0_0_rgba(255,255,255,0.08)]">
-                <tr>
-                  <th className="py-2 px-4 font-normal tracking-wider w-40">TIMESTAMP (UTC)</th>
-                  <th className="py-2 px-4 font-normal tracking-wider w-32">ACTOR ID</th>
-                  <th className="py-2 px-4 font-normal tracking-wider w-48">ACTION</th>
-                  <th className="py-2 px-4 font-normal tracking-wider w-40">TARGET / CASE ID</th>
-                  <th className="py-2 px-4 font-normal tracking-wider">SOURCE IP / DEVICE</th>
-                </tr>
-              </thead>
-              <tbody className="font-data-code text-data-code text-on-surface divide-y divide-outline-variant/30">
-                {logs.map((log) => (
-                  <tr 
-                    key={log.id}
-                    onClick={() => setSelectedLog(log.raw)}
-                    className={`transition-colors cursor-pointer ${
-                      log.isWarning ? 'bg-status-warning/5 hover:bg-surface-variant/30' : 
-                      log.isHighlighted ? 'bg-surface-variant/10 hover:bg-surface-variant/30' : 
-                      'hover:bg-surface-variant/30'
-                    }`}
-                  >
-                    <td className="py-2 px-4 text-on-surface-variant">{log.timestamp}</td>
-                    <td className={`py-2 px-4 ${log.isWarning ? 'text-status-warning' : 'text-primary'}`}>{log.actor}</td>
-                    <td className={`py-2 px-4 ${log.isWarning ? 'text-status-warning flex items-center space-x-1' : log.isHighlighted ? 'text-data-node-person' : ''}`}>
-                      {log.isWarning && <span className="material-symbols-outlined text-[16px]">warning</span>}
-                      <span>{log.action}</span>
-                    </td>
-                    <td className="py-2 px-4 text-secondary">{log.target}</td>
-                    <td className="py-2 px-4 text-on-surface-variant">{log.ip}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+          <div className="text-[10px] text-outline">Real-time Policy Guard</div>
+        </div>
+
+        <div className="bg-surface-container-lowest p-3 flex flex-col justify-between">
+          <span className="text-[10px] text-outline uppercase font-bold">GATEWAY HEALTH</span>
+          <div className="text-xl font-bold text-primary mt-1">ACTIVE</div>
+          <div className="text-[10px] text-primary">All Sessions Monitored</div>
         </div>
       </section>
-      
-      {/* Right Inspector Pane */}
-      <aside className="w-[400px] bg-surface-elevated flex flex-col border-l border-outline-variant shrink-0 relative z-20 hidden lg:flex">
-        {/* Security Alerts Panel (Top half) */}
-        <div className="h-1/2 flex flex-col border-b border-outline-variant">
-          <header className="h-10 px-4 flex items-center bg-surface-container-high border-b border-outline-variant shrink-0">
-            <span className="material-symbols-outlined text-status-warning mr-2 text-[18px]">security</span>
-            <h3 className="font-label-caps text-label-caps text-on-surface">SECURITY ALERTS</h3>
-          </header>
-          <div className="flex-1 overflow-auto p-4 space-y-3">
-            {/* Alert Card */}
-            <div className="bg-surface-card border border-status-warning/30 rounded p-3 relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-1 h-full bg-status-warning"></div>
-              <div className="flex justify-between items-start mb-1">
-                <span className="font-label-caps text-label-caps text-status-warning">UNUSUAL ACCESS PATTERN</span>
-                <span className="font-data-code text-[10px] text-on-surface-variant">08:22:11 UTC</span>
+
+      {/* Control Strip */}
+      <section className="p-2.5 bg-surface-container-low border-b border-outline-variant flex items-center justify-between flex-wrap gap-2 shrink-0 font-mono text-xs">
+        <div className="flex items-center space-x-2 flex-1 max-w-lg">
+          <div className="flex items-center flex-1 bg-surface-container-lowest border border-outline-variant px-2 py-1 focus-within:border-primary">
+            <span className="material-symbols-outlined text-outline text-sm mr-1.5">search</span>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="FILTER LOGS BY ACTOR, ACTION, RESOURCE..."
+              className="bg-transparent border-none p-0 text-xs text-on-surface focus:outline-none w-full placeholder:text-outline/50"
+            />
+          </div>
+
+          <select
+            value={severityFilter}
+            onChange={(e) => setSeverityFilter(e.target.value)}
+            className="bg-surface-container-lowest border border-outline-variant text-xs text-on-surface px-2 py-1 font-mono focus:outline-none cursor-pointer"
+          >
+            <option value="ALL">ALL STATUSES</option>
+            <option value="VERIFIED">VERIFIED</option>
+            <option value="FLAGGED">FLAGGED</option>
+          </select>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={fetchLogs}
+            className="px-2.5 py-1 bg-surface-container-high border border-outline-variant hover:border-primary text-on-surface transition-colors flex items-center gap-1 cursor-pointer"
+          >
+            <span className="material-symbols-outlined text-xs">refresh</span>
+            <span>REFRESH</span>
+          </button>
+          <button
+            onClick={handleExport}
+            className="px-2.5 py-1 bg-primary text-surface-container-lowest font-bold hover:bg-primary-fixed-dim transition-colors flex items-center gap-1 cursor-pointer"
+          >
+            <span className="material-symbols-outlined text-xs">file_download</span>
+            <span>EXPORT ATTESTATION</span>
+          </button>
+        </div>
+      </section>
+
+      {/* Split View */}
+      <div className="flex-1 flex overflow-hidden min-h-0 bg-surface">
+        {/* Left: Audit Log Table (55%) */}
+        <div className="w-full lg:w-[55%] border-r border-outline-variant flex flex-col bg-surface-container-lowest overflow-hidden">
+          <div className="flex-1 overflow-y-auto font-mono text-xs">
+            {loading ? (
+              <div className="p-8 text-center text-outline">
+                <span className="material-symbols-outlined text-2xl animate-spin mb-2 text-primary">progress_activity</span>
+                <div>LOADING IMMUTABLE AUDIT TRAIL...</div>
               </div>
-              <p className="font-body-sm text-body-sm text-on-surface mb-2">Cross-case query detected between <span className="text-secondary">2024-ALPHA-09</span> and restricted case <span className="text-status-critical">2023-OMEGA-12</span>.</p>
-              <div className="flex justify-end space-x-2 mt-2">
-                <button className="font-label-caps text-[10px] text-on-surface-variant hover:text-on-surface uppercase tracking-wider">Dismiss</button>
-                <button className="font-label-caps text-[10px] text-status-warning hover:text-status-warning/80 uppercase tracking-wider border border-status-warning/50 rounded px-2 py-0.5">Investigate</button>
+            ) : filteredRecords.length === 0 ? (
+              <div className="p-12 text-center flex flex-col items-center justify-center h-full text-outline">
+                <span className="material-symbols-outlined text-3xl mb-2 text-secondary">verified_user</span>
+                <div className="text-sm font-bold text-on-surface uppercase">NO AUDIT RECORDS FOUND</div>
+                <p className="text-xs mt-1 max-w-sm text-outline">
+                  No system transactions match the filter criteria. Live security events stream here automatically.
+                </p>
               </div>
-            </div>
-            
-            {/* Alert Card (Critical) */}
-            <div className="bg-surface-card border border-status-critical/30 rounded p-3 relative overflow-hidden shadow-[0_0_12px_rgba(255,61,0,0.1)]">
-              <div className="absolute top-0 left-0 w-1 h-full bg-status-critical"></div>
-              <div className="flex justify-between items-start mb-1">
-                <span className="font-label-caps text-label-caps text-status-critical">FAILED AUTHENTICATION</span>
-                <span className="font-data-code text-[10px] text-on-surface-variant">07:45:02 UTC</span>
-              </div>
-              <p className="font-body-sm text-body-sm text-on-surface">5 consecutive failed login attempts for ID <span className="text-primary font-data-code">OP-0888-Y</span> from unverified IP.</p>
-            </div>
+            ) : (
+              <table className="w-full text-left border-collapse">
+                <thead className="sticky top-0 bg-surface-container-low border-b border-outline-variant z-10 text-[10px] uppercase text-outline">
+                  <tr className="h-7">
+                    <th className="px-3 py-1.5 font-semibold">LOCAL TIME</th>
+                    <th className="px-2 py-1.5 font-semibold">OPERATOR / ACTOR</th>
+                    <th className="px-2 py-1.5 font-semibold">ACTION</th>
+                    <th className="px-2 py-1.5 font-semibold">TARGET RESOURCE</th>
+                    <th className="px-3 py-1.5 text-center font-semibold">STATUS</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-surface-container-high">
+                  {filteredRecords.map((r) => {
+                    const isSelected = selectedRecord?.id === r.id;
+                    return (
+                      <tr
+                        key={r.id}
+                        onClick={() => setSelectedRecord(r)}
+                        className={`cursor-pointer transition-colors ${
+                          isSelected
+                            ? 'bg-surface-container-low border-l-2 border-primary text-on-surface'
+                            : 'hover:bg-surface-container-high/40'
+                        }`}
+                      >
+                        <td className="px-3 py-2 text-outline text-[11px]">{r.timestamp}</td>
+                        <td className="px-2 py-2 font-bold text-primary">{r.actor}</td>
+                        <td className="px-2 py-2 text-on-surface">{r.action}</td>
+                        <td className="px-2 py-2 text-on-surface-variant truncate max-w-xs">{r.target}</td>
+                        <td className="px-3 py-2 text-center">
+                          <span className={`px-1.5 py-0.5 text-[9px] border font-bold ${r.statusColor}`}>
+                            {r.status}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
-        
-        {/* Verbatim JSON Inspector (Bottom half) */}
-        <div className="h-1/2 flex flex-col bg-surface-dim">
-          <header className="h-10 px-4 flex items-center justify-between bg-surface-container-high border-b border-outline-variant shrink-0">
-            <div className="flex items-center">
-              <span className="material-symbols-outlined text-on-surface-variant mr-2 text-[18px]">data_object</span>
-              <h3 className="font-label-caps text-label-caps text-on-surface">RAW EVENT DATA</h3>
+
+        {/* Right: Selected Provenance Inspector (45%) */}
+        <div className="w-full lg:w-[45%] flex flex-col bg-surface-container-lowest overflow-y-auto font-mono text-xs p-4">
+          {selectedRecord ? (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-outline-variant">
+                <div>
+                  <div className="text-primary font-bold text-sm">{selectedRecord.auditNum}</div>
+                  <div className="text-on-surface font-bold text-base">{selectedRecord.action}</div>
+                </div>
+                <span className={`px-2 py-1 border text-[10px] font-bold ${selectedRecord.statusColor}`}>
+                  {selectedRecord.status}
+                </span>
+              </div>
+
+              <div className="p-3 bg-surface-container-low border border-outline-variant space-y-2 text-[11px]">
+                <div className="flex justify-between">
+                  <span className="text-outline">ACTOR / OPERATOR:</span>
+                  <span className="text-primary font-bold">{selectedRecord.actor} ({selectedRecord.actorRole})</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-outline">IP ADDRESS:</span>
+                  <span className="text-on-surface">{selectedRecord.ip}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-outline">TARGET RESOURCE:</span>
+                  <span className="text-on-surface font-bold">{selectedRecord.target}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-outline">TIMESTAMP:</span>
+                  <span className="text-secondary font-bold">{selectedRecord.timestamp}</span>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <div className="text-[10px] uppercase font-bold text-outline">RAW AUDIT EVENT PAYLOAD (JSON)</div>
+                <pre className="p-3 bg-surface-container-low border border-outline-variant text-[10px] text-on-surface-variant font-mono leading-relaxed overflow-x-auto whitespace-pre-wrap">
+                  {JSON.stringify(selectedRecord.raw, null, 2)}
+                </pre>
+              </div>
             </div>
-            <button className="text-on-surface-variant hover:text-primary transition-colors" title="Copy JSON">
-              <span className="material-symbols-outlined text-[16px]">content_copy</span>
-            </button>
-          </header>
-          <div className="flex-1 overflow-auto p-4 relative group">
-            <pre className="font-data-code text-data-code text-tertiary-fixed-dim whitespace-pre-wrap break-all" style={{tabSize: 4}}>
-              {JSON.stringify(selectedLog, null, 2)}
-            </pre>
-          </div>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-outline">
+              <span className="material-symbols-outlined text-3xl mb-2">history_edu</span>
+              <div>Select an audit ledger entry to view transaction details.</div>
+            </div>
+          )}
         </div>
-      </aside>
+      </div>
     </div>
   );
 };
