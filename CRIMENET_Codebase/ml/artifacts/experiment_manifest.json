@@ -1,7 +1,7 @@
 {
-  "experiment_id": "EXP_58AC821A",
-  "git_commit": "6e05fa3fe5581ba22ca4c84d37120f035b0ca0f5",
-  "execution_date": "2026-09-06T15:38:58.033144+00:00",
+  "experiment_id": "EXP_E32C5A87",
+  "git_commit": "ec69bd05f2134d15ff69f6ffbe93863f7dfa69bf",
+  "execution_date": "2026-09-06T16:03:52.987532+00:00",
   "configuration": {
     "er_high_threshold": 0.85,
     "er_low_threshold": 0.5,

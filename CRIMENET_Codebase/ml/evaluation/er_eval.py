@@ -91,20 +91,23 @@ def evaluate_entity_resolution(
     total_pairs = len(benchmark_pairs)
     auto_decisions = tp + fp
 
-    precision = (tp / (tp + fp)) * 100 if (tp + fp) > 0 else 0.0
-    recall = (tp / (tp + fn)) * 100 if (tp + fn) > 0 else 0.0
-    f1 = (2 * precision * recall) / (precision + recall) if (precision + recall) > 0 else 0.0
+    precision = round((tp / (tp + fp)) * 100, 2) if (tp + fp) > 0 else "N/A"
+    recall = round((tp / (tp + fn)) * 100, 2) if (tp + fn) > 0 else "N/A"
+    if isinstance(precision, (int, float)) and isinstance(recall, (int, float)) and (precision + recall) > 0:
+        f1 = round((2 * precision * recall) / (precision + recall), 2)
+    else:
+        f1 = "N/A"
 
-    false_merge_rate = (fp / (tp + fp)) * 100 if (tp + fp) > 0 else 0.0
-    false_split_rate = (fn / (tp + fn)) * 100 if (tp + fn) > 0 else 0.0
-    hitl_quarantine_rate = (hitl / total_pairs) * 100
-    auto_merge_coverage = (auto_decisions / total_pairs) * 100
+    false_merge_rate = round((fp / (tp + fp)) * 100, 2) if (tp + fp) > 0 else 0.0
+    false_split_rate = round((fn / (tp + fn)) * 100, 2) if (tp + fn) > 0 else 0.0
+    hitl_quarantine_rate = round((hitl / total_pairs) * 100, 2)
+    auto_merge_coverage = round((auto_decisions / total_pairs) * 100, 2)
 
     # Calculate per-category breakdown
     category_breakdown = {}
     for cat, s in category_stats.items():
-        cat_p = (s["tp"] / (s["tp"] + s["fp"])) * 100 if (s["tp"] + s["fp"]) > 0 else 100.0
-        cat_r = (s["tp"] / (s["tp"] + s["fn"])) * 100 if (s["tp"] + s["fn"]) > 0 else 100.0
+        cat_p = round((s["tp"] / (s["tp"] + s["fp"])) * 100, 2) if (s["tp"] + s["fp"]) > 0 else "N/A"
+        cat_r = round((s["tp"] / (s["tp"] + s["fn"])) * 100, 2) if (s["tp"] + s["fn"]) > 0 else "N/A"
         category_breakdown[cat] = {
             "total": s["total"],
             "tp": s["tp"],
@@ -112,8 +115,8 @@ def evaluate_entity_resolution(
             "tn": s["tn"],
             "fn": s["fn"],
             "hitl": s["hitl"],
-            "precision": round(cat_p, 2),
-            "recall": round(cat_r, 2)
+            "precision": cat_p,
+            "recall": cat_r
         }
 
     return {
@@ -123,13 +126,16 @@ def evaluate_entity_resolution(
         "true_negatives": tn,
         "false_negatives": fn,
         "hitl_quarantined": hitl,
-        "auto_merge_precision": round(precision, 2),
-        "auto_merge_recall": round(recall, 2),
-        "auto_merge_f1": round(f1, 2),
-        "false_merge_rate": round(false_merge_rate, 2),
-        "false_split_rate": round(false_split_rate, 2),
-        "hitl_quarantine_rate": round(hitl_quarantine_rate, 2),
-        "auto_merge_coverage": round(auto_merge_coverage, 2),
+        "auto_decision_precision": precision,
+        "auto_decision_recall": recall,
+        "auto_decision_f1": f1,
+        "auto_merge_precision": precision,
+        "auto_merge_recall": recall,
+        "auto_merge_f1": f1,
+        "false_merge_rate": false_merge_rate,
+        "false_split_rate": false_split_rate,
+        "hitl_quarantine_rate": hitl_quarantine_rate,
+        "auto_merge_coverage": auto_merge_coverage,
         "category_breakdown": category_breakdown,
         "details_sample": details[:10]
     }
@@ -147,17 +153,22 @@ if __name__ == "__main__":
     print(f"False Negatives (False Split) : {res['false_negatives']}")
     print(f"HITL Quarantined Pairs        : {res['hitl_quarantined']}")
     print("-" * 80)
-    print(f"Production Auto-Merge Precision : {res['auto_merge_precision']}%")
-    print(f"Production Auto-Merge Recall    : {res['auto_merge_recall']}%")
-    print(f"Production Auto-Merge F1-Score  : {res['auto_merge_f1']}%")
-    print(f"Empirical False Merge Rate      : {res['false_merge_rate']}%")
-    print(f"False Split Rate                : {res['false_split_rate']}%")
-    print(f"HITL Review / Quarantine Rate   : {res['hitl_quarantine_rate']}%")
-    print(f"Auto-Merge Coverage             : {res['auto_merge_coverage']}%")
+    p_str = f"{res['auto_decision_precision']}%" if res['auto_decision_precision'] != "N/A" else "N/A"
+    r_str = f"{res['auto_decision_recall']}%" if res['auto_decision_recall'] != "N/A" else "N/A"
+    f1_str = f"{res['auto_decision_f1']}%" if res['auto_decision_f1'] != "N/A" else "N/A"
+    print(f"Production Auto-Decision Precision : {p_str}")
+    print(f"Production Auto-Decision Recall    : {r_str} (across resolved cases)")
+    print(f"Production Auto-Decision F1-Score  : {f1_str}")
+    print(f"Empirical False Merge Rate         : {res['false_merge_rate']}%")
+    print(f"False Split Rate                   : {res['false_split_rate']}%")
+    print(f"HITL Review / Quarantine Rate      : {res['hitl_quarantine_rate']}% ({res['hitl_quarantined']} ambiguous pairs)")
+    print(f"Auto-Merge Coverage                : {res['auto_merge_coverage']}%")
     print("=" * 80)
     print("\nPER-CATEGORY PERFORMANCE BREAKDOWN:")
-    print(f"{'Category':<30} | {'Total':<6} | {'TP':<4} | {'FP':<4} | {'TN':<4} | {'FN':<4} | {'HITL':<5} | {'Prec (%)':<8}")
-    print("-" * 80)
+    print(f"{'Category':<30} | {'Total':<6} | {'TP':<4} | {'FP':<4} | {'TN':<4} | {'FN':<4} | {'HITL':<5} | {'Prec (%)':<8} | {'Rec (%)':<8}")
+    print("-" * 90)
     for cat, cb in res["category_breakdown"].items():
-        print(f"{cat:<30} | {cb['total']:<6} | {cb['tp']:<4} | {cb['fp']:<4} | {cb['tn']:<4} | {cb['fn']:<4} | {cb['hitl']:<5} | {cb['precision']:<8.1f}")
-    print("=" * 80)
+        p_val = f"{cb['precision']:.1f}" if isinstance(cb['precision'], (int, float)) else str(cb['precision'])
+        r_val = f"{cb['recall']:.1f}" if isinstance(cb['recall'], (int, float)) else str(cb['recall'])
+        print(f"{cat:<30} | {cb['total']:<6} | {cb['tp']:<4} | {cb['fp']:<4} | {cb['tn']:<4} | {cb['fn']:<4} | {cb['hitl']:<5} | {p_val:<8} | {r_val:<8}")
+    print("=" * 90)

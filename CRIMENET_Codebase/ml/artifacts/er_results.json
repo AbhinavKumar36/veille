@@ -5,6 +5,9 @@
   "true_negatives": 191,
   "false_negatives": 11,
   "hitl_quarantined": 96,
+  "auto_decision_precision": 100.0,
+  "auto_decision_recall": 95.58,
+  "auto_decision_f1": 97.74,
   "auto_merge_precision": 100.0,
   "auto_merge_recall": 95.58,
   "auto_merge_f1": 97.74,
@@ -20,8 +23,8 @@
       "tn": 0,
       "fn": 0,
       "hitl": 4,
-      "precision": 100.0,
-      "recall": 100.0
+      "precision": "N/A",
+      "recall": "N/A"
     },
     "Abbreviation": {
       "total": 4,
@@ -60,8 +63,8 @@
       "tn": 16,
       "fn": 0,
       "hitl": 1,
-      "precision": 100.0,
-      "recall": 100.0
+      "precision": "N/A",
+      "recall": "N/A"
     },
     "Hyphenated": {
       "total": 1,
@@ -100,8 +103,8 @@
       "tn": 0,
       "fn": 0,
       "hitl": 1,
-      "precision": 100.0,
-      "recall": 100.0
+      "precision": "N/A",
+      "recall": "N/A"
     },
     "Surname Variant": {
       "total": 1,
@@ -130,8 +133,8 @@
       "tn": 27,
       "fn": 0,
       "hitl": 18,
-      "precision": 100.0,
-      "recall": 100.0
+      "precision": "N/A",
+      "recall": "N/A"
     },
     "OCR Noise": {
       "total": 40,
@@ -150,8 +153,8 @@
       "tn": 40,
       "fn": 0,
       "hitl": 0,
-      "precision": 100.0,
-      "recall": 100.0
+      "precision": "N/A",
+      "recall": "N/A"
     },
     "Phone Format": {
       "total": 20,
@@ -170,8 +173,8 @@
       "tn": 9,
       "fn": 0,
       "hitl": 1,
-      "precision": 100.0,
-      "recall": 100.0
+      "precision": "N/A",
+      "recall": "N/A"
     },
     "Account Format": {
       "total": 12,
@@ -190,8 +193,8 @@
       "tn": 0,
       "fn": 0,
       "hitl": 4,
-      "precision": 100.0,
-      "recall": 100.0
+      "precision": "N/A",
+      "recall": "N/A"
     },
     "Account Bank Collision": {
       "total": 4,
@@ -200,8 +203,8 @@
       "tn": 4,
       "fn": 0,
       "hitl": 0,
-      "precision": 100.0,
-      "recall": 100.0
+      "precision": "N/A",
+      "recall": "N/A"
     },
     "Geospatial": {
       "total": 55,
@@ -240,8 +243,8 @@
       "tn": 20,
       "fn": 0,
       "hitl": 0,
-      "precision": 100.0,
-      "recall": 100.0
+      "precision": "N/A",
+      "recall": "N/A"
     },
     "Common Surname Collision": {
       "total": 20,
@@ -250,8 +253,8 @@
       "tn": 20,
       "fn": 0,
       "hitl": 0,
-      "precision": 100.0,
-      "recall": 100.0
+      "precision": "N/A",
+      "recall": "N/A"
     },
     "Vehicle Resolution": {
       "total": 40,

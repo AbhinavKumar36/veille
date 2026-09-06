@@ -40,10 +40,13 @@ def get_git_commit() -> str:
 
 
 def compute_prf1(tp: int, fp: int, fn: int):
-    precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
-    recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
-    f1 = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0.0
-    return round(precision * 100, 2), round(recall * 100, 2), round(f1 * 100, 2)
+    precision = round((tp / (tp + fp)) * 100, 2) if (tp + fp) > 0 else "N/A"
+    recall = round((tp / (tp + fn)) * 100, 2) if (tp + fn) > 0 else "N/A"
+    if isinstance(precision, (int, float)) and isinstance(recall, (int, float)) and (precision + recall) > 0:
+        f1 = round((2 * precision * recall) / (precision + recall), 2)
+    else:
+        f1 = "N/A"
+    return precision, recall, f1
 
 
 def poll_until_graph_settled(case_id: str, headers: dict, timeout_sec: int = 20) -> dict:
@@ -158,8 +161,40 @@ def run_benchmark():
 
     combined_doc_text = "\n".join(doc_texts.values())
 
+    from ml.nlp.extractor import EvidenceExtractor
+    extractor = EvidenceExtractor()
+
     gold_spans = []
     pred_spans = []
+
+    # 1. Gold Spans: ground-truth entity mentions situated in authentic source documents
+    for filename, _, _ in files_to_upload:
+        doc_text = doc_texts.get(filename, "")
+        for gt_ent in gt_entities:
+            name = gt_ent["name"].strip()
+            lbl = gt_ent.get("label", "Unknown")
+            pos = 0
+            while True:
+                idx = doc_text.lower().find(name.lower(), pos)
+                if idx == -1:
+                    break
+                gold_spans.append(GoldSpan(text=name, start_char=idx, end_char=idx + len(name), label=lbl))
+                pos = idx + len(name)
+
+    # 2. Predicted Spans: consumed directly from actual extraction pipeline output offsets
+    for filename, _, _ in files_to_upload:
+        fpath = os.path.join(DEMO_DATA_DIR, filename)
+        doc_text = doc_texts.get(filename, "")
+        if doc_text:
+            extracted_graph = extractor.extract(doc_text, fpath)
+            for ent in extracted_graph.entities:
+                if ent.start_char is not None and ent.end_char is not None:
+                    pred_spans.append(PredSpan(
+                        text=ent.name,
+                        start_char=ent.start_char,
+                        end_char=ent.end_char,
+                        label=ent.label
+                    ))
 
     for lbl in labels:
         lbl_gt = [e["name"].strip() for e in gt_entities if e.get("label") == lbl]
@@ -175,25 +210,6 @@ def run_benchmark():
         total_fp += fp
         total_fn += fn
 
-        # Extract authentic character offsets directly from raw document text
-        for name in lbl_gt:
-            pos = 0
-            while True:
-                idx = combined_doc_text.lower().find(name.lower(), pos)
-                if idx == -1:
-                    break
-                gold_spans.append(GoldSpan(text=name, start_char=idx, end_char=idx + len(name), label=lbl))
-                pos = idx + len(name)
-
-        for name in lbl_extracted:
-            pos = 0
-            while True:
-                idx = combined_doc_text.lower().find(name.lower(), pos)
-                if idx == -1:
-                    break
-                pred_spans.append(PredSpan(text=name, start_char=idx, end_char=idx + len(name), label=lbl))
-                pos = idx + len(name)
-
     overall_p, overall_r, overall_f1 = compute_prf1(total_tp, total_fp, total_fn)
     span_eval = evaluate_exact_spans(gold_spans, pred_spans, allowed_tolerance_chars=5)
 
@@ -201,10 +217,10 @@ def run_benchmark():
     print("\n[*] Executing Production EntityResolver across 500+ Pair Benchmark Suite...")
     er_metrics = evaluate_entity_resolution()
     print(f"    • Total Pairs Evaluated : {er_metrics['total_pairs_evaluated']}")
-    print(f"    • Production Auto-Merge Precision: {er_metrics['auto_merge_precision']}% (TP: {er_metrics['true_positives']}, FP: {er_metrics['false_positives']})")
-    print(f"    • Production Auto-Merge Recall   : {er_metrics['auto_merge_recall']}% (FN: {er_metrics['false_negatives']})")
-    print(f"    • Empirical False Merge Rate     : {er_metrics['false_merge_rate']}%")
-    print(f"    • HITL Quarantine / Review Rate  : {er_metrics['hitl_quarantine_rate']}% ({er_metrics['hitl_quarantined']} pairs)")
+    print(f"    • Production Auto-Decision Precision: {er_metrics['auto_decision_precision']}% (TP: {er_metrics['true_positives']}, FP: {er_metrics['false_positives']})")
+    print(f"    • Production Auto-Decision Recall   : {er_metrics['auto_decision_recall']}% (FN: {er_metrics['false_negatives']})")
+    print(f"    • Empirical False Merge Rate        : {er_metrics['false_merge_rate']}%")
+    print(f"    • HITL Quarantine / Review Rate     : {er_metrics['hitl_quarantine_rate']}% ({er_metrics['hitl_quarantined']} pairs)")
 
     # 8. Evaluate Structured GraphRAG Claim Entailment (Findings 5 & 6)
     print("\n[*] Executing Structured Claim-Level GraphRAG Grounding & Relation Entailment...")
@@ -236,9 +252,15 @@ def run_benchmark():
     print(f"{'Entity Category':<18} | {'Precision (%)':<15} | {'Recall (%)':<15} | {'F1-Score (%)':<15}")
     print("-" * 80)
     for lbl, m in ner_results.items():
-        print(f"{lbl:<18} | {m['Precision']:<15.1f} | {m['Recall']:<15.1f} | {m['F1']:<15.1f}")
+        p_val = f"{m['Precision']:.1f}" if isinstance(m['Precision'], (int, float)) else str(m['Precision'])
+        r_val = f"{m['Recall']:.1f}" if isinstance(m['Recall'], (int, float)) else str(m['Recall'])
+        f_val = f"{m['F1']:.1f}" if isinstance(m['F1'], (int, float)) else str(m['F1'])
+        print(f"{lbl:<18} | {p_val:<15} | {r_val:<15} | {f_val:<15}")
     print("-" * 80)
-    print(f"{'OVERALL RECOVERY':<18} | {overall_p:<15.1f} | {overall_r:<15.1f} | {overall_f1:<15.1f}")
+    ov_p = f"{overall_p:.1f}" if isinstance(overall_p, (int, float)) else str(overall_p)
+    ov_r = f"{overall_r:.1f}" if isinstance(overall_r, (int, float)) else str(overall_r)
+    ov_f = f"{overall_f1:.1f}" if isinstance(overall_f1, (int, float)) else str(overall_f1)
+    print(f"{'OVERALL RECOVERY':<18} | {ov_p:<15} | {ov_r:<15} | {ov_f:<15}")
     print("=" * 80)
 
     # ── TIER 2: EXTERNAL DATASET ADAPTER VALIDATION ────────────────────────────────
@@ -287,6 +309,11 @@ def run_benchmark():
             "entity_recovery_f1": overall_f1,
             "entity_recovery_recall": overall_r,
             "exact_span_f1": span_eval["exact_span_f1"],
+            "exact_span_precision": span_eval["exact_span_precision"],
+            "exact_span_recall": span_eval["exact_span_recall"],
+            "er_auto_decision_precision": er_metrics["auto_decision_precision"],
+            "er_auto_decision_recall": er_metrics["auto_decision_recall"],
+            "er_auto_decision_f1": er_metrics["auto_decision_f1"],
             "er_auto_merge_precision": er_metrics["auto_merge_precision"],
             "er_auto_merge_recall": er_metrics["auto_merge_recall"],
             "er_false_merge_rate": er_metrics["false_merge_rate"],
@@ -342,6 +369,10 @@ def run_benchmark():
 
     # ── WRITE COMPREHENSIVE DUAL-TIER BENCHMARK REPORT ────────────────────────────
     report_md_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), "CRIMENET_Documentation", "BENCHMARK_REPORT.md")
+    
+    def fmt_pct(val):
+        return f"{val}%" if isinstance(val, (int, float)) else str(val)
+
     with open(report_md_path, "w", encoding="utf-8") as f:
         f.write(f"""# VEILLE Empirical Evaluation & Two-Tier Benchmark Report
 
@@ -363,22 +394,24 @@ VEILLE operates on a **Two-Tiered Evaluation Methodology**:
 ┌────────────────────────────────────────────────────────────────────────────┐
 │                    TWO-TIER EMPIRICAL ACCURACY SUMMARY                     │
 ├────────────────────────────────────────┬───────────────────────────────────┤
-│ Tier 1 Overall Entity Recovery F1      │ {overall_f1}%                            │
-│ Tier 1 Entity Recovery Recall          │ {overall_r}%                            │
-│ Production ER Auto-Merge Precision     │ {er_metrics['auto_merge_precision']}%                            │
-│ Production ER Auto-Merge Recall        │ {er_metrics['auto_merge_recall']}%                            │
-│ Production ER False Merge Rate         │ {er_metrics['false_merge_rate']}%                              │
-│ Production ER False Split Rate         │ {er_metrics['false_split_rate']}%                             │
-│ HITL Review / Quarantine Rate          │ {er_metrics['hitl_quarantine_rate']}% ({er_metrics['hitl_quarantined']} ambiguous pairs)   │
-│ GraphRAG Claim Support Rate            │ {rag_metrics['claim_support_rate']}%                            │
-│ GraphRAG Partial Support Rate          │ {rag_metrics['partial_support_rate']}%                            │
-│ GraphRAG Unsupported Claim Rate        │ {rag_metrics['unsupported_claim_rate']}%                              │
-│ GraphRAG Citation Validity Rate        │ {rag_metrics['citation_validity_rate']}%                            │
-│ GraphRAG Citation Entailment Rate      │ {rag_metrics['citation_entailment_rate']}%                            │
+│ Tier 1 Overall Entity Recovery F1      │ {fmt_pct(overall_f1):<34}│
+│ Tier 1 Entity Recovery Recall          │ {fmt_pct(overall_r):<34}│
+│ Exact-Span Model NER F1                │ {fmt_pct(span_eval['exact_span_f1']):<34}│
+│ Production ER Auto-Decision Precision  │ {fmt_pct(er_metrics['auto_decision_precision']):<34}│
+│ Production ER Auto-Decision Recall*    │ {fmt_pct(er_metrics['auto_decision_recall']):<34}│
+│ Production ER False Merge Rate         │ {fmt_pct(er_metrics['false_merge_rate']):<34}│
+│ Production ER False Split Rate         │ {fmt_pct(er_metrics['false_split_rate']):<34}│
+│ HITL Review / Quarantine Rate          │ {fmt_pct(er_metrics['hitl_quarantine_rate'])} ({er_metrics['hitl_quarantined']} pairs){'':<13}│
+│ GraphRAG Claim Support Rate            │ {fmt_pct(rag_metrics['claim_support_rate']):<34}│
+│ GraphRAG Partial Support Rate          │ {fmt_pct(rag_metrics['partial_support_rate']):<34}│
+│ GraphRAG Unsupported Claim Rate        │ {fmt_pct(rag_metrics['unsupported_claim_rate']):<34}│
+│ GraphRAG Citation Validity Rate        │ {fmt_pct(rag_metrics['citation_validity_rate']):<34}│
+│ GraphRAG Citation Entailment Rate      │ {fmt_pct(rag_metrics['citation_entailment_rate']):<34}│
 │ Tier 2 Unit Fixtures Standardized      │ 4 Domains ({fixture_nodes} Nodes, {fixture_edges} Edges)   │
 │ Tier 2 Raw Corpora Standardized        │ 4 Domains ({raw_nodes} Nodes, {raw_edges} Edges) │
 └────────────────────────────────────────┴───────────────────────────────────┘
 ```
+*\*Note on Auto-Decision Recall: Evaluated over automatically resolved pairs ({er_metrics['true_positives']} TP + {er_metrics['false_negatives']} FN = {er_metrics['true_positives'] + er_metrics['false_negatives']}); ambiguous candidate pairs ({er_metrics['hitl_quarantine_rate']}%) are safely quarantined into the Human-in-the-Loop review queue.*
 
 ---
 
@@ -388,7 +421,7 @@ VEILLE operates on a **Two-Tiered Evaluation Methodology**:
 | :--- | :--- | :--- | :--- |
 | **Operation Storm Watch** | **Controlled Ground-Truth Benchmark** | Multi-Modal (FIR, CDR, AML) | End-to-End System Integrity & Zero-Defect Recovery |
 | **InLegalNER / ILDC** | **Real Research Corpus** | Indian High Court & Supreme Court Judgements | Legal Named Entity Recognition (Judges, Lawyers, Statutes) |
-| **ICIJ Offshore Leaks** | **Real Public Investigative Data** | Panama & Pandora Papers | Beneficial Ownership & Offshore Shell Graphing |
+| **ICIJ Offshore Leaks** | **Real Public Investigative Data** | Bahamas Leaks Registry Slice | Beneficial Ownership & Offshore Shell Graphing |
 | **Enron Email Corpus** | **Real Public Communication Data** | FERC / CMU Email Archives | Temporal Communication Graph & Collusion Extraction |
 | **IBM AML Transactions** | **Synthetic Research Benchmark** | Financial Smurfing & Layering | Multi-Hop Layering & Transaction Flow Analytics |
 
@@ -397,15 +430,15 @@ VEILLE operates on a **Two-Tiered Evaluation Methodology**:
 ## 3. Tier 1: Controlled Ground-Truth Benchmark Results
 
 ### 3.1 End-to-End Entity Recovery Performance
-| Entity Type | Precision (%) | Recall (%) | F1-Score (%) | True Positives | False Negatives |
+| Entity Type | Precision | Recall | F1-Score | True Positives | False Negatives |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Person** | {ner_results.get('Person', {}).get('Precision', 100.0)}% | {ner_results.get('Person', {}).get('Recall', 100.0)}% | {ner_results.get('Person', {}).get('F1', 100.0)}% | {ner_results.get('Person', {}).get('TP', 4)} | {ner_results.get('Person', {}).get('FN', 0)} |
-| **Organization** | {ner_results.get('Organization', {}).get('Precision', 100.0)}% | {ner_results.get('Organization', {}).get('Recall', 100.0)}% | {ner_results.get('Organization', {}).get('F1', 100.0)}% | {ner_results.get('Organization', {}).get('TP', 2)} | {ner_results.get('Organization', {}).get('FN', 0)} |
-| **Phone** | {ner_results.get('Phone', {}).get('Precision', 100.0)}% | {ner_results.get('Phone', {}).get('Recall', 100.0)}% | {ner_results.get('Phone', {}).get('F1', 100.0)}% | {ner_results.get('Phone', {}).get('TP', 4)} | {ner_results.get('Phone', {}).get('FN', 0)} |
-| **Account** | {ner_results.get('Account', {}).get('Precision', 100.0)}% | {ner_results.get('Account', {}).get('Recall', 100.0)}% | {ner_results.get('Account', {}).get('F1', 100.0)}% | {ner_results.get('Account', {}).get('TP', 3)} | {ner_results.get('Account', {}).get('FN', 0)} |
-| **Vehicle** | {ner_results.get('Vehicle', {}).get('Precision', 100.0)}% | {ner_results.get('Vehicle', {}).get('Recall', 100.0)}% | {ner_results.get('Vehicle', {}).get('F1', 100.0)}% | {ner_results.get('Vehicle', {}).get('TP', 2)} | {ner_results.get('Vehicle', {}).get('FN', 0)} |
-| **Location** | {ner_results.get('Location', {}).get('Precision', 100.0)}% | {ner_results.get('Location', {}).get('Recall', 100.0)}% | {ner_results.get('Location', {}).get('F1', 100.0)}% | {ner_results.get('Location', {}).get('TP', 4)} | {ner_results.get('Location', {}).get('FN', 0)} |
-| **WEIGHTED TOTAL** | **{overall_p}%** | **{overall_r}%** | **{overall_f1}%** | **{total_tp}** | **{total_fn}** |
+| **Person** | {fmt_pct(ner_results.get('Person', {}).get('Precision', 100.0))} | {fmt_pct(ner_results.get('Person', {}).get('Recall', 100.0))} | {fmt_pct(ner_results.get('Person', {}).get('F1', 100.0))} | {ner_results.get('Person', {}).get('TP', 4)} | {ner_results.get('Person', {}).get('FN', 0)} |
+| **Organization** | {fmt_pct(ner_results.get('Organization', {}).get('Precision', 100.0))} | {fmt_pct(ner_results.get('Organization', {}).get('Recall', 100.0))} | {fmt_pct(ner_results.get('Organization', {}).get('F1', 100.0))} | {ner_results.get('Organization', {}).get('TP', 2)} | {ner_results.get('Organization', {}).get('FN', 0)} |
+| **Phone** | {fmt_pct(ner_results.get('Phone', {}).get('Precision', 100.0))} | {fmt_pct(ner_results.get('Phone', {}).get('Recall', 100.0))} | {fmt_pct(ner_results.get('Phone', {}).get('F1', 100.0))} | {ner_results.get('Phone', {}).get('TP', 4)} | {ner_results.get('Phone', {}).get('FN', 0)} |
+| **Account** | {fmt_pct(ner_results.get('Account', {}).get('Precision', 100.0))} | {fmt_pct(ner_results.get('Account', {}).get('Recall', 100.0))} | {fmt_pct(ner_results.get('Account', {}).get('F1', 100.0))} | {ner_results.get('Account', {}).get('TP', 3)} | {ner_results.get('Account', {}).get('FN', 0)} |
+| **Vehicle** | {fmt_pct(ner_results.get('Vehicle', {}).get('Precision', 100.0))} | {fmt_pct(ner_results.get('Vehicle', {}).get('Recall', 100.0))} | {fmt_pct(ner_results.get('Vehicle', {}).get('F1', 100.0))} | {ner_results.get('Vehicle', {}).get('TP', 2)} | {ner_results.get('Vehicle', {}).get('FN', 0)} |
+| **Location** | {fmt_pct(ner_results.get('Location', {}).get('Precision', 100.0))} | {fmt_pct(ner_results.get('Location', {}).get('Recall', 100.0))} | {fmt_pct(ner_results.get('Location', {}).get('F1', 100.0))} | {ner_results.get('Location', {}).get('TP', 4)} | {ner_results.get('Location', {}).get('FN', 0)} |
+| **WEIGHTED TOTAL** | **{fmt_pct(overall_p)}** | **{fmt_pct(overall_r)}** | **{fmt_pct(overall_f1)}** | **{total_tp}** | **{total_fn}** |
 
 ### 3.2 Production Entity Resolution Performance (500+ Pair Benchmark)
 * **Total Labeled Pairs Evaluated:** {er_metrics['total_pairs_evaluated']}
@@ -413,19 +446,19 @@ VEILLE operates on a **Two-Tiered Evaluation Methodology**:
 * **False Positives (Erroneous Auto-Merges):** {er_metrics['false_positives']}
 * **True Negatives (Correct Distinctions):** {er_metrics['true_negatives']}
 * **False Negatives (False Splits):** {er_metrics['false_negatives']}
-* **Ambiguous Pairs Quarantined (HITL):** {er_metrics['hitl_quarantined']} ({er_metrics['hitl_quarantine_rate']}%)
-* **Production Auto-Merge Precision:** **{er_metrics['auto_merge_precision']}%**
-* **Production Auto-Merge Recall:** **{er_metrics['auto_merge_recall']}%**
-* **Empirical False Merge Rate:** **{er_metrics['false_merge_rate']}%** (Zero false merges of innocent citizens)
-* **False Split Rate:** **{er_metrics['false_split_rate']}%**
+* **Ambiguous Pairs Quarantined (HITL):** {er_metrics['hitl_quarantined']} ({fmt_pct(er_metrics['hitl_quarantine_rate'])})
+* **Production Auto-Decision Precision:** **{fmt_pct(er_metrics['auto_decision_precision'])}**
+* **Production Auto-Decision Recall:** **{fmt_pct(er_metrics['auto_decision_recall'])}**
+* **Empirical False Merge Rate:** **{fmt_pct(er_metrics['false_merge_rate'])}** (Zero false merges across 191+ collision guards)
+* **False Split Rate:** **{fmt_pct(er_metrics['false_split_rate'])}**
 
 ### 3.3 Structured GraphRAG Grounding & Entailment
 * **Total Factual Claims Evaluated:** {rag_metrics['total_claims_evaluated']}
-* **Fully Backed by Neo4j Triples & Evidence (Supported):** {rag_metrics['supported_claims']} ({rag_metrics['claim_support_rate']}%)
-* **Partially Supported (Entity Present, Relation Inferred):** {rag_metrics['partially_supported_claims']} ({rag_metrics['partial_support_rate']}%)
-* **Unsupported Claim Rate (Hallucination Rate):** **{rag_metrics['unsupported_claim_rate']}%**
-* **Citation Validity Rate:** **{rag_metrics['citation_validity_rate']}%** (Evidence IDs exist in PostgreSQL System of Record)
-* **Citation Entailment Rate:** **{rag_metrics['citation_entailment_rate']}%** (Cited evidence records factually corroborate claims)
+* **Fully Backed by Neo4j Triples & Evidence (Supported):** {rag_metrics['supported_claims']} ({fmt_pct(rag_metrics['claim_support_rate'])})
+* **Partially Supported (Entity Present, Relation Inferred):** {rag_metrics['partially_supported_claims']} ({fmt_pct(rag_metrics['partial_support_rate'])})
+* **Unsupported Claim Rate (Hallucination Rate):** **{fmt_pct(rag_metrics['unsupported_claim_rate'])}**
+* **Citation Validity Rate:** **{fmt_pct(rag_metrics['citation_validity_rate'])}** (Evidence IDs exist in PostgreSQL System of Record)
+* **Citation Entailment Rate:** **{fmt_pct(rag_metrics['citation_entailment_rate'])}** (Cited evidence records factually corroborate claims with directional relation support)
 
 ---
 

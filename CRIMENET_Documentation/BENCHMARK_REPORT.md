@@ -1,8 +1,8 @@
 # VEILLE Empirical Evaluation & Two-Tier Benchmark Report
 
-> **Experiment ID:** `EXP_58AC821A`  
-> **Git Commit:** `6e05fa3fe5581ba22ca4c84d37120f035b0ca0f5`  
-> **Execution Date:** 2026-09-06T15:38:58.033144+00:00  
+> **Experiment ID:** `EXP_E32C5A87`  
+> **Git Commit:** `ec69bd05f2134d15ff69f6ffbe93863f7dfa69bf`  
+> **Execution Date:** 2026-09-06T16:03:52.987532+00:00  
 > **Evaluation Mode:** Dual-Tier (Controlled Ground-Truth Validation + External Canonical Adapter Standardization)  
 > **Status:** Research Prototype — Controlled Empirical Validation  
 
@@ -20,20 +20,22 @@ VEILLE operates on a **Two-Tiered Evaluation Methodology**:
 ├────────────────────────────────────────┬───────────────────────────────────┤
 │ Tier 1 Overall Entity Recovery F1      │ 62.96%                            │
 │ Tier 1 Entity Recovery Recall          │ 89.47%                            │
-│ Production ER Auto-Merge Precision     │ 100.0%                            │
-│ Production ER Auto-Merge Recall        │ 95.58%                            │
+│ Exact-Span Model NER F1                │ 41.02%                            │
+│ Production ER Auto-Decision Precision  │ 100.0%                            │
+│ Production ER Auto-Decision Recall*    │ 95.58%                            │
 │ Production ER False Merge Rate         │ 0.0%                              │
 │ Production ER False Split Rate         │ 4.42%                             │
-│ HITL Review / Quarantine Rate          │ 17.91% (96 ambiguous pairs)   │
-│ GraphRAG Claim Support Rate            │ 0.0%                            │
-│ GraphRAG Partial Support Rate          │ 0.0%                            │
-│ GraphRAG Unsupported Claim Rate        │ 100.0%                              │
+│ HITL Review / Quarantine Rate          │ 17.91% (96 pairs)             │
+│ GraphRAG Claim Support Rate            │ 0.0%                              │
+│ GraphRAG Partial Support Rate          │ 0.0%                              │
+│ GraphRAG Unsupported Claim Rate        │ 100.0%                            │
 │ GraphRAG Citation Validity Rate        │ 100.0%                            │
 │ GraphRAG Citation Entailment Rate      │ 100.0%                            │
 │ Tier 2 Unit Fixtures Standardized      │ 4 Domains (33 Nodes, 26 Edges)   │
 │ Tier 2 Raw Corpora Standardized        │ 4 Domains (336 Nodes, 209 Edges) │
 └────────────────────────────────────────┴───────────────────────────────────┘
 ```
+*\*Note on Auto-Decision Recall: Evaluated over automatically resolved pairs (238 TP + 11 FN = 249); ambiguous candidate pairs (17.91%) are safely quarantined into the Human-in-the-Loop review queue.*
 
 ---
 
@@ -43,7 +45,7 @@ VEILLE operates on a **Two-Tiered Evaluation Methodology**:
 | :--- | :--- | :--- | :--- |
 | **Operation Storm Watch** | **Controlled Ground-Truth Benchmark** | Multi-Modal (FIR, CDR, AML) | End-to-End System Integrity & Zero-Defect Recovery |
 | **InLegalNER / ILDC** | **Real Research Corpus** | Indian High Court & Supreme Court Judgements | Legal Named Entity Recognition (Judges, Lawyers, Statutes) |
-| **ICIJ Offshore Leaks** | **Real Public Investigative Data** | Panama & Pandora Papers | Beneficial Ownership & Offshore Shell Graphing |
+| **ICIJ Offshore Leaks** | **Real Public Investigative Data** | Bahamas Leaks Registry Slice | Beneficial Ownership & Offshore Shell Graphing |
 | **Enron Email Corpus** | **Real Public Communication Data** | FERC / CMU Email Archives | Temporal Communication Graph & Collusion Extraction |
 | **IBM AML Transactions** | **Synthetic Research Benchmark** | Financial Smurfing & Layering | Multi-Hop Layering & Transaction Flow Analytics |
 
@@ -52,7 +54,7 @@ VEILLE operates on a **Two-Tiered Evaluation Methodology**:
 ## 3. Tier 1: Controlled Ground-Truth Benchmark Results
 
 ### 3.1 End-to-End Entity Recovery Performance
-| Entity Type | Precision (%) | Recall (%) | F1-Score (%) | True Positives | False Negatives |
+| Entity Type | Precision | Recall | F1-Score | True Positives | False Negatives |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Person** | 100.0% | 100.0% | 100.0% | 4 | 0 |
 | **Organization** | 50.0% | 100.0% | 66.67% | 2 | 0 |
@@ -69,18 +71,18 @@ VEILLE operates on a **Two-Tiered Evaluation Methodology**:
 * **True Negatives (Correct Distinctions):** 191
 * **False Negatives (False Splits):** 11
 * **Ambiguous Pairs Quarantined (HITL):** 96 (17.91%)
-* **Production Auto-Merge Precision:** **100.0%**
-* **Production Auto-Merge Recall:** **95.58%**
-* **Empirical False Merge Rate:** **0.0%** (Zero false merges of innocent citizens)
+* **Production Auto-Decision Precision:** **100.0%**
+* **Production Auto-Decision Recall:** **95.58%**
+* **Empirical False Merge Rate:** **0.0%** (Zero false merges across 191+ collision guards)
 * **False Split Rate:** **4.42%**
 
 ### 3.3 Structured GraphRAG Grounding & Entailment
-* **Total Factual Claims Evaluated:** 1
+* **Total Factual Claims Evaluated:** 3
 * **Fully Backed by Neo4j Triples & Evidence (Supported):** 0 (0.0%)
 * **Partially Supported (Entity Present, Relation Inferred):** 0 (0.0%)
 * **Unsupported Claim Rate (Hallucination Rate):** **100.0%**
 * **Citation Validity Rate:** **100.0%** (Evidence IDs exist in PostgreSQL System of Record)
-* **Citation Entailment Rate:** **100.0%** (Cited evidence records factually corroborate claims)
+* **Citation Entailment Rate:** **100.0%** (Cited evidence records factually corroborate claims with directional relation support)
 
 ---
 
@@ -109,7 +111,7 @@ VEILLE operates on a **Two-Tiered Evaluation Methodology**:
 ## 5. Machine-Readable Experiment Artifacts
 
 The following machine-readable evaluation artifacts have been generated in `artifacts/`:
-* `experiment_manifest.json` — Immutable run metadata, Git commit `6e05fa3fe5581ba22ca4c84d37120f035b0ca0f5`, and configuration parameters.
+* `experiment_manifest.json` — Immutable run metadata, Git commit `ec69bd05f2134d15ff69f6ffbe93863f7dfa69bf`, and configuration parameters.
 * `metrics.json` — Consolidated headline metrics across both tiers.
 * `er_results.json` — Full confusion matrix and per-category breakdown for Entity Resolution.
 * `rag_results.json` — Claim decomposition and citation entailment breakdown for GraphRAG.

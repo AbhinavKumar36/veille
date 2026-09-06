@@ -1,7 +1,7 @@
-# VEILLE // INTEL-ENGINE (v4.0 PROD)
+# VEILLE // Forensic Intelligence Platform (SIH Research Prototype)
 ### National Security, Threat Matrix & Forensic Relationship Fusion Platform
 
-VEILLE (formerly CRIMENET) is an enterprise-grade forensic intelligence and multi-source relationship analysis platform. It is engineered to ingest heterogeneous, semi-structured, and unstructured intelligence feeds—including police First Information Reports (FIRs), Telecom Call Detail Records (CDRs), financial transaction ledgers (hawala & banking), interrogation transcripts, SIGINT packet streams, and audio intercepts—and fuse them into a coherent, high-confidence knowledge graph.
+VEILLE (formerly CRIMENET) is an investigative forensic intelligence and multi-source relationship analysis platform. It is engineered to ingest heterogeneous, semi-structured, and unstructured intelligence feeds—including police First Information Reports (FIRs), Telecom Call Detail Records (CDRs), financial transaction ledgers (hawala & banking), interrogation transcripts, SIGINT packet streams, and audio intercepts—and fuse them into a coherent, high-confidence knowledge graph.
 
 ---
 
@@ -80,12 +80,12 @@ VEILLE employs a **Dual-Lakehouse / Polyglot Persistence Pattern** that cleanly 
 
 ## 4. Dataset Taxonomy & Provenance
 
-VEILLE categorizes all evaluation data into three distinct tiers:
+VEILLE categorizes all evaluation data into three distinct tiers with fail-closed acquisition integrity:
 
 1. **Real External Datasets (Public / Research)**:
    - **InLegalNER**: Official Indian High Court & Supreme Court legal judgments corpus (OpenNyAI).
-   - **ICIJ Offshore Leaks**: Panama & Pandora Papers entity registry slice (ODbL / CC-BY-SA).
-   - **Enron Email Corpus**: FERC / CMU corporate email records with authentic communication headers.
+   - **ICIJ Offshore Leaks**: Bahamas Leaks official entity registry slice (ODbL / CC-BY-SA).
+   - **Enron Email Corpus**: FERC / CMU corporate email records with authentic RFC-822 communication headers.
 2. **Synthetic Research Benchmarks**:
    - **IBM AMLWorld**: Controlled transaction graph matrix for multi-hop layering and smurfing detection.
 3. **Controlled Ground-Truth Benchmark**:

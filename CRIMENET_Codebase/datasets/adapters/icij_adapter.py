@@ -115,14 +115,16 @@ class ICIJOffshoreAdapter(BaseDatasetAdapter):
             target_ent = node_registry.get(target_id)
 
             if source_ent and target_ent:
-                # Normalize link types
+                # Normalize link types preserving investigative semantics
                 clean_link = "ASSOCIATED_WITH"
-                if any(k in link_type.lower() for k in ["owner", "shareholder", "director", "beneficiary", "owns"]):
-                    clean_link = "OWNS"
+                if any(k in link_type.lower() for k in ["officer", "director", "shareholder", "beneficiary", "owner"]):
+                    clean_link = "OFFICER_OF"
+                elif any(k in link_type.lower() for k in ["intermediary", "service_provider", "agent"]):
+                    clean_link = "INTERMEDIARY_OF"
                 elif any(k in link_type.lower() for k in ["location", "registered_at", "address"]):
                     clean_link = "LOCATED_AT"
-                elif any(k in link_type.lower() for k in ["intermediary", "service_provider"]):
-                    clean_link = "ASSOCIATED_WITH"
+                elif any(k in link_type.lower() for k in ["owns", "holding"]):
+                    clean_link = "OWNS"
 
                 relationships.append(CanonicalRelationship(
                     source_id=source_ent.id,

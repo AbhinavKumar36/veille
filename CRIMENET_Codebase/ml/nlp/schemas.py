@@ -34,6 +34,14 @@ class ExtractedEntity(BaseModel):
     name: str = Field(
         description="The literal text representation of the entity as it appears in the document."
     )
+    start_char: Optional[int] = Field(
+        default=None,
+        description="Starting character offset in source document"
+    )
+    end_char: Optional[int] = Field(
+        default=None,
+        description="Ending character offset in source document"
+    )
     properties: Optional[Dict[str, Any]] = Field(
         default_factory=dict,
         description="Additional attributes. E.g. {age: 45} for Person, {plate: 'MH04-1234'} for Vehicle, {lat: 19.076, lng: 72.877} for Location."

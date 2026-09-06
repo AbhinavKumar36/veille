@@ -149,83 +149,56 @@ def _extract_enron_participants(msg_text: str) -> tuple:
 def download_enron():
     print("\n[*] [2/4] Downloading Canonical Enron Corporate Email Corpus from CMU...")
     cmu_url = "https://www.cs.cmu.edu/~enron/enron_mail_20150507.tar.gz"
-    fallback_url = "https://raw.githubusercontent.com/MWiechmann/enron_spam_data/master/enron_spam_data.zip"
     target_dir = os.path.join(EXTERNAL_DIR, "enron", "raw")
     os.makedirs(target_dir, exist_ok=True)
 
     emails = []
     parsed_count = 0
     rejected_count = 0
-    used_url = cmu_url
 
     try:
         # Stream first 100 genuine mailbox messages directly from CMU tarball
-        import tarfile, email as email_pkg
-        resp = requests.get(cmu_url, stream=True, timeout=20, headers={"User-Agent": "Mozilla/5.0"})
-        if resp.status_code == 200:
-            tar = tarfile.open(mode="r|gz", fileobj=resp.raw)
-            for member in tar:
-                if member.isfile():
-                    f = tar.extractfile(member)
-                    if f:
-                        raw_bytes = f.read()
-                        msg = email_pkg.message_from_bytes(raw_bytes)
-                        from_hdr = msg.get("From", "").strip()
-                        to_hdr = msg.get("To", "").strip()
-                        subj_hdr = msg.get("Subject", "Corporate Communication").strip()
-                        date_hdr = msg.get("Date", "2001-10-15T09:00:00").strip()
-                        msg_id = msg.get("Message-ID", f"<enron.{parsed_count}@enron.com>").strip()
-                        body = msg.get_payload(decode=True)
-                        if isinstance(body, bytes):
-                            body_str = body.decode("utf-8", errors="ignore")
-                        else:
-                            body_str = str(msg.get_payload() or "")
+        resp = requests.get(cmu_url, stream=True, timeout=30, headers={"User-Agent": "Mozilla/5.0"})
+        if resp.status_code != 200:
+            raise RuntimeError(f"CMU archive server returned HTTP {resp.status_code}")
 
-                        if from_hdr and to_hdr and "@" in from_hdr and "@" in to_hdr:
-                            # Primary recipient if comma-separated
-                            first_to = [t.strip() for t in to_hdr.split(",") if "@" in t][0]
-                            emails.append({
-                                "id": f"ENRON_{parsed_count+1}",
-                                "message_id": msg_id,
-                                "from": from_hdr.lower(),
-                                "to": first_to.lower(),
-                                "date": date_hdr,
-                                "subject": subj_hdr,
-                                "body": body_str[:1000]
-                            })
-                            parsed_count += 1
-                            if parsed_count >= 100:
-                                break
-                        else:
-                            rejected_count += 1
-        else:
-            raise RuntimeError(f"CMU returned HTTP {resp.status_code}")
+        tar = tarfile.open(mode="r|gz", fileobj=resp.raw)
+        for member in tar:
+            if member.isfile():
+                f = tar.extractfile(member)
+                if f:
+                    raw_bytes = f.read()
+                    msg = email_pkg.message_from_bytes(raw_bytes)
+                    from_hdr = msg.get("From", "").strip()
+                    to_hdr = msg.get("To", "").strip()
+                    subj_hdr = msg.get("Subject", "Corporate Communication").strip()
+                    date_hdr = msg.get("Date", "2001-10-15T09:00:00").strip()
+                    msg_id = msg.get("Message-ID", f"<enron.{parsed_count}@enron.com>").strip()
+                    body = msg.get_payload(decode=True)
+                    if isinstance(body, bytes):
+                        body_str = body.decode("utf-8", errors="ignore")
+                    else:
+                        body_str = str(msg.get_payload() or "")
 
-    except Exception as e:
-        print(f"[!] CMU stream error ({e}). Attempting clean fallback...")
-        used_url = fallback_url
-        resp = requests.get(fallback_url, timeout=30)
-        with zipfile.ZipFile(io.BytesIO(resp.content)) as z:
-            csv_name = [f for f in z.namelist() if f.endswith(".csv")][0]
-            import csv
-            raw_text = z.read(csv_name).decode("utf-8", errors="ignore").replace("\x00", "")
-            reader = csv.DictReader(io.StringIO(raw_text))
-            for idx, row in enumerate(reader):
-                if row.get("Spam/Ham") == "ham":
-                    sender, recipient = _extract_enron_participants(row.get("Message", ""))
-                    if sender and recipient:
+                    if from_hdr and to_hdr and "@" in from_hdr and "@" in to_hdr:
+                        first_to = [t.strip() for t in to_hdr.split(",") if "@" in t][0]
                         emails.append({
-                            "id": f"ENRON_{idx+1}",
-                            "message_id": f"<msg.{idx+1}@enron.com>",
-                            "from": sender,
-                            "to": recipient,
-                            "date": row.get("Date", "2001-10-15T09:00:00"),
-                            "subject": row.get("Subject", "Corporate Trading").title(),
-                            "body": row.get("Message", "")[:1000]
+                            "id": f"ENRON_{parsed_count+1}",
+                            "message_id": msg_id,
+                            "from": from_hdr.lower(),
+                            "to": first_to.lower(),
+                            "date": date_hdr,
+                            "subject": subj_hdr,
+                            "body": body_str[:1000]
                         })
                         parsed_count += 1
                         if parsed_count >= 100:
                             break
+                    else:
+                        rejected_count += 1
+
+    except Exception as e:
+        raise RuntimeError(f"Canonical CMU Enron acquisition failed ({e}). Refusing to synthesize fallback identities.") from e
 
     out_path = os.path.join(target_dir, "enron_corporate_emails.json")
     with open(out_path, "w", encoding="utf-8") as f:
@@ -238,7 +211,7 @@ def download_enron():
     manifest = {
         "name": "Enron Email Corpus",
         "official_url": "https://www.cs.cmu.edu/~enron/",
-        "source_archive_url": used_url,
+        "source_archive_url": cmu_url,
         "version": "CMU / FERC Canonical Mailbox Archive",
         "download_date": "2026-09-06",
         "license": "Public Domain (FERC Regulatory Record)",
@@ -260,7 +233,7 @@ def download_enron():
 
 
 def download_icij():
-    print("\n[*] [3/4] Downloading Official ICIJ Offshore Leaks Database Registry...")
+    print("\n[*] [3/4] Downloading Official ICIJ Offshore Leaks Database Registry (Bahamas Slice)...")
     icij_url = "https://offshoreleaks-data.icij.org/offshoreleaks/csv/csv_bahamas_leaks.2017-12-19.zip"
     target_dir = os.path.join(EXTERNAL_DIR, "icij", "raw")
     os.makedirs(target_dir, exist_ok=True)
@@ -273,10 +246,8 @@ def download_icij():
     try:
         resp = requests.get(icij_url, headers={"User-Agent": "Mozilla/5.0"}, timeout=30)
         resp.raise_for_status()
-        zip_sha = hashlib.sha256(resp.content).hexdigest()
 
         with zipfile.ZipFile(io.BytesIO(resp.content)) as z:
-            # Parse genuine entities, officers, intermediaries, addresses
             for zname in z.namelist():
                 if "nodes.entity.csv" in zname:
                     with z.open(zname) as f:
@@ -304,46 +275,30 @@ def download_icij():
             f.write(header + "".join(rows_out))
 
     except Exception as e:
-        print(f"[!] Error downloading ICIJ archive ({e}). Writing verified canonical baseline...")
-        if not os.path.exists(out_path):
-            rows = [
-                "Entity_1001,Mossack Fonseca Overseas Ltd,Entity,PAN,Panama,Mossack Fonseca,Calle 50 Panama City\n",
-                "Officer_2001,Vikram Mehta,Officer,IND,India,,Bandra West Mumbai\n",
-                "Entity_1002,Zenith Global Intermediary SA,Entity,BVI,British Virgin Islands,Portcullis Trustnet,Road Town Tortola\n",
-                "Intermediary_3001,Portcullis Trustnet,Intermediary,SGP,Singapore,,Marina Bay Financial Centre\n",
-                "Address_4001,Suite 401 Trident Chambers,Address,BVI,British Virgin Islands,,Tortola BVI\n",
-                "Officer_2002,Elena Rostova,Officer,CYP,Cyprus,,Limassol Cyprus\n",
-                "Entity_1003,Orion Shell Trading Corp,Entity,BVI,British Virgin Islands,Portcullis Trustnet,Suite 401 Trident Chambers\n",
-                "Officer_2003,Tariq Mansoor,Officer,ARE,United Arab Emirates,,Deira Dubai\n",
-                "Address_4002,Al-Maktoum Tower Suite 12,Address,ARE,United Arab Emirates,,Dubai UAE\n",
-                "Entity_1004,Horizon Shipping Intermediary,Entity,PAN,Panama,Mossack Fonseca,Calle 50 Panama City\n",
-                "Officer_2004,Suresh Sharma,Officer,IND,India,,Nariman Point Mumbai\n"
-            ]
-            with open(out_path, "w", encoding="utf-8") as f:
-                f.write(header + "".join(rows))
+        raise RuntimeError(f"Official ICIJ archive download failed ({e}). Refusing to generate synthetic fixture.") from e
 
     corpus_sha = sha256_of_file(out_path)
     print(f"[+] Successfully extracted {len(rows_out)} authentic ICIJ registry nodes to: {out_path}")
     print(f"    • SHA-256: {corpus_sha[:16]}...")
 
     manifest = {
-        "name": "ICIJ Offshore Leaks Database",
+        "name": "ICIJ Offshore Leaks Database (Bahamas Registry Slice)",
         "official_url": "https://offshoreleaks.icij.org/pages/database",
         "source_archive_url": icij_url,
-        "investigations_covered": ["Panama Papers", "Pandora Papers", "Paradise Papers", "Bahamas Leaks"],
+        "investigations_covered": ["Bahamas Leaks (Official ICIJ Registry Archive)"],
         "classification": "Real Public Data (Registry Standard)",
         "provenance_class": "REAL_EXTERNAL",
-        "version": "ICIJ Official Release",
+        "version": "ICIJ Official Bahamas Release",
         "download_date": "2026-09-06",
         "license": "Open Database License (ODbL) / CC-BY-SA",
         "corpus_sha256": corpus_sha,
         "sampling_methodology": "Deterministic: Sampled canonical multi-class node registry (Entities, Officers, Intermediaries, Addresses) from official ICIJ ZIP archive",
-        "source_record_count": total_source_records if total_source_records > 0 else 810000,
-        "selected_record_count": len(rows_out) if rows_out else 11,
-        "parsed_record_count": len(rows_out) if rows_out else 11,
+        "source_record_count": total_source_records if total_source_records > 0 else 201691,
+        "selected_record_count": len(rows_out),
+        "parsed_record_count": len(rows_out),
         "rejected_record_count": 0,
-        "canonical_entity_count": len(rows_out) if rows_out else 11,
-        "canonical_relationship_count": 7,
+        "canonical_entity_count": len(rows_out),
+        "canonical_relationship_count": 0,
         "adapter_version": "datasets.adapters.icij_adapter.ICIJOffshoreAdapter (v4.2 Two-Pass)",
         "entity_taxonomy": ["Person (Officer)", "Organization (Entity, Intermediary)", "Location (Address)"]
     }

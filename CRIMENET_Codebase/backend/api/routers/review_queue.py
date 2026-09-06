@@ -181,43 +181,48 @@ def merge_entity(
                     match_id=item["match_id"],
                 )
             else:
-                # 2. Native Cypher preserving relationship types & properties
+                # 2. Native Cypher dynamically preserving exact relationship types & properties
+                # First fetch all candidate relationships to reconstruct them with exact types
+                rels = session.run(
+                    """
+                    MATCH (candidate {id: $candidate_id})-[r]->(other)
+                    WHERE other.id <> $match_id
+                    RETURN type(r) AS rel_type, properties(r) AS props, other.id AS other_id, 'out' AS direction
+                    UNION
+                    MATCH (other)-[r]->(candidate {id: $candidate_id})
+                    WHERE other.id <> $match_id
+                    RETURN type(r) AS rel_type, properties(r) AS props, other.id AS other_id, 'in' AS direction
+                    """,
+                    candidate_id=item["candidate_id"],
+                    match_id=item["match_id"],
+                ).data()
+
+                # Reconnect relationships with exact original types
+                for rel in rels:
+                    rel_type = re.sub(r"[^A-Za-z0-9_]", "", rel["rel_type"]) or "ASSOCIATED_WITH"
+                    props = rel.get("props") or {}
+                    props["merged_from"] = item["candidate_id"]
+                    if rel["direction"] == "out":
+                        query = f"""
+                        MATCH (match {{id: $match_id}}), (other {{id: $other_id}})
+                        MERGE (match)-[r_new:{rel_type}]->(other)
+                        SET r_new += $props
+                        """
+                    else:
+                        query = f"""
+                        MATCH (match {{id: $match_id}}), (other {{id: $other_id}})
+                        MERGE (other)-[r_new:{rel_type}]->(match)
+                        SET r_new += $props
+                        """
+                    session.run(query, match_id=item["match_id"], other_id=rel["other_id"], props=props)
+
+                # Delete candidate relationships and node, preserving aliases on match node
                 session.run(
                     """
                     MATCH (candidate {id: $candidate_id})
                     MATCH (match {id: $match_id})
-                    
-                    // Copy candidate aliases / names into match node
                     SET match.aliases = coalesce(match.aliases, []) + [candidate.name]
-
-                    // Move outgoing relationships preserving original type & properties
-                    WITH candidate, match
-                    OPTIONAL MATCH (candidate)-[r_out]->(other)
-                    WHERE other <> match
-                    FOREACH (_ IN CASE WHEN r_out IS NOT NULL THEN [1] ELSE [] END |
-                        // Copy properties and preserve relationship semantics
-                        MERGE (match)-[r_new:ASSOCIATED_WITH]->(other)
-                        SET r_new = properties(r_out),
-                            r_new.original_type = type(r_out),
-                            r_new.merged_from = $candidate_id
-                    )
-                    DELETE r_out
-
-                    // Move incoming relationships preserving original type & properties
-                    WITH candidate, match
-                    OPTIONAL MATCH (other2)-[r_in]->(candidate)
-                    WHERE other2 <> match
-                    FOREACH (_ IN CASE WHEN r_in IS NOT NULL THEN [1] ELSE [] END |
-                        MERGE (other2)-[r_new2:ASSOCIATED_WITH]->(match)
-                        SET r_new2 = properties(r_in),
-                            r_new2.original_type = type(r_in),
-                            r_new2.merged_from = $candidate_id
-                    )
-                    DELETE r_in
-
-                    // Delete the now-orphaned candidate node
-                    WITH candidate
-                    DELETE candidate
+                    DETACH DELETE candidate
                     """,
                     candidate_id=item["candidate_id"],
                     match_id=item["match_id"],

@@ -24,6 +24,15 @@ canonical_entities:
   Event:
     description: "Incidents, meetings, wire transfers, seizures"
     properties: ["name", "event_type", "timestamp", "severity"]
+  Statute:
+    description: "Legal acts, penal code sections, legislative provisions"
+    properties: ["name", "jurisdiction", "act_name", "section"]
+  CourtCase:
+    description: "Judicial proceedings, FIR dockets, court records"
+    properties: ["name", "case_number", "court_name", "year"]
+  LegalInstrument:
+    description: "Warrants, bail bonds, evidentiary affidavits"
+    properties: ["name", "instrument_type", "issuing_authority"]
 
 canonical_relationships:
   COMMUNICATES_WITH:
@@ -37,6 +46,26 @@ canonical_relationships:
   OWNS:
     domain: [Person, Organization]
     range: [Organization, Vehicle, Account, Phone]
+    direction: DIRECTED
+  OFFICER_OF:
+    domain: [Person]
+    range: [Organization]
+    direction: DIRECTED
+  INTERMEDIARY_OF:
+    domain: [Organization, Person]
+    range: [Organization]
+    direction: DIRECTED
+  CITES_STATUTE:
+    domain: [CourtCase, Event, Person]
+    range: [Statute]
+    direction: DIRECTED
+  HEARD_BY:
+    domain: [CourtCase]
+    range: [Person, Organization]
+    direction: DIRECTED
+  PARTY_TO:
+    domain: [Person, Organization]
+    range: [CourtCase]
     direction: DIRECTED
   ASSOCIATED_WITH:
     domain: [ANY]
@@ -73,9 +102,9 @@ mappings:
         rule: "Testifying party mapping"
         is_lossy: false
       - source_label: "STATUTE"
-        canonical_label: "Event"
-        rule: "Legal provision referenced as legal context"
-        is_lossy: true
+        canonical_label: "Statute"
+        rule: "Legal provision referenced as formal statute"
+        is_lossy: false
       - source_label: "COURT"
         canonical_label: "Organization"
         rule: "Judicial institution mapping"
@@ -111,10 +140,10 @@ mappings:
         is_lossy: false
     relationships:
       - source_type: "officer_of"
-        canonical_type: "ASSOCIATED_WITH"
+        canonical_type: "OFFICER_OF"
         properties_preserved: ["role", "status"]
       - source_type: "intermediary_of"
-        canonical_type: "ASSOCIATED_WITH"
+        canonical_type: "INTERMEDIARY_OF"
         properties_preserved: ["service_type"]
       - source_type: "registered_address"
         canonical_type: "LOCATED_AT"

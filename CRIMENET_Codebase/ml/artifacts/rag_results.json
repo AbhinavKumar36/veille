@@ -1,8 +1,8 @@
 {
-  "total_claims_evaluated": 1,
+  "total_claims_evaluated": 3,
   "supported_claims": 0,
   "partially_supported_claims": 0,
-  "unsupported_claims": 1,
+  "unsupported_claims": 3,
   "contradicted_claims": 0,
   "claim_support_rate": 0.0,
   "partial_support_rate": 0.0,
@@ -17,6 +17,16 @@
   "citation_validity_rate": 100.0,
   "citation_entailment_rate": 100.0,
   "claim_breakdown_sample": [
+    {
+      "claim": "Based on real-time graph intelligence in the active case file:",
+      "status": "UNSUPPORTED",
+      "triples": []
+    },
+    {
+      "claim": "\u2022 Cross-reference suspect phone numbers with cell tower pings.",
+      "status": "UNSUPPORTED",
+      "triples": []
+    },
     {
       "claim": "\u2022 Review linked transaction paths for offshore intermediary conduits.",
       "status": "UNSUPPORTED",

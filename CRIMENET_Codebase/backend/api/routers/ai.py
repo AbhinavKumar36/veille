@@ -65,7 +65,13 @@ def _fetch_graph_context(query: str, case_id: Optional[str] = None, db: Optional
     2. Performs targeted multi-hop Cypher traversals around matching entities.
     3. Resolves source evidence document names from PostgreSQL for granular citations.
     """
-    keywords = [w.strip() for w in query.replace("?", "").replace(",", "").split() if len(w) > 2]
+    STOPWORDS = {
+        "detail", "the", "criminal", "network", "and", "shell", "entity", "of", "in", "for",
+        "with", "what", "is", "are", "tell", "me", "show", "who", "all", "about", "how", "to",
+        "from", "between", "associated", "linked", "connected", "case", "file", "please", "summary"
+    }
+    raw_words = [w.strip("?,.:;\"'()[]{}") for w in query.split()]
+    keywords = [w for w in raw_words if len(w) > 2 and w.lower() not in STOPWORDS]
     
     # Load evidence filename map if db is provided
     evidence_name_map = {}
@@ -86,13 +92,12 @@ def _fetch_graph_context(query: str, case_id: Optional[str] = None, db: Optional
             rels = []
 
             # 1. Targeted Cypher query matching keywords or returning case network
-            query_filter = ""
             params = {"case_id": case_id} if case_id else {}
 
             if keywords:
                 # Find matching target nodes
-                kw_conditions = " OR ".join([f"toLower(n.name) CONTAINS toLower($kw_{i})" for i in range(min(5, len(keywords)))])
-                for i, kw in enumerate(keywords[:5]):
+                kw_conditions = " OR ".join([f"toLower(n.name) CONTAINS toLower($kw_{i})" for i in range(min(8, len(keywords)))])
+                for i, kw in enumerate(keywords[:8]):
                     params[f"kw_{i}"] = kw
 
                 cypher_nodes = f"""
@@ -100,7 +105,7 @@ def _fetch_graph_context(query: str, case_id: Optional[str] = None, db: Optional
                 WHERE (n.case_id = $case_id OR $case_id IS NULL)
                   AND ({kw_conditions})
                 RETURN n.name AS name, labels(n)[0] AS type, properties(n) AS props, n.id AS id
-                LIMIT 15
+                LIMIT 20
                 """
             else:
                 cypher_nodes = """
@@ -110,7 +115,11 @@ def _fetch_graph_context(query: str, case_id: Optional[str] = None, db: Optional
                 LIMIT 25
                 """
 
-            node_result = session.run(cypher_nodes, **params)
+            node_result = list(session.run(cypher_nodes, **params))
+            if not node_result and case_id:
+                # Fallback to all case nodes if keyword match didn't yield
+                node_result = list(session.run("MATCH (n {case_id: $case_id}) RETURN n.name AS name, labels(n)[0] AS type, properties(n) AS props, n.id AS id LIMIT 25", case_id=case_id))
+            
             matched_node_ids = set()
 
             for record in node_result:
@@ -262,24 +271,51 @@ No extracted entity relationships or graph records currently exist for this quer
 
 
 def _rule_based_fallback(query: str, graph_context: str) -> str:
-    """Returns an authentic intelligence response based on available graph data."""
+    """Synthesizes factual intelligence response from graph context."""
     q = query.lower()
     
     if any(w in q for w in ["hey", "hi", "hello", "greetings"]):
         return "Hello Investigator. Ready to analyze case evidence and synthesize network intelligence. What would you like to investigate?"
 
-    if graph_context:
+    if not graph_context:
         return (
-            f"## Case Knowledge Analysis\n\n"
-            f"Based on real-time graph intelligence in the active case file:\n\n"
-            f"{graph_context}\n\n"
-            f"## Analytical Lead\n\n"
-            f"• Cross-reference suspect phone numbers with cell tower pings.\n"
-            f"• Review linked transaction paths for offshore intermediary conduits."
+            "## Intelligence Assistant // Notice\n\n"
+            "• No matching entities or transaction paths were identified in the knowledge graph for this query scope.\n"
+            "• **Recommended Action**: Ingest raw FIR documents, wiretap audio, or CDR files into the Seized Evidence Vault to allow the NLP pipeline to extract entities and build relationship topologies."
         )
+    
+    import re
+    lines = graph_context.split("\n")
+    rel_lines = [l.strip().lstrip("- ") for l in lines if "--[" in l]
 
-    return (
-        "## Intelligence Assistant // Empty Slate Notice\n\n"
-        "• No matching entities or transaction paths were identified in the knowledge graph for this query.\n"
-        "• **Recommended Action**: Ingest raw FIR documents, wiretap audio, or CDR files into the Seized Evidence Vault to allow the NLP pipeline to extract entities and build relationship topologies."
-    )
+    summary_paragraphs = [
+        "## Forensic Network Intelligence Synthesis",
+        "Based on corroborated knowledge graph evidence in Case Intelligence:",
+    ]
+    
+    seen_facts = set()
+    for rel in rel_lines:
+        m = re.search(r'([A-Za-z0-9_\+\-\.\s]+?)\s*--\[([A-Z_]+)\]-->\s*([A-Za-z0-9_\+\-\.\s]+)', rel)
+        if m:
+            s, r, o = m.group(1).strip(), m.group(2).strip(), m.group(3).split("(")[0].strip()
+            fact_key = (s, r, o)
+            if fact_key in seen_facts:
+                continue
+            seen_facts.add(fact_key)
+
+            if r == "OWNS":
+                summary_paragraphs.append(f"• Evidence confirms {s} owns and operates {o}.")
+            elif r == "COMMUNICATES_WITH":
+                summary_paragraphs.append(f"• Telecommunication records show {s} communicates directly with {o}.")
+            elif r == "TRANSFERS_FUNDS_TO":
+                summary_paragraphs.append(f"• Financial ledger records establish {s} transfers funds to {o}.")
+            elif r == "LOCATED_AT":
+                summary_paragraphs.append(f"• Operational intelligence confirms {s} is located at {o}.")
+            else:
+                summary_paragraphs.append(f"• Intelligence records establish {s} is associated with {o}.")
+
+    summary_paragraphs.append("## Analytical Lead")
+    summary_paragraphs.append("• Cross-reference suspect phone numbers with cell tower pings.")
+    summary_paragraphs.append("• Review linked transaction paths for offshore intermediary conduits.")
+
+    return "\n\n".join(summary_paragraphs)

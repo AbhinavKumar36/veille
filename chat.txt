@@ -1,40 +1,9 @@
-However, after checking the actual new code, I would not yet say all 20 flaws are completely resolved. Several are genuinely fixed; several are partially fixed; and a few important ones remain.
+🟢 What is genuinely fixed
+1. ER benchmark is now actually 536 pairs
 
-🟢 What you actually fixed
-1. Production ER evaluation — FIXED
+This is a real improvement.
 
-This is a major correction.
-
-The new er_eval.py now imports the actual:
-
-EntityResolver
-
-and directly calls:
-
-resolver.score(...)
-
-before applying the production thresholds.
-
-So the architecture is now:
-
-Ground Truth Pair
-       ↓
-Production EntityResolver
-       ↓
-Lexical + Structural
-       ↓
-0.85 / 0.50 thresholds
-       ↓
-AUTO_MERGE / REVIEW / CREATE_NEW
-       ↓
-TP / FP / TN / FN
-
-That fixes one of my biggest previous criticisms.
-
-✅ This is now legitimate.
-🟢 2. ER benchmark is much larger
-
-You now have a comprehensive generated benchmark covering:
+The benchmark generator now contains a much broader stratification:
 
 aliases
 abbreviations
@@ -43,703 +12,584 @@ corporate suffixes
 OCR noise
 phone formatting
 account formatting
-address variation
-common-name collisions
-adversarial organization lookalikes
-Indian regional names
-collision guards
+address variations
+regional-name collisions
+vehicle identifiers
+passport/national IDs
+offshore entities
+adversarial lookalikes
 
-The benchmark generator is substantially more sophisticated than the old 24-pair test.
+The artifact reports 536 evaluated pairs, so the previous 411-vs-500+ inconsistency is fixed.
 
-The current committed artifact reports:
+Current result:
 
-411 pairs
-188 TP
-0 FP
-156 TN
-11 FN
-56 HITL
+Metric	Result
+Pairs	536
+TP	238
+FP	0
+TN	191
+FN	11
+HITL	96
+Auto-merge precision	100%
+Auto-merge recall*	95.58%
+Auto-merge F1*	97.74%
+False merge	0%
+False split*	4.42%
+HITL	17.91%
+Auto-merge coverage	44.4%
 
-with:
+That is a very good safety-oriented ER result, particularly the 0% false-merge rate.
 
-Auto-Merge Precision = 100%
-Auto-Merge Recall    = 94.47%
-F1                   = 97.16%
-False Merge Rate     = 0%
-False Split Rate     = 5.53%
-HITL Rate            = 13.63%
-Auto-Merge Coverage  = 45.74%
+Important caveat on those ER numbers
 
-That's far more meaningful than the previous 24-pair result.
+The reported "recall" is not ordinary end-to-end recall.
 
-🟢 3. Regression tests are now present
+238 TP + 11 FN = 249 resolved positive decisions, while 96 ambiguous cases are excluded into HITL.
 
-You added:
+So the 95.58% is effectively:
 
-backend/tests/evaluation/
-├── test_er_production_regression.py
-└── test_provenance_integrity.py
+recall among cases that were automatically decided
 
-The ER regression suite checks:
+rather than:
 
-threshold invariants
-≥150 negative collision pairs
-zero false merges
-≥95% auto-merge precision
-HITL actually being exercised.
+recall across all 536 candidate pairs.
 
-This is exactly the sort of thing I wanted.
+That's actually a reasonable metric for VEILLE, but rename it to something like:
 
-🟢 4. Taxonomy mapping is now formalized
+Auto-decision recall
 
-You have:
+and separately report:
 
-datasets/taxonomy_mapping.yaml
+HITL coverage / unresolved rate = 17.91%
 
-and the provenance test checks that mappings exist for:
+Otherwise a reviewer could challenge the metric definition.
 
-InLegalNER
-ICIJ
-Enron
-IBM AML
+🟢 2. ICIJ is now actually acquired from an official source
 
-Good.
+This is another substantial correction.
 
-🟢 5. Enron synthetic fallback identities were removed
+The downloader now targets:
 
-This is another real improvement.
+offshoreleaks-data.icij.org/...
 
-The old:
+and parses the actual ZIP contents rather than writing the previous 11-record fabricated-looking fixture. The committed slice contains 100 records, including real-looking entity/intermediary records from the Bahamas dataset.
 
-Enron_Employee_XXX
-Enron_Trading_Desk_XXX
+The manifest now records:
 
-fallback has been removed.
-
-The new code preserves None when participant information cannot be extracted.
-
-And you added a regression test specifically looking for those fabricated identity patterns.
-
-That's good.
-
-But there's still a larger Enron provenance problem — I'll get to that.
-
-🟢 6. GraphRAG benchmark API mismatch was fixed
-
-The previous mismatch I found between:
-
-benchmark_suite.py
-
-and:
-
-rag_eval.py
-
-has been fixed.
-
-The evaluator now actually returns:
-
-partially_supported_claims
-partial_support_rate
-citation_validity_rate
-citation_entailment_rate
-
-and the benchmark consumes those fields.
-
-So the previous KeyError problem is gone.
-
-🟢 7. Experiment artifacts are now generated
-
-You now produce:
-
-metrics.json
-er_results.json
-rag_results.json
-experiment_manifest.json
-BENCHMARK_REPORT.md
-
-and the benchmark records:
-
-experiment_id
-Git commit
-timestamp
-ER thresholds
-ER weights
-taxonomy mapping
-
-This is a good direction.
-
-🟢 8. Async graph polling improved
-
-You removed the simplistic:
-
-time.sleep(5)
-
-approach.
-
-The benchmark now actively polls the graph and waits for two consecutive stable graph states.
-
-That's definitely better.
-
-🟢 9. The current ER result is actually interesting
-
-The new result:
-
-100% precision
-94.47% recall
-0% false merge
-5.53% false split
-13.63% HITL
-45.74% auto-merge coverage
-
-is a much more useful story.
-
-In particular:
-
-VEILLE is conservative.
-
-It automatically merges only ~46% of candidate pairs while maintaining 100% precision on this benchmark.
-
-That is actually a good safety-oriented design for entity resolution.
-
-Don't try to optimize this blindly toward 100% coverage.
-
-Your research question should become:
-
-How much auto-merge coverage can VEILLE achieve while maintaining an acceptably low false-merge rate?
-
-That's a strong evaluation story.
-
-🔴 But there are still important problems
-
-And this is where I want you to be careful.
-
-1. Your benchmark says "500+" but actually contains 411
-
-This is now easy to verify.
-
-The artifact says:
-
-total_pairs_evaluated: 411
-
-But the code/documentation repeatedly calls it:
-
-500+ pair benchmark.
-
-Fix:
-
-Either:
-
-411-pair benchmark
-
-or add enough pairs to genuinely reach:
-
-500+
-
-I'd actually prefer 500+ because the benchmark architecture is already good.
-
-Add ~100+ more adversarial cases.
-
-🔴 2. Your committed metrics are from the OLD commit
-
-This is probably the most important repository-management issue I found.
-
-Your new code is:
-
-6e05fa3
-
-But:
-
-metrics.json
-
-says:
-
-"git_commit": "5b8a30557d60..."
-
-Same thing in:
-
-experiment_manifest.json
-
-So right now:
-
-CODE
-6e05fa3
-   │
-   │
-   X
-   │
-   ▼
-ARTIFACTS
-5b8a305
-This must be fixed.
-
-After the new code is complete:
-
-python -m ml.evaluation.benchmark_suite
-
-or your actual benchmark command,
-
-then commit the newly generated:
-
-metrics.json
-er_results.json
-rag_results.json
-experiment_manifest.json
-BENCHMARK_REPORT.md
-
-with:
-
-git_commit = 6e05fa3
-
-or, preferably, the next commit hash containing the benchmark output.
-
-Do not present the current artifact numbers as results from 6e05fa3.
-
-🔴 3. Exact-span NER is still not actually exact-span evaluation
-
-This one survived.
-
-Your benchmark still creates:
-
-start_char = idx * 10
-end_char = idx * 10 + len(name)
-
-for both gold and prediction.
-
-So:
-
-Actual document
-      X
-      │
-      ▼
-invented offsets
-      ↓
-NER evaluator
-
-The evaluator itself is capable of proper exact-span comparison.
-
-But the benchmark isn't feeding it real spans.
-
-Therefore:
-exact_span_f1 = 44.44%
-
-in the committed artifact should not be treated as a real NER span F1.
-
-Fix:
-
-Ground truth:
-
-actual source text
-+
-actual annotation offsets
-
-Prediction:
-
-actual extracted span offsets
-
-Then compare:
-
-(start_char, end_char, label)
-
-directly.
-
-🔴 4. ICIJ is STILL synthetic/curated
-
-This is the biggest remaining data problem.
-
-The new download_icij() literally contains:
-
-rows = [
-    "Entity_1001,...",
-    "Officer_2001,Vikram Mehta,...",
-    ...
-]
-
-and writes those rows to the raw file.
-
-The resulting raw CSV has only 11 records.
-
-So this:
-
-download_icij()
-
-is not actually downloading ICIJ.
-
-It's generating a curated fixture.
-
-Yet the manifest says:
-
-classification: Real Public Investigative Registry Data
-provenance_class: REAL_EXTERNAL
-source_record_count: 810000
-selected_record_count: 11
-
-This is NOT acceptable yet.
-
-We should change it to:
-
-Official ICIJ artifact
-        ↓
-actual download
-        ↓
+REAL_EXTERNAL
+official ICIJ archive URL
 SHA-256
-        ↓
-deterministic subset
-        ↓
-canonical adapter
+201,691 source records
+100 selected records
+deterministic sampling
+adapter version
 
-Do not claim ICIJ as acquired real data until this is done.
+This fixes one of the biggest provenance problems from the previous commit.
 
-🔴 5. Enron is better, but still not truly canonical
+But one problem remains
 
-You fixed the fake identities, which is good.
+The downloader still has this fallback:
 
-But the downloader still gets:
+if the official ICIJ download fails → write a hardcoded "verified canonical baseline"
 
-MWiechmann/enron_spam_data
+That baseline contains fabricated/sample-looking records.
 
-rather than the canonical Enron mailbox corpus.
+So the code can still theoretically produce:
 
-Then it searches the message body for:
+synthetic data → REAL_EXTERNAL manifest
 
-from:
-to:
-forwarded by:
-salutation
+if the network request fails.
 
-rather than parsing the original email headers.
+That's unacceptable for a provenance-sensitive benchmark.
 
-So the new claim:
+Fix
 
-"authentic communication headers"
+If the official download fails:
 
-is still too strong.
+raise RuntimeError(
+    "Official ICIJ archive unavailable; refusing to generate fallback data."
+)
 
-The manifest itself exposes the mismatch:
+Do not create fallback records.
 
-official_url: CMU
-source_archive_url: MWiechmann GitHub
+🟢 3. Enron primary acquisition is now genuinely CMU
 
-Correct solution:
+This is much better than the previous third-party spam/ham dataset.
 
-Acquire the original Enron mailbox archive and parse:
+The primary path now downloads:
+
+cs.cmu.edu/~enron/enron_mail_20150507.tar.gz
+
+and parses actual RFC-822 headers:
 
 From
 To
-Cc
-Bcc
-Date
 Subject
+Date
 Message-ID
 
-directly.
+The manifest also now points to the CMU archive and labels it real external data.
 
-Then your communication graph becomes genuinely defensible.
+That's a real improvement.
 
-🔴 6. GraphRAG "citation entailment" is still not actual entailment
+But there is still a fallback problem
 
-This is subtle.
+If CMU fails, the code falls back to the third-party Enron spam dataset and reconstructs participants from message bodies.
 
-The new evaluator is definitely better.
+It even generates:
 
-It now distinguishes:
+<msg.X@enron.com>
+
+and constructs email addresses from names.
+
+So this statement:
+
+"authentic communication headers"
+
+is true for the primary CMU path, but not guaranteed for every execution path.
+
+Better approach
+
+For a provenance benchmark:
+
+CMU unavailable = benchmark fails.
+
+Don't silently downgrade to a different corpus.
+
+🟢 4. Cryptographic provenance test is now real
+
+This was fixed properly.
+
+The regression test now actually computes SHA-256 of each corpus and compares it against the manifest:
+
+actual_sha = sha256_of_file(corpus_path)
+assert actual_sha == mf["corpus_sha256"]
+
+That's exactly what we wanted previously.
+
+So this issue is now closed.
+
+🟢 5. Dataset hashes are now in experiment metadata
+
+The benchmark manifest now records hashes for:
+
+InLegalNER
+Enron
+ICIJ
+IBM AML
+
+That's excellent for reproducibility.
+
+🟢 6. GraphRAG is substantially better than before
+
+The new evaluator actually loads evidence content from PostgreSQL/files instead of merely checking citation IDs.
+
+It distinguishes:
+
+citation validity
+citation entailment
+
+and accesses the underlying evidence text.
+
+It also implements:
 
 SUPPORTED
 PARTIALLY_SUPPORTED
 UNSUPPORTED
 CONTRADICTED
 
-and checks graph edges.
+with graph checks and basic contradiction detection.
 
-But citation entailment currently does:
+So the previous "hardcoded zero unsupported claims / fake citation validation" problem is substantially improved.
 
-ev_str = filename + source_type
-entailed_citations_count += 1
+🔴 BUT: GraphRAG entailment is still not true entailment
 
-if the citation is valid.
+This is now the biggest remaining ML/evaluation weakness.
 
-So:
+The citation "entailment" logic essentially checks whether a grounded entity appears inside the cited document:
 
-citation exists
-      ↓
-citation entailment = TRUE
+does evidence text contain the grounded entity?
 
-That isn't real entailment.
+That's useful, but it does not establish:
 
-Need:
-Claim
- ↓
-Evidence document
- ↓
-Evidence text
- ↓
-Does evidence support claim?
-
-This could eventually use:
-
-deterministic textual overlap
-structured evidence fields
-relation matching
-optional NLI/LLM adjudication
-
-but it must inspect the actual evidence content, not merely the filename/source type.
-
-🔴 7. "CONTRADICTED" exists in the API but is never really implemented
-
-The evaluator initializes:
-
-contradicted_claims = 0
-
-and returns it.
-
-But I don't see actual contradiction detection.
-
-So currently:
-
-CONTRADICTED
-
-is effectively a placeholder.
-
-Implement:
-Claim:
-A owns B
-
-Graph:
-A does NOT own B
-A transferred ownership to C
-
-→ CONTRADICTED
-
-or remove the label until it is implemented.
-
-🔴 8. The benchmark report still says "Fully Reproducible & Production Aligned"
-
-The code literally generates:
-
-Status: Fully Reproducible & Production Aligned
-
-I would remove this right now.
-
-Because we still have:
-
-411 vs 500+ mismatch
-stale artifact commit
-synthetic NER offsets
-ICIJ fixture
-derived Enron corpus
-incomplete citation entailment
-
-Better:
-
-Status: Research Prototype — Controlled Empirical Validation
-
-Then upgrade it after the pipeline actually proves reproducibility.
-
-🔴 9. Provenance regression test doesn't actually verify the hash
-
-This is a good example of something that looks fixed but isn't.
-
-The test says:
-
-"Verify all manifests exist and match the actual corpus SHA-256."
-
-But it only checks:
-
-"corpus_sha256" in mf
-
-and:
-
-len(mf["corpus_sha256"]) == 64
-
-It never does:
-
-actual_sha = sha256_of_file(corpus)
-assert actual_sha == mf["corpus_sha256"]
-
-The sha256_of_file() helper exists but isn't used for the actual comparison.
-
-Fix this.
-
-This is a small change with a big credibility benefit.
-
-🔴 10. Hard-coded benchmark credentials remain
-
-benchmark_suite.py still contains:
-
-ADMIN_CREDS = {
-    "email": "admin@veille.gov.in",
-    "password": "admin123"
-}
-
-Even if they're demo credentials, they shouldn't be hardcoded.
-
-Use:
-
-ADMIN_EMAIL = os.environ["VEILLE_BENCHMARK_ADMIN_EMAIL"]
-ADMIN_PASSWORD = os.environ["VEILLE_BENCHMARK_ADMIN_PASSWORD"]
-🟠 11. The benchmark's zero-denominator metrics still default to 100%
+"Does this document actually support the relationship asserted by the AI?"
 
 For example:
 
-precision = ... if denominator > 0 else 1.0
+"Vikram transferred money to Zenith."
 
-This can make:
+Evidence containing both:
 
-zero predictions
+"Vikram"
+"Zenith"
 
-look like:
+would pass the current citation entailment check even if the document actually says they didn't transact.
 
-100% precision
+The code itself shows that the current check is entity-presence based.
 
-I'd return:
+What we ultimately want
+AI claim
+   ↓
+S = Vikram
+P = TRANSFERS_FUNDS_TO
+O = Zenith
+   ↓
+retrieve cited evidence
+   ↓
+extract supporting relation from evidence
+   ↓
+compare S-P-O
+   ↓
+SUPPORTED / CONTRADICTED / NOT ENTAILED
+
+That's the proper next evolution.
+
+🔴 7. Exact-span NER is STILL not actually model-output span evaluation
+
+This is an important one.
+
+The commit message says:
+
+"real document NER offsets"
+
+and the code does indeed use real document text.
+
+But look carefully at what happens.
+
+For the gold entity:
+
+idx = combined_doc_text.lower().find(name.lower(), pos)
+
+And for the prediction:
+
+idx = combined_doc_text.lower().find(name.lower(), pos)
+
+So both gold and predicted spans are reconstructed by searching the document for their text.
+
+That means the benchmark isn't measuring the actual character offsets emitted by the NER system.
+
+It is measuring:
+
+"Does the extracted entity string occur somewhere in the document?"
+
+That's useful, but it's not strict NER span evaluation.
+
+Why this matters
+
+Suppose the model extracts:
+
+"Vikram Mehta"
+
+but the actual model span was wrong.
+
+The evaluator searches the document, finds the correct occurrence, and gives the prediction the correct coordinates.
+
+So it can artificially inflate exact-span F1.
+
+Therefore
+
+The reported:
+
+exact-span F1 = 56.1%
+
+should not yet be presented as genuine model exact-span F1.
+
+This needs another fix.
+
+🔴 8. The experiment artifacts are STILL one commit behind
+
+This is probably the most important reproducibility issue I found.
+
+The current commit is:
+
+ec69bd0
+
+But experiment_manifest.json says:
+
+6e05fa3
+
+as the experiment's git_commit.
+
+The metrics artifact also says:
+
+git_commit: 6e05fa3
+
+rather than ec69bd0.
+
+This is particularly significant because ec69bd0 changed:
+
+ER benchmark
+Enron acquisition
+ICIJ acquisition
+NER evaluation
+provenance tests
+artifacts
+
+So the artifact metadata is not a faithful record of the commit that contains the code/data used to define the current benchmark.
+
+Fix
+
+Run the entire benchmark after checking out ec69bd0, then commit the newly generated:
+
+metrics.json
+er_results.json
+rag_results.json
+experiment_manifest.json
+BENCHMARK_REPORT.md
+
+The manifest should then say:
+
+"git_commit": "ec69bd0..."
+
+This is mandatory before presenting the results as reproducible.
+
+🟠 9. Zero-denominator metrics are still misleading
+
+This hasn't been fixed.
+
+Look at the ER artifact:
+
+Alias
+
+total = 4
+TP = 0
+FN = 0
+HITL = 4
+precision = 100
+recall = 100
+
+That's mathematically misleading.
+
+There were zero automatic positive decisions, so saying recall = 100% doesn't tell us anything.
+
+Same issue appears in several categories.
+
+Fix
+
+Return:
 
 N/A
 
-for undefined metrics.
+instead of 100% when the denominator is zero.
 
-🟠 12. The experiment manifest still needs dataset hashes
+This will make the evaluation much more academically defensible.
 
-Current manifest contains:
+🟠 10. ICIJ scope is slightly misrepresented
 
-experiment_id
-git_commit
-execution_date
-thresholds
-weights
-taxonomy mapping
+The actual archive URL is:
 
-But not:
+csv_bahamas_leaks.2017-12-19.zip
 
-InLegalNER SHA
-Enron SHA
-ICIJ SHA
-AML SHA
+and the manifest says the dataset covers:
 
-Add them.
+Panama Papers
+Pandora Papers
+Paradise Papers
+Bahamas Leaks
 
-Then you get:
+But this particular downloaded archive is specifically a Bahamas Leaks release.
 
-Experiment
-   │
-   ├── Git commit
-   ├── Dataset hashes
-   ├── Adapter versions
-   ├── Model version
-   ├── Thresholds
-   └── Metrics
+Meanwhile the README says:
 
-That's a proper reproducibility record.
+"Panama & Pandora Papers entity registry slice"
 
-🟠 13. Root README is STILL stale
+which doesn't accurately describe the committed source.
 
-This is visible directly on the repository.
+Fix
 
-The root README still says:
+Say:
 
-VEILLE // INTEL-ENGINE (v4.0 PROD)
+ICIJ Offshore Leaks — Bahamas Leaks official registry slice
+
+until you actually acquire multiple investigation releases.
+
+🟠 11. Taxonomy still has semantic loss
+
+The canonical taxonomy still maps:
+
+STATUTE → Event
+
+and explicitly marks it lossy.
+
+It also maps:
+
+officer_of → ASSOCIATED_WITH
+intermediary_of → ASSOCIATED_WITH
+
+For an investigative graph, that's not ideal.
+
+I'd now strongly recommend:
+
+Person
+Organization
+Location
+Phone
+Account
+Vehicle
+Event
+Statute
+CourtCase
+LegalInstrument
+
+and preserve relationships such as:
+
+OFFICER_OF
+INTERMEDIARY_OF
+CITES_STATUTE
+HEARD_BY
+PARTY_TO
+
+rather than flattening everything into ASSOCIATED_WITH.
+
+This isn't a benchmark-killer, but it matters for the quality of the final knowledge graph.
+
+🟠 12. Native Neo4j merge fallback still loses relationship types
+
+This one also survived.
+
+If APOC isn't available, the code creates:
+
+ASSOCIATED_WITH
+
+and stores the original relationship type as:
+
+original_type
+
+So:
+
+OWNS
+COMMUNICATES_WITH
+LOCATED_AT
+
+can become:
+
+ASSOCIATED_WITH
+
+That means graph semantics are degraded after a HITL merge.
+
+This should be fixed before claiming the graph preserves investigative relationship semantics.
+
+🟠 13. Async benchmark synchronization still only proves graph stability
+
+The benchmark says:
+
+"Actively Polling Outbox & Neo4j until settled"
+
+but the polling function actually checks node + edge counts in Neo4j.
+
+It does not establish:
+
+all Celery jobs succeeded
+no failed tasks
+outbox pending = 0
+DLQ = 0
+expected evidence processing completed
+
+So it's better than a fixed sleep(5), but not yet a true transactional benchmark barrier.
+
+🟠 14. Benchmark credentials still have defaults
+
+The benchmark now supports environment variables, which is better:
+
+os.getenv(...)
+
+but still falls back to:
+
+admin@veille.gov.in
+admin123
+
+For a research repository, I'd make the credentials mandatory:
+
+if not email or not password:
+    raise RuntimeError(...)
+
+No default credentials in benchmark code.
+
+🟠 15. README is improved but still overclaims
+
+The README is much cleaner than before.
+
+Good:
+
+no PBFT claim
+no ML-KEM claim
+no hardcoded admin credentials
+explicitly says research/educational prototype
+dataset taxonomy is clearer
+
+But it still starts with:
+
+INTEL-ENGINE (v4.0 PROD)
 
 and:
 
-"enterprise-grade"
+enterprise-grade forensic intelligence
 
-and still describes:
+while this is still a research/SIH prototype.
 
-Merkle PBFT
-court admissibility
-ML-KEM-1024
-HSM enclave quorum ceremonies.
+Also, the README claims:
 
-It also still publishes:
+"authentic communication headers"
 
-admin@veille.gov.in / admin123
-investigator@veille.gov.in / investigator123
+without mentioning the fallback problem.
 
-Meanwhile the new codebase is moving toward a much more defensible research-prototype description.
+And the ICIJ description doesn't match the actual Bahamas-only source.
 
-This is now a priority.
+So I'd clean this up.
 
-Your root README should be updated to match the new architecture.
+My updated assessment
+Previous 6e05fa3
 
-🟢 Overall, though, this update is a BIG step forward
+~7.5/10
 
-Here's how I would classify the 20 flaws now:
+Good architecture, but significant evaluation/provenance problems.
 
-Category	Status
-Production ER evaluator	🟢 Fixed
-Large ER benchmark	🟢 Mostly fixed
-ER regression suite	🟢 Fixed
-ER thresholds	🟢 Fixed
-Synthetic ER fallback	🟢 Fixed
-GraphRAG API mismatch	🟢 Fixed
-Claim classification	🟢 Implemented
-Async graph polling	🟢 Improved
-Benchmark run isolation	🟢 Improved
-Machine-readable artifacts	🟢 Fixed
-Taxonomy mapping	🟢 Fixed
-Enron fabricated fallback	🟢 Fixed
-Exact NER evaluator	🟡 Evaluator exists, benchmark input still synthetic
-GraphRAG claim entailment	🟡 Improved, not true entailment
-Citation entailment	🔴 Still proxy
-ICIJ acquisition	🔴 Still synthetic fixture
-Canonical Enron	🔴 Still derived corpus
-Provenance hash test	🔴 Doesn't compare actual hash
-Experiment reproducibility	🟡 Good foundation, stale artifacts
-Documentation accuracy	🔴 Root README still stale
-Most important thing now
+Current ec69bd0
 
-Do not make another giant architecture change.
+~9/10 architecturally/evaluation-wise
 
-The new commit has done the hard structural work.
+and much closer to something I'd be comfortable defending in an SIH technical review.
 
-Now I recommend one final "Integrity Sprint":
+Area	Status
+Production ER evaluator	🟢
+500+ ER benchmark	🟢 536
+False-merge evaluation	🟢 0%
+HITL measurement	🟢
+Real ICIJ acquisition	🟢 primary path
+Real CMU Enron acquisition	🟢 primary path
+Dataset SHA verification	🟢
+Experiment dataset hashes	🟢
+GraphRAG evidence access	🟢
+Claim classification	🟢
+True GraphRAG entailment	🟠
+True exact-span NER	🔴
+Artifact commit reproducibility	🔴
+ICIJ fallback integrity	🔴
+Enron fallback integrity	🔴
+Zero-denominator metrics	🟠
+Relationship semantic preservation	🟠
+Async completion barrier	🟠
+README accuracy	🟠
+The important thing
 
-                 6e05fa3
-                    │
-                    ▼
-        ┌───────────────────────┐
-        │ 1. Fix stale artifacts│
-        └───────────┬───────────┘
-                    ▼
-        ┌───────────────────────┐
-        │ 2. Make ER = 500+     │
-        │    real generated pairs│
-        └───────────┬───────────┘
-                    ▼
-        ┌───────────────────────┐
-        │ 3. Real NER offsets   │
-        └───────────┬───────────┘
-                    ▼
-        ┌───────────────────────┐
-        │ 4. Real ICIJ download │
-        └───────────┬───────────┘
-                    ▼
-        ┌───────────────────────┐
-        │ 5. Canonical Enron    │
-        └───────────┬───────────┘
-                    ▼
-        ┌───────────────────────┐
-        │ 6. True evidence      │
-        │    entailment         │
-        └───────────┬───────────┘
-                    ▼
-        ┌───────────────────────┐
-        │ 7. Hash verification  │
-        └───────────┬───────────┘
-                    ▼
-        ┌───────────────────────┐
-        │ 8. Clean root README  │
-        └───────────┬───────────┘
-                    ▼
-             RUN CLEAN BENCHMARK
-                    │
-                    ▼
-              FREEZE BASELINE
-                    │
-                    ▼
-             ZERO-SHOT DATASETS
-And then we stop changing the evaluation methodology.
+We're no longer in the situation where the whole evaluation methodology is questionable.
 
-At that point, we can finally move to the thing you originally wanted:
+The core is now solid:
 
-real dataset acquisition → zero-shot VEILLE evaluation → identify weak components → targeted training.
+real external datasets → provenance → canonical adapters → production ER → controlled benchmark → machine-readable metrics → reproducibility metadata → regression tests
 
-The latest commit has genuinely moved VEILLE much closer to that stage. The remaining issues are now mostly data authenticity, benchmark hygiene, and scientific rigor, rather than fundamental architecture problems.
+That's the right architecture.
+
+The remaining work is now an integrity/measurement cleanup, not a redesign.
+
+I would do exactly these 6 things next, in this order:
+Rerun the entire benchmark on ec69bd0 so artifacts actually identify ec69bd0.
+Remove ICIJ/Enron synthetic fallbacks — fail closed.
+Fix exact-span evaluation to consume actual NER offsets from the extraction pipeline.
+Fix zero-denominator metrics to N/A.
+Upgrade GraphRAG citation entailment from entity-presence → claim/evidence relation support.
+Clean taxonomy + native relationship merge semantics.
+
+After those six, I'd be comfortable treating the benchmark as research-grade empirical validation rather than merely a sophisticated demo.
+
+And importantly: do not start training the NER/ER models yet. Get this evaluation protocol completely trustworthy first; otherwise training will optimize against a questionable measurement system.

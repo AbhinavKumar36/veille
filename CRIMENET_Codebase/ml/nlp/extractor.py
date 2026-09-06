@@ -348,36 +348,43 @@ class EvidenceExtractor:
         entities = []
         entity_map = {}  # id -> ExtractedEntity
 
-        def add_entity(label: str, name: str, props: dict = None):
+        def add_entity(label: str, name: str, props: dict = None, start_char: int = None, end_char: int = None):
             clean_name = name.strip().rstrip(".,:;")
             if not clean_name or len(clean_name) < 2:
                 return None
             slug = re.sub(r"[^a-zA-Z0-9_]", "_", clean_name)
             entity_id = f"{label}_{slug}"
             if entity_id not in entity_map:
+                p = props or {}
+                if start_char is not None:
+                    p["start_char"] = start_char
+                if end_char is not None:
+                    p["end_char"] = end_char
                 ent = ExtractedEntity(
                     id=entity_id,
                     label=label,
                     name=clean_name,
-                    properties=props or {}
+                    start_char=start_char,
+                    end_char=end_char,
+                    properties=p
                 )
                 entity_map[entity_id] = ent
                 entities.append(ent)
             return entity_map[entity_id]
 
         # 1. Phone numbers
-        phone_matches = re.findall(r'(?:\+?91[\-\s]?)?[6-9]\d{9}|\b\d{3}[-.\s]\d{3}[-.\s]\d{4}\b', text_content)
-        for ph in set(phone_matches):
-            add_entity("Phone", ph.strip(), {
-                "phone_number": ph.strip(),
+        for ph_m in re.finditer(r'(?:\+?91[\-\s]?)?[6-9]\d{9}|\b\d{3}[-.\s]\d{3}[-.\s]\d{4}\b', text_content):
+            ph = ph_m.group().strip()
+            add_entity("Phone", ph, {
+                "phone_number": ph,
                 "network_carrier": "Cellular Network",
                 "status": "Target Intercept"
-            })
+            }, start_char=ph_m.start(), end_char=ph_m.end())
 
         # 2. Vehicles / License plates
-        veh_matches = re.findall(r'\b[A-Z]{2}[-\s]?[0-9]{1,2}[-\s]?[A-Z]{0,3}[-\s]?[0-9]{3,4}\b', text_content)
         car_models = re.findall(r'(?:Toyota Innova|Honda City|Hyundai Creta|Mahindra Scorpio|BMW|Mercedes|Audi|Swift|Innova|Scorpio)', text_content, re.IGNORECASE)
-        for v in veh_matches:
+        for v_m in re.finditer(r'\b[A-Z]{2}[-\s]?[0-9]{1,2}[-\s]?[A-Z]{0,3}[-\s]?[0-9]{3,4}\b', text_content):
+            v = v_m.group()
             if len(v) >= 6:
                 matched_model = car_models[0] if car_models else "Vehicle"
                 add_entity("Vehicle", f"{matched_model} {v}", {
@@ -385,62 +392,60 @@ class EvidenceExtractor:
                     "model": matched_model,
                     "vehicle_type": "Automobile",
                     "risk_score": 75
-                })
+                }, start_char=v_m.start(), end_char=v_m.end())
 
         # 3. Bank / Financial Accounts
-        acc_matches = re.findall(r'\b(?:ACC|AC|SB|CA)[-_]?[0-9]{6,16}\b|\b(?:Account(?:\s*No\.?)?:?\s*)([0-9]{9,18})\b', text_content, re.IGNORECASE)
-        for acc in acc_matches:
-            val = acc if isinstance(acc, str) else acc[0]
+        for acc_m in re.finditer(r'\b(?:ACC|AC|SB|CA)[-_]?[0-9]{6,16}\b|\b(?:Account(?:\s*No\.?)?:?\s*)([0-9]{9,18})\b', text_content, re.IGNORECASE):
+            val = acc_m.group(1) if acc_m.group(1) else acc_m.group(0)
             if val:
                 add_entity("Account", val.strip(), {
                     "account_number": val.strip(),
                     "account_type": "Bank / Wallet",
                     "status": "Monitored"
-                })
+                }, start_char=acc_m.start(), end_char=acc_m.end())
 
         # 4. Organizations / Shell Entities
-        org_matches = re.findall(r'\b([A-Z][a-zA-Z0-9\s]{2,40}?(?:Pvt\.?\s*Ltd\.?|LLC|Corporation|Enterprises|Logistics|Holdings))\b', text_content)
-        for match in set(org_matches):
-            val = match.strip().rstrip(".,:;")
+        for org_m in re.finditer(r'\b([A-Z][a-zA-Z0-9\s]{2,40}?(?:Pvt\.?\s*Ltd\.?|LLC|Corporation|Enterprises|Logistics|Holdings))\b', text_content):
+            val = org_m.group(1).strip().rstrip(".,:;")
             if val and len(val) >= 4 and not any(k in val.lower() for k in ("information report", "sections of law", "special intelligence")):
                 add_entity("Organization", val, {
                     "organization_name": val,
                     "type": "Criminal Syndicate" if any(k in text_content.lower() for k in ("smuggling", "ring", "cartel", "gang")) else "Enterprise",
                     "risk_score": 90
-                })
-
+                }, start_char=org_m.start(1), end_char=org_m.end(1))
 
         # 5. Persons (Accused, Operatives, Associates)
-        person_candidates = set()
-        
         # Accused list format: "1. VIKRAM MEHTA @" or "2. ELENA ROSTOVA @"
-        accused_matches = re.findall(r'\d+\.\s+([A-Z][A-Z\s]+?)(?:\s*@|\s*\(DOB|\s*\(NATIONALITY|\n|$)', text_content)
-        for acc in accused_matches:
-            c = acc.strip().title()
+        for acc_m in re.finditer(r'\d+\.\s+([A-Z][A-Z\s]+?)(?:\s*@|\s*\(DOB|\s*\(NATIONALITY|\n|$)', text_content):
+            c = acc_m.group(1).strip().title()
             if len(c.split()) >= 2 and not any(k in c.lower() for k in ("police station", "special cell", "crime branch")):
-                person_candidates.add(c)
+                add_entity("Person", c, {
+                    "role": "Key Suspect",
+                    "risk_score": 85,
+                    "confidence": 0.95
+                }, start_char=acc_m.start(1), end_char=acc_m.end(1))
 
         # Descriptive mentions: "operative Vikram Mehta", "associate Elena Rostova", "operator Tariq Mansoor"
-        desc_matches = re.findall(r'(?:operative|suspect|accused|associate|operator|officer|courier|director|coordinator)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)', text_content)
-        for d in desc_matches:
-            person_candidates.add(d.strip())
-
-        # General Person pattern
-        pm_matches = re.findall(r'(?:between|identified as|witness|Shri|Mr\.|Mrs\.)\s+([A-Z][a-z]+\s+[A-Z][a-z]+)', text_content)
-        for pm in pm_matches:
-            person_candidates.add(pm.strip())
-
-        for p_name in person_candidates:
+        for d_m in re.finditer(r'(?:operative|suspect|accused|associate|operator|officer|courier|director|coordinator)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)', text_content):
+            p_name = d_m.group(1).strip()
             if p_name and not any(k in p_name.lower() for k in ("toyota", "mercedes", "information report", "incident details", "police station", "special cell")):
                 add_entity("Person", p_name, {
                     "role": "Key Suspect" if any(k in text_content.lower() for k in ("suspect", "accused", "smuggling", "hawala")) else "Subject of Interest",
                     "risk_score": 85,
                     "confidence": 0.95
-                })
+                }, start_char=d_m.start(1), end_char=d_m.end(1))
+
+        # General Person pattern
+        for pm_m in re.finditer(r'(?:between|identified as|witness|Shri|Mr\.|Mrs\.)\s+([A-Z][a-z]+\s+[A-Z][a-z]+)', text_content):
+            pm = pm_m.group(1).strip()
+            if pm and not any(k in pm.lower() for k in ("toyota", "mercedes", "information report", "incident details", "police station", "special cell")):
+                add_entity("Person", pm, {
+                    "role": "Subject of Interest",
+                    "risk_score": 75,
+                    "confidence": 0.90
+                }, start_char=pm_m.start(1), end_char=pm_m.end(1))
 
         # 6. Locations (with Geocoding & Coordinates)
-        loc_candidates = set()
-        # Location patterns targeting Indian landmark names & safehouses
         loc_patterns = [
             r'\b(Mumbai Port Trust)\b',
             r'\b(Hotel Oberoi Trident)\b',
@@ -449,22 +454,19 @@ class EvidenceExtractor:
             r'\b([A-Z][a-zA-Z0-9\s]{2,30}?(?:Port Trust|Hotel|Trident|Complex|Safehouse|Sector \d+|Terminus|Airport|Dockyard))\b'
         ]
         for pat in loc_patterns:
-            for lm in re.findall(pat, text_content):
+            for loc_m in re.finditer(pat, text_content):
+                lm = loc_m.group(1)
                 cleaned = lm.split("(")[0].strip().rstrip(".,:;")
-                if cleaned and len(cleaned) > 3 and not any(p.lower() in cleaned.lower() for p in person_candidates):
-                    loc_candidates.add(cleaned)
-
-        for loc_name in loc_candidates:
-            if loc_name and len(loc_name) > 3 and not any(k in loc_name.lower() for k in ("toyota", "mercedes", "the", "first", "sections")):
-                coords = resolve_coordinates(loc_name, text_content)
-                props = {
-                    "location_name": loc_name,
-                    "address": loc_name,
-                }
-                if coords:
-                    props["lat"] = coords[0]
-                    props["lng"] = coords[1]
-                add_entity("Location", loc_name, props)
+                if cleaned and len(cleaned) > 3:
+                    coords = resolve_coordinates(cleaned, text_content)
+                    props = {
+                        "location_name": cleaned,
+                        "address": cleaned,
+                    }
+                    if coords:
+                        props["lat"] = coords[0]
+                        props["lng"] = coords[1]
+                    add_entity("Location", cleaned, props, start_char=loc_m.start(1), end_char=loc_m.end(1))
 
 
         # 7. Relationships extraction between found entities

@@ -59,9 +59,12 @@ def evaluate_exact_spans(
         fp = len(p_lbl) - tp
         fn = len(g_lbl) - tp
         
-        prec = (tp / (tp + fp)) * 100 if (tp + fp) > 0 else 100.0
-        rec = (tp / (tp + fn)) * 100 if (tp + fn) > 0 else 100.0
-        f1 = (2 * prec * rec) / (prec + rec) if (prec + rec) > 0 else 0.0
+        prec = round((tp / (tp + fp)) * 100, 2) if (tp + fp) > 0 else "N/A"
+        rec = round((tp / (tp + fn)) * 100, 2) if (tp + fn) > 0 else "N/A"
+        if isinstance(prec, (int, float)) and isinstance(rec, (int, float)) and (prec + rec) > 0:
+            f1 = round((2 * prec * rec) / (prec + rec), 2)
+        else:
+            f1 = "N/A"
         
         per_label[lbl] = {
             "gold_count": len(g_lbl),
@@ -69,23 +72,26 @@ def evaluate_exact_spans(
             "tp": tp,
             "fp": fp,
             "fn": fn,
-            "precision": round(prec, 2),
-            "recall": round(rec, 2),
-            "f1": round(f1, 2)
+            "precision": prec,
+            "recall": rec,
+            "f1": f1
         }
         
         total_tp += tp
         total_fp += fp
         total_fn += fn
 
-    overall_p = (total_tp / (total_tp + total_fp)) * 100 if (total_tp + total_fp) > 0 else 100.0
-    overall_r = (total_tp / (total_tp + total_fn)) * 100 if (total_tp + total_fn) > 0 else 100.0
-    overall_f1 = (2 * overall_p * overall_r) / (overall_p + overall_r) if (overall_p + overall_r) > 0 else 0.0
+    overall_p = round((total_tp / (total_tp + total_fp)) * 100, 2) if (total_tp + total_fp) > 0 else "N/A"
+    overall_r = round((total_tp / (total_tp + total_fn)) * 100, 2) if (total_tp + total_fn) > 0 else "N/A"
+    if isinstance(overall_p, (int, float)) and isinstance(overall_r, (int, float)) and (overall_p + overall_r) > 0:
+        overall_f1 = round((2 * overall_p * overall_r) / (overall_p + overall_r), 2)
+    else:
+        overall_f1 = "N/A"
 
     return {
-        "exact_span_precision": round(overall_p, 2),
-        "exact_span_recall": round(overall_r, 2),
-        "exact_span_f1": round(overall_f1, 2),
+        "exact_span_precision": overall_p,
+        "exact_span_recall": overall_r,
+        "exact_span_f1": overall_f1,
         "total_gold_spans": len(gold_spans),
         "total_pred_spans": len(pred_spans),
         "total_tp": total_tp,

@@ -21,9 +21,19 @@ from db.models import Evidence
 
 def _extract_spo_triples_from_sentence(sentence: str, known_entities: List[str]) -> List[Tuple[str, str, str]]:
     """Extracts candidate (Subject, Relation, Object) triples from a factual sentence."""
-    found_entities = [e for e in known_entities if e.lower() in sentence.lower()]
     triples = []
     
+    # 1. Match structured arrow notation: e.g. "Vikram Mehta --[OWNS]--> +91-9820199482"
+    arrow_match = re.search(r'[-*]?\s*([A-Za-z0-9_\+\-\.\s]+?)\s*--\[([A-Z_]+)\]-->\s*([A-Za-z0-9_\+\-\.\s]+)', sentence)
+    if arrow_match:
+        s_raw = arrow_match.group(1).strip()
+        rel_raw = arrow_match.group(2).strip()
+        o_raw = arrow_match.group(3).split("(")[0].strip()
+        triples.append((s_raw, rel_raw, o_raw))
+        return triples
+
+    # 2. Natural language entity co-occurrence + predicate keyword extraction
+    found_entities = [e for e in known_entities if e.lower() in sentence.lower()]
     if len(found_entities) >= 2:
         for i in range(len(found_entities)):
             for j in range(i + 1, len(found_entities)):
@@ -33,11 +43,11 @@ def _extract_spo_triples_from_sentence(sentence: str, known_entities: List[str])
                 # Infer relation intent from relational keywords in sentence
                 rel_kw = "ASSOCIATED_WITH"
                 s_lower = sentence.lower()
-                if any(w in s_lower for w in ["calls", "communicat", "phoned", "spoke", "messag", "cdr"]):
+                if any(w in s_lower for w in ["calls", "communicat", "phoned", "spoke", "messag", "cdr", "telecom"]):
                     rel_kw = "COMMUNICATES_WITH"
-                elif any(w in s_lower for w in ["transfer", "sent", "wire", "paid", "hawala", "lakh", "crore", "inr"]):
+                elif any(w in s_lower for w in ["transfer", "sent", "wire", "paid", "hawala", "lakh", "crore", "inr", "account"]):
                     rel_kw = "TRANSFERS_FUNDS_TO"
-                elif any(w in s_lower for w in ["owns", "director", "shareholder", "operates", "shell", "front"]):
+                elif any(w in s_lower for w in ["owns", "director", "shareholder", "operates", "shell", "front", "registered"]):
                     rel_kw = "OWNS"
                 elif any(w in s_lower for w in ["located", "address", "safehouse", "port", "office", "terminal"]):
                     rel_kw = "LOCATED_AT"
@@ -65,8 +75,8 @@ def evaluate_graphrag_response(
 
     # 1. Split AI Response into Individual Sentences / Claims
     raw_sentences = [
-        s.strip() for s in re.split(r'(?<=[.!?])\s+', ai_response_text)
-        if len(s.strip()) > 15 and not s.strip().startswith("#") and not s.strip().startswith("*—")
+        s.strip() for s in re.split(r'(?<=[.!?\n])\s+', ai_response_text)
+        if len(s.strip()) > 10 and not s.strip().startswith("#") and not s.strip().startswith("*—")
     ]
 
     total_claims = len(raw_sentences)
@@ -126,9 +136,13 @@ def evaluate_graphrag_response(
     unfounded_entities = [e for e in filtered_entities if e not in grounded_entities]
     entity_grounding_rate = (len(grounded_entities) / len(filtered_entities)) * 100 if filtered_entities else 100.0
 
-    # 5. Citation Validity (ID exists in SoR) vs Citation Entailment (content actually contains claim entities)
+    # 5. Citation Validity (ID exists in SoR) vs Citation Entailment (content corroborates relational claim / SPO)
     valid_citations_count = 0
     entailed_citations_count = 0
+
+    all_response_triples = []
+    for sent in raw_sentences:
+        all_response_triples.extend(_extract_spo_triples_from_sentence(sent, known_node_names))
 
     for cit in returned_citations:
         cid = str(cit.get("id", ""))
@@ -137,21 +151,48 @@ def evaluate_graphrag_response(
         is_valid = (cid in valid_evidence_ids or any(ctitle in ef for ef in valid_evidence_files) or "document #" in ctitle)
         if is_valid:
             valid_citations_count += 1
-            # True Entailment check: does the cited evidence document text actually contain any grounded entities?
+            # True Entailment check: does the cited evidence document text actually contain relational support for the asserted claims?
             ev_match = [ec for ec in evidence_contents if ec["id"] == cid or (ec["filename"] and ec["filename"].lower() in ctitle)]
             if ev_match and ev_match[0]["content"]:
                 doc_text_lower = ev_match[0]["content"].lower()
-                # Check if any grounded entity or key subject/object appears in the actual text
-                if any(ge.lower() in doc_text_lower for ge in grounded_entities):
+                
+                # Check for directional relation support: evidence text must contain subject, object, or relational context
+                relation_entailed = False
+                for s, rel, o in all_response_triples:
+                    s_low, o_low = s.lower(), o.lower()
+                    if s_low in doc_text_lower and o_low in doc_text_lower:
+                        # Check predicate keywords in document text
+                        rel_keywords = {
+                            "COMMUNICATES_WITH": ["call", "cdr", "communicat", "phoned", "spoke", "dial", "sms", "messag"],
+                            "TRANSFERS_FUNDS_TO": ["transfer", "wire", "sent", "paid", "hawala", "ledger", "inr", "lakh", "crore", "account"],
+                            "OWNS": ["owner", "director", "shareholder", "operates", "shell", "vehicle", "registered", "account"],
+                            "LOCATED_AT": ["located", "address", "safehouse", "port", "terminal", "sector", "hotel", "mumbai"],
+                            "ASSOCIATED_WITH": ["associate", "syndicate", "network", "meeting", "operation", "with"]
+                        }.get(rel, ["with", "and"])
+                        
+                        if any(kw in doc_text_lower for kw in rel_keywords):
+                            # Verify no contradictory negation in proximity
+                            if not any(neg in doc_text_lower for neg in ["not linked", "never transferred", "no record of contact"]):
+                                relation_entailed = True
+                                break
+
+                # Fallback to grounded entity verification with contextual keywords if triples list was sparse
+                if not relation_entailed and grounded_entities:
+                    matched_grounded = [ge for ge in grounded_entities if ge.lower() in doc_text_lower]
+                    if len(matched_grounded) >= 2 or (len(matched_grounded) >= 1 and any(kw in doc_text_lower for kw in ["suspect", "transfer", "call", "account", "vehicle", "fir", "cdr"])):
+                        relation_entailed = True
+
+                if relation_entailed:
                     entailed_citations_count += 1
+
             elif ev_match:
-                # If content unavailable, verify against known filename/metadata keywords
+                # If raw content unavailable, verify against known filename/metadata keywords
                 ev_str = (ev_match[0]["filename"] + " " + ev_match[0]["source_type"]).lower()
                 if any(ge.lower() in ev_str for ge in grounded_entities):
                     entailed_citations_count += 1
 
-    citation_validity_rate = (valid_citations_count / len(returned_citations)) * 100 if returned_citations else 100.0
-    citation_entailment_rate = (entailed_citations_count / valid_citations_count) * 100 if valid_citations_count > 0 else (100.0 if not returned_citations else 0.0)
+    citation_validity_rate = round((valid_citations_count / len(returned_citations)) * 100, 2) if returned_citations else "N/A"
+    citation_entailment_rate = round((entailed_citations_count / valid_citations_count) * 100, 2) if valid_citations_count > 0 else ("N/A" if not returned_citations else 0.0)
 
     # 6. Structured Claim-Level Entailment (4-tier classification)
     supported_claims = 0
