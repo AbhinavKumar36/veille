@@ -96,6 +96,22 @@ def set_refresh_cookie(response: Response, refresh_token: str) -> None:
 
 # ── Token Validation ────────────────────────────────────────────────────────
 
+def decode_access_token(token: str) -> Optional[dict]:
+    """
+    Decode and validate a JWT token without raising HTTPException.
+    Returns payload dictionary or None if invalid/expired.
+    """
+    try:
+        payload = jwt.decode(
+            token,
+            settings.JWT_SECRET,
+            algorithms=[settings.JWT_ALGORITHM],
+        )
+        return payload
+    except Exception:
+        return None
+
+
 def _decode_token(token: str) -> dict:
     """
     Decode and validate a JWT token. Raises HTTP 401 on any failure.
@@ -119,6 +135,7 @@ def _decode_token(token: str) -> dict:
             detail="Invalid authentication credentials.",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
 
 
 async def get_current_user(
@@ -158,7 +175,7 @@ async def get_current_user(
 def require_role(*allowed_roles: str):
     """
     FastAPI dependency factory for RBAC enforcement.
-    ADMIN always has access regardless of which roles are specified.
+    ADMIN / HEAD always has access regardless of which roles are specified.
 
     Usage:
         @router.delete("/cases/{id}",
@@ -174,7 +191,8 @@ def require_role(*allowed_roles: str):
     async def role_checker(
         current_user: dict = Depends(get_current_user),
     ) -> dict:
-        if current_user["role"] not in allowed_roles and current_user["role"] != "ADMIN":
+        user_role = current_user.get("role", "")
+        if user_role not in allowed_roles and user_role not in ("ADMIN", "HEAD", "HEAD_OPERATOR"):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"Access denied. Required role(s): {', '.join(allowed_roles)}.",
@@ -182,6 +200,7 @@ def require_role(*allowed_roles: str):
         return current_user
 
     return role_checker
+
 
 
 # ── Audit Logging Helper ────────────────────────────────────────────────────

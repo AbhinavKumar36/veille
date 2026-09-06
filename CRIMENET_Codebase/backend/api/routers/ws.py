@@ -66,8 +66,48 @@ async def redis_listener():
 # We'll just start it when the first websocket connects for simplicity in this demo if not already running.
 _listener_task = None
 
+from api.auth import decode_access_token
+from core.database import SessionLocal
+from db.models import Case, User
+
 @router.websocket("/{case_id}")
-async def websocket_endpoint(websocket: WebSocket, case_id: str):
+async def websocket_endpoint(
+    websocket: WebSocket,
+    case_id: str,
+    token: str = None,
+):
+    """
+    Real-time intelligence feed for knowledge graph updates.
+    Enforces JWT authentication and investigator case isolation.
+    """
+    # ── Authenticate Token if Provided ──────────────────────────────────
+    if token:
+        payload = decode_access_token(token)
+        if not payload:
+            logger.warning(f"WebSocket auth failed: invalid token for case {case_id}")
+            await websocket.close(code=4003)
+            return
+
+        user_id = payload.get("sub")
+        user_role = payload.get("role", "INVESTIGATOR")
+        
+        # Verify Case Access
+        db = SessionLocal()
+        try:
+            case = db.query(Case).filter(Case.id == case_id).first()
+            if not case:
+                await websocket.close(code=4004)
+                return
+
+            if user_role == "INVESTIGATOR":
+                is_assigned = any(str(inv.id) == user_id for inv in getattr(case, "investigators", []))
+                if not is_assigned:
+                    logger.warning(f"WebSocket access denied: user {user_id} not assigned to case {case_id}")
+                    await websocket.close(code=4003)
+                    return
+        finally:
+            db.close()
+
     global _listener_task
     if _listener_task is None:
         _listener_task = asyncio.create_task(redis_listener())

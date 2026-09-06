@@ -44,7 +44,9 @@ def _verify_case_access(case_id: str, current_user: dict, db: Session) -> Case:
 
 
 @router.get("/{case_id}")
+@router.get("/dossier/{case_id}")
 def get_graph(
+
     case_id: str,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),

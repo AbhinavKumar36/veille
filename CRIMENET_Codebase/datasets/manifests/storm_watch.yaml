@@ -1,0 +1,10 @@
+name: Operation Storm Watch
+source: VEILLE Controlled Forensic Benchmark
+classification: Controlled Ground-Truth Benchmark
+domain: Multi-Modal Syndicate Investigation (FIR, CDR, AML)
+adapter: internal
+target_entities:
+  - Person, Organization, Location, Phone, Account, Vehicle
+target_relationships:
+  - OWNS, ASSOCIATED_WITH, COMMUNICATES_WITH, LOCATED_AT, PARTICIPATED_IN
+primary_evaluation: End-to-End System Integrity & Zero-Defect Ground-Truth Reconstruction

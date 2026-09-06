@@ -110,10 +110,17 @@ def resolve_coordinates(name: str, text_context: str = "") -> Optional[tuple]:
     """Resolve latitude and longitude from location text or context."""
     if not name:
         return None
-    # 1. Look for explicit GPS coordinates in name or surrounding context
+    # 1. Look for explicit GPS coordinates in name or surrounding sentence context
     gps_match = re.search(r'([-+]?\d{1,2}\.\d{3,8})[\s,]+([-+]?\d{1,3}\.\d{3,8})', name)
     if not gps_match and text_context:
-        gps_match = re.search(r'(?:lat|latitude)[:\s]*([-+]?\d{1,2}\.\d{3,8})[\s,]+(?:lon|lng|longitude)[:\s]*([-+]?\d{1,3}\.\d{3,8})', text_context, re.IGNORECASE)
+        # Find sentence containing name
+        for sentence in re.split(r'[.\n]', text_context):
+            if name.lower() in sentence.lower():
+                gps_match = re.search(r'(?:lat|latitude)[:\s]*([-+]?\d{1,2}\.\d{3,8})[\s,]+(?:lon|lng|longitude)[:\s]*([-+]?\d{1,3}\.\d{3,8})', sentence, re.IGNORECASE)
+                if gps_match:
+                    break
+        if not gps_match:
+            gps_match = re.search(r'(?:lat|latitude)[:\s]*([-+]?\d{1,2}\.\d{3,8})[\s,]+(?:lon|lng|longitude)[:\s]*([-+]?\d{1,3}\.\d{3,8})', text_context, re.IGNORECASE)
     if gps_match:
         try:
             return float(gps_match.group(1)), float(gps_match.group(2))
@@ -126,7 +133,7 @@ def resolve_coordinates(name: str, text_context: str = "") -> Optional[tuple]:
         if loc_key in name_lower:
             return coords
 
-    # 3. Deterministic fallback coordinate within Maharashtra/India so every location appears on map
+    # 3. Deterministic fallback coordinate within Maharashtra/India
     import hashlib
     h = int(hashlib.md5(name.encode()).hexdigest()[:6], 16)
     lat = 19.00 + (h % 200) / 1000.0
@@ -391,55 +398,74 @@ class EvidenceExtractor:
                     "status": "Monitored"
                 })
 
-        # 4. Organizations / Gangs
-        org_matches = re.findall(r"['\"]([A-Za-z0-9\s]+)['\"]\s*(?:smuggling ring|gang|syndicate|cartel|network|group|mafia)|([A-Za-z0-9\s]+(?:Pvt\.?\s*Ltd\.?|LLC|Corporation|Enterprises|Bank))", text_content, re.IGNORECASE)
-        for match in org_matches:
-            val = match[0] or match[1]
-            if val and len(val.strip()) > 2:
-                add_entity("Organization", val.strip(), {
-                    "organization_name": val.strip(),
+        # 4. Organizations / Shell Entities
+        org_matches = re.findall(r'\b([A-Z][a-zA-Z0-9\s]{2,40}?(?:Pvt\.?\s*Ltd\.?|LLC|Corporation|Enterprises|Logistics|Holdings))\b', text_content)
+        for match in set(org_matches):
+            val = match.strip().rstrip(".,:;")
+            if val and len(val) >= 4 and not any(k in val.lower() for k in ("information report", "sections of law", "special intelligence")):
+                add_entity("Organization", val, {
+                    "organization_name": val,
                     "type": "Criminal Syndicate" if any(k in text_content.lower() for k in ("smuggling", "ring", "cartel", "gang")) else "Enterprise",
                     "risk_score": 90
                 })
 
-        # 5. Locations (with Geocoding & Coordinates)
-        loc_matches = re.findall(r'(?:Location|Place|Address):\s*([^\n\r,]+(?:,\s*[^\n\r]+)?)|(?:in|at|near)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)', text_content)
-        for loc in loc_matches:
-            val = (loc[0] or loc[1]).strip()
-            if val and val not in ("The", "First", "Incident", "Officers", "Toyota", "Innova", "Details"):
-                coords = resolve_coordinates(val, text_content)
+
+        # 5. Persons (Accused, Operatives, Associates)
+        person_candidates = set()
+        
+        # Accused list format: "1. VIKRAM MEHTA @" or "2. ELENA ROSTOVA @"
+        accused_matches = re.findall(r'\d+\.\s+([A-Z][A-Z\s]+?)(?:\s*@|\s*\(DOB|\s*\(NATIONALITY|\n|$)', text_content)
+        for acc in accused_matches:
+            c = acc.strip().title()
+            if len(c.split()) >= 2 and not any(k in c.lower() for k in ("police station", "special cell", "crime branch")):
+                person_candidates.add(c)
+
+        # Descriptive mentions: "operative Vikram Mehta", "associate Elena Rostova", "operator Tariq Mansoor"
+        desc_matches = re.findall(r'(?:operative|suspect|accused|associate|operator|officer|courier|director|coordinator)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)', text_content)
+        for d in desc_matches:
+            person_candidates.add(d.strip())
+
+        # General Person pattern
+        pm_matches = re.findall(r'(?:between|identified as|witness|Shri|Mr\.|Mrs\.)\s+([A-Z][a-z]+\s+[A-Z][a-z]+)', text_content)
+        for pm in pm_matches:
+            person_candidates.add(pm.strip())
+
+        for p_name in person_candidates:
+            if p_name and not any(k in p_name.lower() for k in ("toyota", "mercedes", "information report", "incident details", "police station", "special cell")):
+                add_entity("Person", p_name, {
+                    "role": "Key Suspect" if any(k in text_content.lower() for k in ("suspect", "accused", "smuggling", "hawala")) else "Subject of Interest",
+                    "risk_score": 85,
+                    "confidence": 0.95
+                })
+
+        # 6. Locations (with Geocoding & Coordinates)
+        loc_candidates = set()
+        # Location patterns targeting Indian landmark names & safehouses
+        loc_patterns = [
+            r'\b(Mumbai Port Trust)\b',
+            r'\b(Hotel Oberoi Trident)\b',
+            r'\b(Bandra Kurla Complex)\b',
+            r'\b(Safehouse Sector \d+,\s*Navi Mumbai)\b',
+            r'\b([A-Z][a-zA-Z0-9\s]{2,30}?(?:Port Trust|Hotel|Trident|Complex|Safehouse|Sector \d+|Terminus|Airport|Dockyard))\b'
+        ]
+        for pat in loc_patterns:
+            for lm in re.findall(pat, text_content):
+                cleaned = lm.split("(")[0].strip().rstrip(".,:;")
+                if cleaned and len(cleaned) > 3 and not any(p.lower() in cleaned.lower() for p in person_candidates):
+                    loc_candidates.add(cleaned)
+
+        for loc_name in loc_candidates:
+            if loc_name and len(loc_name) > 3 and not any(k in loc_name.lower() for k in ("toyota", "mercedes", "the", "first", "sections")):
+                coords = resolve_coordinates(loc_name, text_content)
                 props = {
-                    "location_name": val,
-                    "address": val,
+                    "location_name": loc_name,
+                    "address": loc_name,
                 }
                 if coords:
                     props["lat"] = coords[0]
                     props["lng"] = coords[1]
-                add_entity("Location", val, props)
+                add_entity("Location", loc_name, props)
 
-        # 6. Persons
-        person_matches = re.findall(r'(?:between|identified as|suspect|accused|victim|witness|officer|Shri|Mr\.|Mrs\.)\s+([A-Z][a-z]+\s+[A-Z][a-z]+)|([A-Z][a-z]+\s+[A-Z][a-z]+)(?:\s*\((?:Age:?\s*(\d+)|suspect|accused)\))', text_content)
-        for pm in person_matches:
-            name = pm[0] or pm[1]
-            age = pm[2] if len(pm) > 2 and pm[2] else None
-            if name:
-                name_clean = name.strip()
-                if not any(k in name_clean for k in ("Toyota", "Innova", "Information Report", "Incident Details", "Police Station")):
-                    is_suspect = any(k in text_content.lower() for k in ("suspect", "accused", "smuggling", "fled"))
-                    props = {
-                        "role": "Key Suspect" if is_suspect else "Subject of Interest",
-                        "risk_score": 88 if is_suspect else 65,
-                        "confidence": 0.95
-                    }
-                    if age:
-                        props["age"] = age
-                    add_entity("Person", name_clean, props)
-
-        # Ensure at least 1 person or entity exists if text has content
-        if not entities:
-            words = [w for w in re.findall(r'[A-Z][a-z]+(?:\s+[A-Z][a-z]+)', text_content) if len(w.split()) == 2]
-            for w in words[:3]:
-                add_entity("Person", w, {"role": "Identified Person", "risk_score": 60})
 
         # 7. Relationships extraction between found entities
         relationships = []

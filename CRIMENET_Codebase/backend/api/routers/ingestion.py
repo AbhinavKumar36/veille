@@ -5,6 +5,7 @@ File is saved locally (MinIO integration deferred to Phase 2).
 Evidence record is written to DB before Celery task is dispatched.
 """
 import hashlib
+import logging
 import os
 import shutil
 import uuid
@@ -18,10 +19,14 @@ from sqlalchemy.orm import Session
 from api.auth import get_current_user, log_action, require_role
 from core.config import settings
 from core.database import get_db
-from db.models import Case, Evidence
+from core.storage import storage_service
+from db.models import Case, Evidence, case_investigators
 from workers.tasks import extract_entities_task, process_structured_data_task
 
+logger = logging.getLogger("veille.ingestion")
+
 router = APIRouter(prefix="/api/v1/evidence", tags=["evidence"])
+
 
 # Local upload directory (mocks MinIO for Phase 1)
 UPLOAD_DIR = os.path.join(
@@ -61,6 +66,7 @@ class EvidenceUploadResponse(BaseModel):
     evidence_id: str
     job_id: str
     message: str
+    storage_path: Optional[str] = None
 
 
 class EvidenceResponse(BaseModel):
@@ -85,8 +91,19 @@ def get_all_evidence(
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """List all accessible evidence."""
-    evidence_list = db.query(Evidence).offset(skip).limit(limit).all()
+    """List accessible evidence. Enforces investigator case assignment boundaries."""
+    if current_user["role"] == "HEAD":
+        evidence_list = db.query(Evidence).offset(skip).limit(limit).all()
+    else:
+        evidence_list = (
+            db.query(Evidence)
+            .join(Case, Evidence.case_id == Case.id)
+            .join(case_investigators, Case.id == case_investigators.c.case_id)
+            .filter(case_investigators.c.user_id == current_user["id"])
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
     return [
         EvidenceResponse(
             id=str(e.id),
@@ -119,6 +136,12 @@ def get_evidence_for_case(
     if not case:
         raise HTTPException(status_code=404, detail=f"Case '{case_id}' not found.")
 
+    if (
+        current_user["role"] == "INVESTIGATOR"
+        and not any(str(inv.id) == current_user["id"] for inv in getattr(case, "investigators", []))
+    ):
+        raise HTTPException(status_code=403, detail="You do not have access to this case.")
+
     evidence_list = db.query(Evidence).filter(Evidence.case_id == case.id).offset(skip).limit(limit).all()
     if not evidence_list:
         return []
@@ -150,8 +173,7 @@ async def upload_evidence(
 ):
     """
     Upload an evidence file and dispatch to the async intelligence pipeline.
-    Returns 202 Accepted immediately; processing happens in background.
-    Phase 1: Files saved locally. Phase 2: MinIO integration.
+    Persists to MinIO object storage (or local vault) with SHA-256 integrity verification.
     """
     # ── Validation ──────────────────────────────────────────────────────
     if source_type not in ("FIR", "CDR", "FINANCIAL"):
@@ -175,11 +197,7 @@ async def upload_evidence(
     ):
         raise HTTPException(status_code=403, detail="Cannot upload evidence to another investigator's case.")
 
-    # ── Save File ────────────────────────────────────────────────────────
-    evidence_id = uuid.uuid4()
-    safe_filename = f"{evidence_id}{file_ext}"
-    file_path = os.path.join(UPLOAD_DIR, safe_filename)
-
+    # ── Read & Verify File ──────────────────────────────────────────────
     file_content = await file.read()
 
     # Enforce size limit
@@ -189,15 +207,28 @@ async def upload_evidence(
     # Compute SHA-256 hash for immutability verification
     file_hash = hashlib.sha256(file_content).hexdigest()
 
-    with open(file_path, "wb") as f:
-        f.write(file_content)
+    evidence_id = uuid.uuid4()
+    safe_filename = f"{evidence_id}{file_ext}"
+
+    # ── Upload to MinIO Object Storage (with local fallback) ─────────────
+    success, storage_path = storage_service.upload_file(
+        safe_filename,
+        file_content,
+        content_type=file.content_type or "application/octet-stream",
+    )
+
+    # Also keep a local copy for immediate local worker processing if needed
+    local_file_path = os.path.join(UPLOAD_DIR, safe_filename)
+    if not os.path.exists(local_file_path):
+        with open(local_file_path, "wb") as f:
+            f.write(file_content)
 
     # ── Write Evidence Record to PostgreSQL ──────────────────────────────
     evidence = Evidence(
         id=evidence_id,
         case_id=case_id,
         source_type=source_type,
-        file_path=file_path,
+        file_path=storage_path,
         original_filename=file.filename,
         file_size_bytes=len(file_content),
         hash=file_hash,
@@ -212,14 +243,13 @@ async def upload_evidence(
     job_id = str(uuid.uuid4())
     try:
         if source_type == "FIR" or file_ext in (".pdf", ".txt", ".png", ".jpg", ".jpeg", ".mp3", ".wav"):
-            result = extract_entities_task.delay(str(evidence_id), file_path, case_id)
+            result = extract_entities_task.delay(str(evidence_id), local_file_path, case_id)
             job_id = result.id
         else:
-            result = process_structured_data_task.delay(str(evidence_id), source_type, file_path, case_id)
+            result = process_structured_data_task.delay(str(evidence_id), source_type, local_file_path, case_id)
             job_id = result.id
     except Exception as celery_err:
-        import logging
-        logging.getLogger(__name__).warning(
+        logger.warning(
             f"Celery dispatch failed for evidence {evidence_id}: {celery_err}. Using BackgroundTasks."
         )
 
@@ -227,7 +257,7 @@ async def upload_evidence(
     background_tasks.add_task(
         _run_evidence_pipeline,
         str(evidence_id),
-        file_path,
+        local_file_path,
         case_id,
         source_type
     )
@@ -236,8 +266,98 @@ async def upload_evidence(
         status="processing",
         evidence_id=str(evidence_id),
         job_id=job_id,
-        message=f"File '{file.filename}' accepted. Processing in background.",
+        message=f"File '{file.filename}' securely vaulted. SHA-256: {file_hash[:16]}...",
+        storage_path=storage_path,
     )
+
+
+@router.get("/{evidence_id}/download")
+def download_evidence(
+    evidence_id: str,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Download the raw evidence file. Enforces case authorization."""
+    evidence = db.query(Evidence).filter(Evidence.id == evidence_id).first()
+    if not evidence:
+        raise HTTPException(status_code=404, detail="Evidence not found.")
+
+    case = evidence.case
+    if (
+        current_user["role"] == "INVESTIGATOR"
+        and case
+        and not any(str(inv.id) == current_user["id"] for inv in getattr(case, "investigators", []))
+    ):
+        raise HTTPException(status_code=403, detail="You do not have access to this case evidence.")
+
+    # Try generating presigned MinIO URL first
+    presigned_url = storage_service.get_download_url(evidence.file_path)
+    if presigned_url:
+        return {"download_url": presigned_url, "filename": evidence.original_filename}
+
+    # Fallback to local file stream
+    file_bytes = storage_service.get_file(evidence.file_path)
+    if not file_bytes:
+        # Check local upload dir
+        local_path = os.path.join(UPLOAD_DIR, os.path.basename(evidence.file_path))
+        if os.path.exists(local_path):
+            return FileResponse(local_path, filename=evidence.original_filename)
+        raise HTTPException(status_code=404, detail="Evidence file data not found.")
+
+    return Response(
+        content=file_bytes,
+        media_type="application/octet-stream",
+        headers={"Content-Disposition": f'attachment; filename="{evidence.original_filename or "evidence"}"'},
+    )
+
+
+@router.get("/{evidence_id}/preview")
+def preview_evidence(
+    evidence_id: str,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Returns text/snippet preview of evidence content for the UI viewer."""
+    evidence = db.query(Evidence).filter(Evidence.id == evidence_id).first()
+    if not evidence:
+        raise HTTPException(status_code=404, detail="Evidence not found.")
+
+    case = evidence.case
+    if (
+        current_user["role"] == "INVESTIGATOR"
+        and case
+        and not any(str(inv.id) == current_user["id"] for inv in getattr(case, "investigators", []))
+    ):
+        raise HTTPException(status_code=403, detail="You do not have access to this case evidence.")
+
+    file_bytes = storage_service.get_file(evidence.file_path)
+    if not file_bytes:
+        local_path = os.path.join(UPLOAD_DIR, os.path.basename(evidence.file_path))
+        if os.path.exists(local_path):
+            with open(local_path, "rb") as f:
+                file_bytes = f.read()
+
+    if not file_bytes:
+        return {"content": "Preview unavailable: file data not found in vault.", "type": "empty"}
+
+    try:
+        text_content = file_bytes.decode("utf-8", errors="replace")
+        return {
+            "evidence_id": str(evidence.id),
+            "filename": evidence.original_filename,
+            "source_type": evidence.source_type,
+            "hash": evidence.hash,
+            "size_bytes": evidence.file_size_bytes,
+            "content": text_content[:50000],  # Return first 50KB for fast preview
+            "type": "text",
+        }
+    except Exception as e:
+        return {
+            "evidence_id": str(evidence.id),
+            "filename": evidence.original_filename,
+            "type": "binary",
+            "content": f"Binary content ({len(file_bytes)} bytes). Use download to view.",
+        }
 
 
 @router.post("/{evidence_id}/reprocess", response_model=EvidenceResponse)
@@ -247,10 +367,18 @@ def reprocess_evidence(
     current_user: dict = Depends(require_role("INVESTIGATOR", "HEAD")),
     db: Session = Depends(get_db),
 ):
-    """Trigger reprocessing for an evidence record."""
+    """Trigger reprocessing for an evidence record with strict case authorization."""
     evidence = db.query(Evidence).filter(Evidence.id == evidence_id).first()
     if not evidence:
         raise HTTPException(status_code=404, detail="Evidence not found.")
+
+    case = evidence.case
+    if (
+        current_user["role"] == "INVESTIGATOR"
+        and case
+        and not any(str(inv.id) == current_user["id"] for inv in getattr(case, "investigators", []))
+    ):
+        raise HTTPException(status_code=403, detail="You do not have access to this case.")
 
     evidence.status = "PROCESSING"
     evidence.error_message = None

@@ -22,7 +22,9 @@ router = APIRouter(
 
 @router.get("")
 @router.get("/")
+@router.get("/nodes")
 def get_geospatial_locations(
+
     case_id: Optional[str] = Query(None, description="Filter locations by case ID"),
     current_user: dict = Depends(get_current_user),
 ) -> List[Dict]:

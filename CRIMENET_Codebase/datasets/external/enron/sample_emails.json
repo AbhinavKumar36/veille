@@ -1,0 +1,18 @@
+[
+  {
+    "id": "ENRON_EM_001",
+    "date": "2001-10-12T14:32:00",
+    "from": "jeff.skilling@enron.com",
+    "to": "kenneth.lay@enron.com, andrew.fastow@enron.com",
+    "subject": "LJM Special Purpose Vehicle structuring",
+    "body": "Ken, Andy has prepared the transfer schedule for Raptor hedges. We need to finalize the offshore SPV accounts before the quarterly SEC filings."
+  },
+  {
+    "id": "ENRON_EM_002",
+    "date": "2001-10-14T09:15:00",
+    "from": "andrew.fastow@enron.com",
+    "to": "richard.causey@enron.com",
+    "subject": "Re: LJM Special Purpose Vehicle structuring",
+    "body": "Confirming account wire routing through Cayman entity. Total collateral INR equivalent 45M transferred."
+  }
+]

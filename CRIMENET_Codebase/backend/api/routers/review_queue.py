@@ -159,36 +159,72 @@ def merge_entity(
     from core.graph_db import get_graph_session
     try:
         with get_graph_session() as session:
-            # Redirect all relationships from candidate to the canonical match node
-            session.run(
-                """
-                MATCH (candidate {id: $candidate_id})
-                MATCH (match {id: $match_id})
-                // Move outgoing relationships
-                OPTIONAL MATCH (candidate)-[r_out]->(other)
-                WHERE other <> match
-                MERGE (match)-[r_new_out:ASSOCIATED_WITH]->(other)
-                SET r_new_out.merged_from = $candidate_id
-                DELETE r_out
-                WITH candidate, match
-                // Move incoming relationships
-                OPTIONAL MATCH (other2)-[r_in]->(candidate)
-                WHERE other2 <> match
-                MERGE (other2)-[r_new_in:ASSOCIATED_WITH]->(match)
-                SET r_new_in.merged_from = $candidate_id
-                DELETE r_in
-                WITH candidate
-                // Delete the now-orphaned candidate node
-                DELETE candidate
-                """,
-                candidate_id=item["candidate_id"],
-                match_id=item["match_id"],
-            )
+            # 1. First check if apoc.refactor.mergeNodes is available
+            use_apoc = False
+            try:
+                apoc_test = session.run("RETURN apoc.version() AS v").single()
+                if apoc_test:
+                    use_apoc = True
+            except Exception:
+                use_apoc = False
+
+            if use_apoc:
+                session.run(
+                    """
+                    MATCH (candidate {id: $candidate_id})
+                    MATCH (match {id: $match_id})
+                    CALL apoc.refactor.mergeNodes([match, candidate], {properties: 'combine', mergeRels: true})
+                    YIELD node
+                    RETURN node
+                    """,
+                    candidate_id=item["candidate_id"],
+                    match_id=item["match_id"],
+                )
+            else:
+                # 2. Native Cypher preserving relationship types & properties
+                session.run(
+                    """
+                    MATCH (candidate {id: $candidate_id})
+                    MATCH (match {id: $match_id})
+                    
+                    // Copy candidate aliases / names into match node
+                    SET match.aliases = coalesce(match.aliases, []) + [candidate.name]
+
+                    // Move outgoing relationships preserving original type & properties
+                    WITH candidate, match
+                    OPTIONAL MATCH (candidate)-[r_out]->(other)
+                    WHERE other <> match
+                    FOREACH (_ IN CASE WHEN r_out IS NOT NULL THEN [1] ELSE [] END |
+                        // Copy properties and preserve relationship semantics
+                        MERGE (match)-[r_new:ASSOCIATED_WITH]->(other)
+                        SET r_new = properties(r_out),
+                            r_new.original_type = type(r_out),
+                            r_new.merged_from = $candidate_id
+                    )
+                    DELETE r_out
+
+                    // Move incoming relationships preserving original type & properties
+                    WITH candidate, match
+                    OPTIONAL MATCH (other2)-[r_in]->(candidate)
+                    WHERE other2 <> match
+                    FOREACH (_ IN CASE WHEN r_in IS NOT NULL THEN [1] ELSE [] END |
+                        MERGE (other2)-[r_new2:ASSOCIATED_WITH]->(match)
+                        SET r_new2 = properties(r_in),
+                            r_new2.original_type = type(r_in),
+                            r_new2.merged_from = $candidate_id
+                    )
+                    DELETE r_in
+
+                    // Delete the now-orphaned candidate node
+                    WITH candidate
+                    DELETE candidate
+                    """,
+                    candidate_id=item["candidate_id"],
+                    match_id=item["match_id"],
+                )
     except Exception as e:
         logger.error(f"Merge failed for {item['candidate_id']} → {item['match_id']}: {e}")
         raise HTTPException(status_code=500, detail=f"Graph merge failed: {e}")
-    finally:
-        pass
 
     _remove_review_item(r, lookup_id)
     log_action(db, current_user["id"], "MERGE_ENTITY", case_id=item.get("case_id"))

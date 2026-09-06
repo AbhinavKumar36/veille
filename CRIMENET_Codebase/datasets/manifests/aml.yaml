@@ -1,0 +1,10 @@
+name: IBM AML Transaction Benchmark
+source: IBM Research Anti-Money Laundering Benchmark
+classification: Synthetic Research Benchmark
+domain: Financial Smurfing & Layering
+adapter: datasets.adapters.aml_adapter.AMLTransactionAdapter
+target_entities:
+  - Account (Bank Account, Mule Account)
+target_relationships:
+  - TRANSFERRED_FUNDS (Wire, RTGS, Cash Mule)
+primary_evaluation: Cycle Detection & Smurfing Anomaly Detection

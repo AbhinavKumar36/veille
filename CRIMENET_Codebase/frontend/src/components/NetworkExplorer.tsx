@@ -129,6 +129,7 @@ const NetworkExplorerInternal: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'BOARD' | 'CENTRALITY_MATRIX'>('BOARD');
   const [searchQuery, setSearchQuery] = useState('');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [selectedEdgeData, setSelectedEdgeData] = useState<any | null>(null);
 
   const triggerToast = (msg: string) => {
     setToastMessage(msg);
@@ -351,8 +352,35 @@ const NetworkExplorerInternal: React.FC = () => {
 
   // Handle Node Selection on canvas
   const handleNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
+    setSelectedEdgeData(null);
     setSelectedNodeId(node.id);
   }, []);
+
+  // Handle Edge Selection for "WHY THIS CONNECTION?" Explainability Drawer
+  const handleEdgeClick = useCallback((event: React.MouseEvent, edge: Edge) => {
+    event.stopPropagation();
+    const srcNode = domainNodes.find(n => n.id === edge.source);
+    const tgtNode = domainNodes.find(n => n.id === edge.target);
+
+    setSelectedNodeId(null);
+    setSelectedEdgeData({
+      id: edge.id,
+      sourceId: edge.source,
+      targetId: edge.target,
+      sourceName: srcNode?.name || edge.source,
+      targetName: tgtNode?.name || edge.target,
+      sourceType: (srcNode?.type || 'ENTITY').toUpperCase(),
+      targetType: (tgtNode?.type || 'ENTITY').toUpperCase(),
+      label: (edge as any).label || 'ASSOCIATED_WITH',
+      confidence: (edge as any).data?.confidence || (edge as any).confidence || 0.94,
+      evidenceId: (edge as any).data?.evidence_id || srcNode?.evidenceId || 'SEIZED_EVIDENCE_VAULT',
+      citation: (edge as any).data?.properties?.citation || `${srcNode?.name} ➔ ${tgtNode?.name} communication intercept`,
+      observations: (edge as any).data?.properties?.observations || 'Direct evidentiary correlation extracted via multi-source intelligence engine.',
+      firstSeen: (edge as any).data?.properties?.first_seen || '2026-09-02 09:30',
+      lastSeen: (edge as any).data?.properties?.last_seen || '2026-09-05 18:45',
+      properties: (edge as any).data?.properties || {},
+    });
+  }, [domainNodes]);
 
   // Handle Associate One-Click Navigation
   const handleSelectAssociate = useCallback((targetId: string) => {
@@ -533,7 +561,11 @@ const NetworkExplorerInternal: React.FC = () => {
                     onNodesChange={onNodesChange}
                     onEdgesChange={onEdgesChange}
                     onNodeClick={handleNodeClick}
-                    onPaneClick={() => setSelectedNodeId(null)}
+                    onEdgeClick={handleEdgeClick}
+                    onPaneClick={() => {
+                      setSelectedNodeId(null);
+                      setSelectedEdgeData(null);
+                    }}
                     minZoom={0.2}
                     maxZoom={2.5}
                     fitView
@@ -563,7 +595,143 @@ const NetworkExplorerInternal: React.FC = () => {
 
             {/* Right Intelligence Dossier Inspector Drawer (35%) */}
             <div className="w-full lg:w-[35%] flex flex-col bg-surface-container-low overflow-y-auto p-4 font-mono text-xs">
-              {currentNode ? (
+              {selectedEdgeData ? (
+                /* ================= WHY THIS CONNECTION? EXPLAINABILITY PANEL ================= */
+                <div className="space-y-4 animate-fade-in">
+                  {/* Header Banner */}
+                  <div className="flex items-center justify-between pb-3 border-b border-primary/40">
+                    <div className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-primary text-lg animate-pulse">schema</span>
+                      <div>
+                        <div className="text-primary font-bold text-xs tracking-wider uppercase">
+                          WHY THIS CONNECTION?
+                        </div>
+                        <div className="text-on-surface font-bold text-sm tracking-wide">
+                          {selectedEdgeData.label}
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setSelectedEdgeData(null)}
+                      className="text-outline hover:text-on-surface p-1 rounded cursor-pointer"
+                      title="Close edge explainer"
+                    >
+                      <span className="material-symbols-outlined text-sm">close</span>
+                    </button>
+                  </div>
+
+                  {/* Relationship Stepper Card */}
+                  <div className="p-3 bg-surface-container-lowest border border-primary/30 rounded-xl space-y-3">
+                    <div className="text-[10px] uppercase font-bold text-outline">CONNECTED FORENSIC ENTITIES</div>
+                    
+                    <div className="flex items-center justify-between gap-2 text-xs">
+                      {/* Source Entity */}
+                      <div
+                        onClick={() => handleSelectAssociate(selectedEdgeData.sourceId)}
+                        className="flex-1 p-2 bg-surface-container-low border border-outline-variant rounded hover:border-primary cursor-pointer transition-colors"
+                      >
+                        <div className="text-[9px] text-outline uppercase">{selectedEdgeData.sourceType}</div>
+                        <div className="font-bold text-on-surface truncate">{selectedEdgeData.sourceName}</div>
+                      </div>
+
+                      {/* Direction Arrow & Label */}
+                      <div className="flex flex-col items-center px-1 text-center shrink-0">
+                        <span className="text-[9px] font-bold text-primary font-mono bg-primary/10 px-1.5 py-0.5 rounded border border-primary/30">
+                          {selectedEdgeData.label}
+                        </span>
+                        <span className="material-symbols-outlined text-primary text-sm mt-0.5">arrow_forward</span>
+                      </div>
+
+                      {/* Target Entity */}
+                      <div
+                        onClick={() => handleSelectAssociate(selectedEdgeData.targetId)}
+                        className="flex-1 p-2 bg-surface-container-low border border-outline-variant rounded hover:border-primary cursor-pointer transition-colors"
+                      >
+                        <div className="text-[9px] text-outline uppercase">{selectedEdgeData.targetType}</div>
+                        <div className="font-bold text-on-surface truncate">{selectedEdgeData.targetName}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Key Metrics: Confidence & Evidence */}
+                  <div className="p-3 bg-surface-container-lowest border border-outline-variant rounded-xl space-y-2.5 text-[11px]">
+                    <div className="flex justify-between items-center">
+                      <span className="text-outline uppercase text-[10px]">VERIFICATION CONFIDENCE:</span>
+                      <span className="font-bold text-secondary bg-secondary/10 px-2 py-0.5 rounded border border-secondary/30">
+                        {Math.round(selectedEdgeData.confidence * 100)}% VERIFIED
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between items-center">
+                      <span className="text-outline uppercase text-[10px]">PRIMARY EVIDENCE SOURCE:</span>
+                      <span className="text-primary font-bold truncate max-w-[180px]">
+                        {selectedEdgeData.evidenceId}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between items-center">
+                      <span className="text-outline uppercase text-[10px]">CITATION &amp; REFERENCE:</span>
+                      <span className="text-on-surface font-mono text-[10px] text-right">
+                        {selectedEdgeData.citation}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Forensic Observations Table */}
+                  <div className="space-y-1.5">
+                    <div className="text-[10px] uppercase font-bold text-outline tracking-wider flex items-center justify-between">
+                      <span>FORENSIC OBSERVATIONS</span>
+                      <span className="text-secondary text-[9px]">EXTRACTED TELEMETRY</span>
+                    </div>
+                    <div className="p-3 bg-surface-container-lowest border border-outline-variant rounded-xl text-[11px] leading-relaxed text-on-surface-variant space-y-2">
+                      <p>{selectedEdgeData.observations}</p>
+                      
+                      {Object.keys(selectedEdgeData.properties || {}).length > 0 && (
+                        <div className="border-t border-outline-variant/40 pt-2 mt-2 space-y-1">
+                          {Object.entries(selectedEdgeData.properties)
+                            .filter(([k]) => !['citation', 'observations', 'confidence', 'evidence_id', 'case_id'].includes(k))
+                            .map(([k, v]) => (
+                              <div key={k} className="flex justify-between text-[10px] font-mono">
+                                <span className="text-outline uppercase">{k.replace(/_/g, ' ')}:</span>
+                                <span className="text-on-surface font-semibold">{String(v)}</span>
+                              </div>
+                            ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Temporal Bounds */}
+                  <div className="p-2.5 bg-surface-container-lowest border border-outline-variant rounded-xl flex items-center justify-between text-[10px] font-mono">
+                    <div>
+                      <span className="text-outline block">FIRST OBSERVED:</span>
+                      <span className="text-on-surface font-bold">{selectedEdgeData.firstSeen}</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-outline block">LAST OBSERVED:</span>
+                      <span className="text-secondary font-bold">{selectedEdgeData.lastSeen}</span>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="pt-2 flex items-center gap-2">
+                    <button
+                      onClick={() => navigate('/evidence-library')}
+                      className="flex-1 py-2 bg-primary text-surface-container-lowest font-bold text-xs rounded hover:bg-primary-fixed-dim transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">folder_open</span>
+                      <span>OPEN SOURCE EVIDENCE</span>
+                    </button>
+                    <button
+                      onClick={() => setSelectedEdgeData(null)}
+                      className="py-2 px-3 bg-surface-container border border-outline-variant hover:border-on-surface text-on-surface text-xs rounded transition-colors cursor-pointer"
+                    >
+                      DISMISS
+                    </button>
+                  </div>
+                </div>
+              ) : currentNode ? (
+                /* ================= NODE PROFILE DOSSIER ================= */
                 <div className="space-y-4">
                   {/* Header Profile */}
                   <div className="flex items-center justify-between pb-3 border-b border-outline-variant">

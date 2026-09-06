@@ -144,10 +144,10 @@ export const KeyVaultHSM: React.FC = () => {
         <div>
           <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2.5">
             <span className="material-symbols-outlined text-sky-400 text-[28px]">vpn_key</span>
-            Key Vault &amp; Encryption Management
+            Cryptographic Operations &amp; Key Vault
           </h1>
           <p className="text-xs text-slate-400 mt-1">
-            Manage hardware encryption keys, envelope master keys, and rotation schedules.
+            Cryptographic operations console: manage envelope master keys, rotation epochs, and encryption protocols.
           </p>
         </div>
         <button

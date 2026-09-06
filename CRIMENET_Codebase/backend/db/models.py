@@ -158,6 +158,9 @@ class OutboxEvent(Base):
     status: Mapped[str] = mapped_column(
         String(50), nullable=False, default="PENDING"
     )  # PENDING | PROCESSED | FAILED
+    idempotency_key: Mapped[Optional[str]] = mapped_column(
+        String(64), unique=True, index=True, nullable=True
+    )
     error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     retries: Mapped[int] = mapped_column(default=0, nullable=False)
     created_at: Mapped[datetime] = mapped_column(

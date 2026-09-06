@@ -1,0 +1,53 @@
+[
+  {
+    "id": "IN_SC_2023_4910",
+    "year": 2023,
+    "court": "Supreme Court of India",
+    "text": "In the Supreme Court of India, Criminal Appellate Jurisdiction. Appeal filed by Appellant Harish Chandra against the State of Maharashtra. The Bench presided by Hon'ble Justice Dr. D.Y. Chandrachud and Justice Surya Kant heard Senior Advocate Kapil Sibal appearing for the petitioner. The Central Bureau of Investigation submitted chargesheet under Section 120B and Section 409 of Indian Penal Code concerning illicit procurement at Jawaharlal Nehru Port Trust in Navi Mumbai.",
+    "annotations": [
+      { "name": "Harish Chandra", "label": "PETITIONER" },
+      { "name": "State of Maharashtra", "label": "RESPONDENT" },
+      { "name": "Dr. D.Y. Chandrachud", "label": "JUDGE" },
+      { "name": "Surya Kant", "label": "JUDGE" },
+      { "name": "Kapil Sibal", "label": "LAWYER" },
+      { "name": "Central Bureau of Investigation", "label": "ORG" },
+      { "name": "Jawaharlal Nehru Port Trust", "label": "LOC" },
+      { "name": "Navi Mumbai", "label": "GPE" },
+      { "name": "Section 120B", "label": "STATUTE" },
+      { "name": "Section 409", "label": "STATUTE" }
+    ]
+  },
+  {
+    "id": "IN_BHC_2024_1029",
+    "year": 2024,
+    "court": "High Court of Judicature at Bombay",
+    "text": "Before the High Court of Judicature at Bombay, Criminal Division. Bail Application No. 891 of 2024. In the matter of Elena Rostova versus Directorate of Enforcement (ED). Counsel Abhishek Manu Singhvi appeared on behalf of applicant Elena Rostova concerning allegations under PMLA 2002 connected to Horizon Global Logistics based in Bandra Kurla Complex, Mumbai.",
+    "annotations": [
+      { "name": "Elena Rostova", "label": "PETITIONER" },
+      { "name": "Directorate of Enforcement", "label": "ORG" },
+      { "name": "Abhishek Manu Singhvi", "label": "LAWYER" },
+      { "name": "Horizon Global Logistics", "label": "ORG" },
+      { "name": "Bandra Kurla Complex", "label": "LOC" },
+      { "name": "Mumbai", "label": "GPE" },
+      { "name": "PMLA 2002", "label": "STATUTE" }
+    ]
+  },
+  {
+    "id": "IN_DHC_2025_0412",
+    "year": 2025,
+    "court": "High Court of Delhi",
+    "text": "In the High Court of Delhi at New Delhi. Serious Fraud Investigation Office (SFIO) versus Zenith Infrastructure Consortium. Justice Pratibha M. Singh presided. Advocate Mukul Rohatgi represented respondent Vikram Mehta. Financial forensic evidence established round-tripping of funds via Mauritius and Singapore entities in violation of Companies Act 2013 and Section 420 of Indian Penal Code.",
+    "annotations": [
+      { "name": "Serious Fraud Investigation Office", "label": "ORG" },
+      { "name": "Zenith Infrastructure Consortium", "label": "ORG" },
+      { "name": "Pratibha M. Singh", "label": "JUDGE" },
+      { "name": "Mukul Rohatgi", "label": "LAWYER" },
+      { "name": "Vikram Mehta", "label": "RESPONDENT" },
+      { "name": "New Delhi", "label": "GPE" },
+      { "name": "Mauritius", "label": "GPE" },
+      { "name": "Singapore", "label": "GPE" },
+      { "name": "Companies Act 2013", "label": "STATUTE" },
+      { "name": "Section 420", "label": "STATUTE" }
+    ]
+  }
+]

@@ -196,10 +196,10 @@ export const PKIRevocation: React.FC = () => {
         <div>
           <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2.5">
             <span className="material-symbols-outlined text-sky-400 text-[28px]">verified_user</span>
-            PKI &amp; Certificate Management
+            PKI &amp; Trust Operations Console
           </h1>
           <p className="text-xs text-slate-400 mt-1">
-            Manage operator credentials, SSL/TLS nodes, and revocation lists.
+            Certificate lifecycle console: manage operator credentials, TLS trust stores, and revocation lists.
           </p>
         </div>
         <button

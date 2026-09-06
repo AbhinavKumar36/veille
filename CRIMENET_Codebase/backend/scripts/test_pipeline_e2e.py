@@ -130,7 +130,7 @@ def run_pipeline_tests():
             files = {"file": ("FIR_CR_2026_0882.txt", f, "text/plain")}
             data = {"case_id": case_id, "source_type": "FIR"}
             res = requests.post(f"{BASE_URL}/evidence/upload", files=files, data=data, headers=admin_headers)
-            assert res.status_code == 200, f"FIR upload failed: {res.text}"
+            assert res.status_code in (200, 202), f"FIR upload failed ({res.status_code}): {res.text}"
             ev_id = res.json()["evidence_id"]
             evidence_ids.append(ev_id)
             log_test(3, "Evidence Ingestion — Unstructured FIR Report", "PASS", f"Evidence ID={ev_id}")
@@ -143,7 +143,7 @@ def run_pipeline_tests():
             files = {"file": ("CDR_Telecom_Log.csv", f, "text/csv")}
             data = {"case_id": case_id, "source_type": "CDR"}
             res = requests.post(f"{BASE_URL}/evidence/upload", files=files, data=data, headers=admin_headers)
-            assert res.status_code == 200, f"CDR upload failed: {res.text}"
+            assert res.status_code in (200, 202), f"CDR upload failed ({res.status_code}): {res.text}"
             ev_id = res.json()["evidence_id"]
             evidence_ids.append(ev_id)
             log_test(3, "Evidence Ingestion — Structured Telecom CDR", "PASS", f"Evidence ID={ev_id}")
@@ -156,12 +156,13 @@ def run_pipeline_tests():
             files = {"file": ("Financial_Ledger.csv", f, "text/csv")}
             data = {"case_id": case_id, "source_type": "FINANCIAL"}
             res = requests.post(f"{BASE_URL}/evidence/upload", files=files, data=data, headers=admin_headers)
-            assert res.status_code == 200, f"Financial upload failed: {res.text}"
+            assert res.status_code in (200, 202), f"Financial upload failed ({res.status_code}): {res.text}"
             ev_id = res.json()["evidence_id"]
             evidence_ids.append(ev_id)
             log_test(3, "Evidence Ingestion — Financial Hawala Ledger", "PASS", f"Evidence ID={ev_id}")
     except Exception as e:
         log_test(3, "Evidence Ingestion — Financial Hawala Ledger", "FAIL", str(e))
+
 
     # ──────────────────────────────────────────────────────────────────────────
     # 4 & 5. NLP Extraction, Outbox Processor & Neo4j Graph Sync

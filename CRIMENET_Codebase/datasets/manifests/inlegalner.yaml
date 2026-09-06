@@ -1,0 +1,11 @@
+name: InLegalNER
+source: Indian Legal Documents Corpus / InLegalNER Benchmark
+classification: Real Research Corpus
+domain: Legal / Judiciary
+adapter: datasets.adapters.inlegalner_adapter.InLegalNERAdapter
+target_entities:
+  - Person (Judge, Petitioner, Respondent, Lawyer, Witness, Accused)
+  - Organization (Court, Corporate Entity)
+  - Location (Jurisdiction, GPE)
+  - Event (Statute, Statutory Provision)
+primary_evaluation: Named Entity Recognition & Statute Cross-Referencing

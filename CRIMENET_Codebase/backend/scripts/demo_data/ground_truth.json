@@ -1,0 +1,47 @@
+{
+  "dataset_metadata": {
+    "case_title": "Operation Storm Watch (Syndicate 2026)",
+    "benchmark_sources": [
+      "InLegalNER / ILDC (Indian Legal Documents Corpus)",
+      "Telecom Italia / Open Telecom Big Data Benchmark",
+      "IBM Anti-Money Laundering (AML) Transaction Benchmark"
+    ],
+    "total_documents": 3
+  },
+  "ground_truth_entities": [
+    { "id": "Person_VikramMehta", "label": "Person", "name": "Vikram Mehta", "aliases": ["Vicky Hawala"] },
+    { "id": "Person_ElenaRostova", "label": "Person", "name": "Elena Rostova", "aliases": ["Madam Russian"] },
+    { "id": "Person_TariqMansoor", "label": "Person", "name": "Tariq Mansoor", "aliases": ["Tariq Navi"] },
+    { "id": "Person_SureshSharma", "label": "Person", "name": "Suresh Sharma", "aliases": ["Sharmaji"] },
+    { "id": "Organization_ZenithMaritimeLogistics", "label": "Organization", "name": "Zenith Maritime Logistics Pvt Ltd" },
+    { "id": "Organization_OrionGlobalHoldings", "label": "Organization", "name": "Orion Global Holdings" },
+    { "id": "Phone_9820199482", "label": "Phone", "name": "+91-9820199482" },
+    { "id": "Phone_9821048192", "label": "Phone", "name": "+91-9821048192" },
+    { "id": "Phone_9988776655", "label": "Phone", "name": "+91-9988776655" },
+    { "id": "Phone_447911123456", "label": "Phone", "name": "+447911123456" },
+    { "id": "Account_HDFC0091823901", "label": "Account", "name": "HDFC-0091823901" },
+    { "id": "Account_ICICI9948102394", "label": "Account", "name": "ICICI-9948102394" },
+    { "id": "Account_HSBC4481029381", "label": "Account", "name": "HSBC-4481029381" },
+    { "id": "Vehicle_MH01BK9901", "label": "Vehicle", "name": "MH01-BK-9901" },
+    { "id": "Vehicle_MH04EX4421", "label": "Vehicle", "name": "MH04-EX-4421" },
+    { "id": "Location_MumbaiPortTrust", "label": "Location", "name": "Mumbai Port Trust", "lat": 18.9438, "lng": 72.8541 },
+    { "id": "Location_HotelOberoiTrident", "label": "Location", "name": "Hotel Oberoi Trident", "lat": 18.9270, "lng": 72.8228 },
+    { "id": "Location_BandraKurlaComplex", "label": "Location", "name": "Bandra Kurla Complex", "lat": 19.0657, "lng": 72.8685 },
+    { "id": "Location_SafehouseNaviMumbai", "label": "Location", "name": "Safehouse Sector 12, Navi Mumbai", "lat": 19.0330, "lng": 73.0297 }
+  ],
+  "ground_truth_relationships": [
+    { "source": "Person_VikramMehta", "target": "Person_ElenaRostova", "type": "ASSOCIATED_WITH" },
+    { "source": "Person_ElenaRostova", "target": "Organization_ZenithMaritimeLogistics", "type": "OWNS" },
+    { "source": "Person_VikramMehta", "target": "Phone_9820199482", "type": "OWNS" },
+    { "source": "Person_TariqMansoor", "target": "Phone_9821048192", "type": "OWNS" },
+    { "source": "Person_SureshSharma", "target": "Phone_9988776655", "type": "OWNS" },
+    { "source": "Phone_9820199482", "target": "Phone_9821048192", "type": "COMMUNICATES_WITH" },
+    { "source": "Phone_9821048192", "target": "Phone_447911123456", "type": "COMMUNICATES_WITH" },
+    { "source": "Person_TariqMansoor", "target": "Location_SafehouseNaviMumbai", "type": "LOCATED_AT" },
+    { "source": "Person_ElenaRostova", "target": "Vehicle_MH01BK9901", "type": "OWNS" },
+    { "source": "Person_SureshSharma", "target": "Vehicle_MH04EX4421", "type": "OWNS" },
+    { "source": "Organization_ZenithMaritimeLogistics", "target": "Account_ICICI9948102394", "type": "OWNS" },
+    { "source": "Person_TariqMansoor", "target": "Account_HDFC0091823901", "type": "OWNS" },
+    { "source": "Person_ElenaRostova", "target": "Account_HSBC4481029381", "type": "OWNS" }
+  ]
+}

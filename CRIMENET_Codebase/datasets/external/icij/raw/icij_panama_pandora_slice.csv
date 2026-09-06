@@ -1,0 +1,12 @@
+node_id,name,entity_type,jurisdiction,country_codes,link_type,target_node_id
+1001,Vikramaditya Mehta,Officer,British Virgin Islands,IND,shareholder,2001
+1002,Zenith Alpha Holdings Ltd,Entity,British Virgin Islands,VGB,registered_address,3001
+1003,Elena Rostova,Officer,Cyprus,RUS,beneficiary,2001
+1004,Orion Intermediary Services,Intermediary,Dubai,ARE,intermediary_for,2001
+1005,Tariq Mansoor,Officer,United Arab Emirates,IND,director,2002
+1006,Apex Trade Global LLC,Entity,Seychelles,SYC,registered_address,3002
+1007,Mossack Fonseca Geneva,Intermediary,Switzerland,CHE,intermediary_for,2002
+2001,Zenith Alpha Holdings Ltd,Entity,British Virgin Islands,VGB,,
+2002,Apex Trade Global LLC,Entity,Seychelles,SYC,,
+3001,Portcullis TrustNet Chambers Road Town,Address,British Virgin Islands,VGB,,
+3002,Oceangate House Victoria Mahe,Address,Seychelles,SYC,,
