@@ -1,0 +1,151 @@
+version: "1.0.0"
+description: "VEILLE Canonical Entity & Relationship Taxonomy Mapping Schema"
+updated_at: "2026-09-06"
+
+canonical_entities:
+  Person:
+    description: "Individual human beings, suspects, witnesses, officers, intermediaries"
+    properties: ["name", "aliases", "identifier", "risk_score"]
+  Organization:
+    description: "Corporate entities, front companies, government departments, shell companies"
+    properties: ["name", "jurisdiction", "registration_no", "company_type"]
+  Location:
+    description: "Physical addresses, ports, safehouses, districts, cities, geo-points"
+    properties: ["name", "address", "coordinates", "country"]
+  Phone:
+    description: "MSISDN, burner SIMs, IMEI devices"
+    properties: ["name", "msisdn", "imei", "service_provider"]
+  Account:
+    description: "Bank accounts, crypto wallets, hawala ledgers"
+    properties: ["name", "account_number", "bank_name", "ifsc_swift"]
+  Vehicle:
+    description: "Automobiles, shipping vessels, aircraft"
+    properties: ["name", "registration_plate", "vehicle_type"]
+  Event:
+    description: "Incidents, meetings, wire transfers, seizures"
+    properties: ["name", "event_type", "timestamp", "severity"]
+
+canonical_relationships:
+  COMMUNICATES_WITH:
+    domain: [Person, Phone]
+    range: [Person, Phone]
+    direction: UNDIRECTED
+  TRANSFERS_FUNDS_TO:
+    domain: [Person, Organization, Account]
+    range: [Person, Organization, Account]
+    direction: DIRECTED
+  OWNS:
+    domain: [Person, Organization]
+    range: [Organization, Vehicle, Account, Phone]
+    direction: DIRECTED
+  ASSOCIATED_WITH:
+    domain: [ANY]
+    range: [ANY]
+    direction: UNDIRECTED
+  LOCATED_AT:
+    domain: [Person, Organization, Event]
+    range: [Location]
+    direction: DIRECTED
+
+mappings:
+  inlegalner:
+    source_format: "OpenNyAI Legal Annotation Schema"
+    provenance_class: "REAL_EXTERNAL"
+    entities:
+      - source_label: "PETITIONER"
+        canonical_label: "Person"
+        rule: "Direct individual mapping"
+        is_lossy: false
+      - source_label: "RESPONDENT"
+        canonical_label: "Person"
+        rule: "Direct individual mapping"
+        is_lossy: false
+      - source_label: "JUDGE"
+        canonical_label: "Person"
+        rule: "Court judicial officer mapping"
+        is_lossy: false
+      - source_label: "LAWYER"
+        canonical_label: "Person"
+        rule: "Legal counsel mapping"
+        is_lossy: false
+      - source_label: "WITNESS"
+        canonical_label: "Person"
+        rule: "Testifying party mapping"
+        is_lossy: false
+      - source_label: "STATUTE"
+        canonical_label: "Event"
+        rule: "Legal provision referenced as legal context"
+        is_lossy: true
+      - source_label: "COURT"
+        canonical_label: "Organization"
+        rule: "Judicial institution mapping"
+        is_lossy: false
+      - source_label: "GPE"
+        canonical_label: "Location"
+        rule: "Geopolitical entity mapping"
+        is_lossy: false
+      - source_label: "ORG"
+        canonical_label: "Organization"
+        rule: "Corporate or agency mapping"
+        is_lossy: false
+
+  icij:
+    source_format: "ICIJ Offshore Leaks Node/Edge Standard"
+    provenance_class: "REAL_EXTERNAL"
+    entities:
+      - source_label: "Entity"
+        canonical_label: "Organization"
+        rule: "Offshore company / trust / foundation"
+        is_lossy: false
+      - source_label: "Officer"
+        canonical_label: "Person"
+        rule: "Beneficial owner, shareholder, director"
+        is_lossy: false
+      - source_label: "Intermediary"
+        canonical_label: "Organization"
+        rule: "Law firm, bank, corporate service provider"
+        is_lossy: false
+      - source_label: "Address"
+        canonical_label: "Location"
+        rule: "Registered offshore address"
+        is_lossy: false
+    relationships:
+      - source_type: "officer_of"
+        canonical_type: "ASSOCIATED_WITH"
+        properties_preserved: ["role", "status"]
+      - source_type: "intermediary_of"
+        canonical_type: "ASSOCIATED_WITH"
+        properties_preserved: ["service_type"]
+      - source_type: "registered_address"
+        canonical_type: "LOCATED_AT"
+        properties_preserved: ["country_codes"]
+
+  enron:
+    source_format: "FERC / CMU Raw RFC 822 Email Standard"
+    provenance_class: "REAL_EXTERNAL"
+    entities:
+      - source_label: "Sender"
+        canonical_label: "Person"
+        rule: "Extracted From: header with domain normalization"
+        is_lossy: false
+      - source_label: "Recipient"
+        canonical_label: "Person"
+        rule: "Extracted To: / Cc: header with domain normalization"
+        is_lossy: false
+    relationships:
+      - source_type: "EMAIL_SENT"
+        canonical_type: "COMMUNICATES_WITH"
+        properties_preserved: ["subject", "timestamp", "message_id"]
+
+  ibm_aml:
+    source_format: "IBM AMLWorld Layering Matrix"
+    provenance_class: "SYNTHETIC_BENCHMARK"
+    entities:
+      - source_label: "Bank_Account"
+        canonical_label: "Account"
+        rule: "Bank account entity"
+        is_lossy: false
+    relationships:
+      - source_type: "WIRE_TRANSFER"
+        canonical_type: "TRANSFERS_FUNDS_TO"
+        properties_preserved: ["amount", "currency", "payment_format"]

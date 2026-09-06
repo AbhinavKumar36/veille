@@ -2,6 +2,7 @@ name: IBM Anti-Money Laundering Synthetic Benchmark
 official_url: https://github.com/IBM/AMLWorld
 version: IBM Research AMLWorld v1.2
 classification: Synthetic Research Benchmark (Not Raw Real Data)
+provenance_class: SYNTHETIC_BENCHMARK
 download_date: '2026-09-06'
 license: Apache 2.0
 corpus_sha256: 9f2c11d4dce7f086afb8a2f8c6d997322c9fecf3b07778504ac4ba21ca6ebd8d
@@ -9,5 +10,9 @@ sampling_methodology: Multi-Hop Layering Matrix & Cycle Smurfing Controlled Grap
   Slice
 source_record_count: 500000
 selected_record_count: 8
+parsed_record_count: 8
+rejected_record_count: 0
+canonical_entity_count: 9
+canonical_relationship_count: 8
 adapter_version: datasets.adapters.aml_adapter.AMLTransactionAdapter (v4.2)
 primary_evaluation: Multi-Hop Layering & Cycle Smurfing Detection

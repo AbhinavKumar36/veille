@@ -1,0 +1,20 @@
+{
+  "experiment_id": "EXP_1375E418",
+  "git_commit": "5b8a30557d60f1abc2ec69db5b9909acce0a96a8",
+  "execution_date": "2026-09-06T15:21:19.436564+00:00",
+  "configuration": {
+    "er_high_threshold": 0.85,
+    "er_low_threshold": 0.5,
+    "er_weights": {
+      "lexical": 0.55,
+      "structural": 0.45
+    },
+    "taxonomy_mapping_schema": "datasets/taxonomy_mapping.yaml"
+  },
+  "produced_artifacts": [
+    "artifacts/metrics.json",
+    "artifacts/er_results.json",
+    "artifacts/rag_results.json",
+    "CRIMENET_Documentation/BENCHMARK_REPORT.md"
+  ]
+}

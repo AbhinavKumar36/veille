@@ -1,0 +1,369 @@
+{
+  "total_pairs_evaluated": 411,
+  "true_positives": 188,
+  "false_positives": 0,
+  "true_negatives": 156,
+  "false_negatives": 11,
+  "hitl_quarantined": 56,
+  "auto_merge_precision": 100.0,
+  "auto_merge_recall": 94.47,
+  "auto_merge_f1": 97.16,
+  "false_merge_rate": 0.0,
+  "false_split_rate": 5.53,
+  "hitl_quarantine_rate": 13.63,
+  "auto_merge_coverage": 45.74,
+  "category_breakdown": {
+    "Alias": {
+      "total": 4,
+      "tp": 0,
+      "fp": 0,
+      "tn": 0,
+      "fn": 0,
+      "hitl": 4,
+      "precision": 100.0,
+      "recall": 100.0
+    },
+    "Abbreviation": {
+      "total": 4,
+      "tp": 2,
+      "fp": 0,
+      "tn": 0,
+      "fn": 0,
+      "hitl": 2,
+      "precision": 100.0,
+      "recall": 100.0
+    },
+    "Initial": {
+      "total": 7,
+      "tp": 6,
+      "fp": 0,
+      "tn": 0,
+      "fn": 0,
+      "hitl": 1,
+      "precision": 100.0,
+      "recall": 100.0
+    },
+    "Honorific": {
+      "total": 3,
+      "tp": 3,
+      "fp": 0,
+      "tn": 0,
+      "fn": 0,
+      "hitl": 0,
+      "precision": 100.0,
+      "recall": 100.0
+    },
+    "Collision": {
+      "total": 17,
+      "tp": 0,
+      "fp": 0,
+      "tn": 16,
+      "fn": 0,
+      "hitl": 1,
+      "precision": 100.0,
+      "recall": 100.0
+    },
+    "Hyphenated": {
+      "total": 1,
+      "tp": 1,
+      "fp": 0,
+      "tn": 0,
+      "fn": 0,
+      "hitl": 0,
+      "precision": 100.0,
+      "recall": 100.0
+    },
+    "Middle Name": {
+      "total": 2,
+      "tp": 2,
+      "fp": 0,
+      "tn": 0,
+      "fn": 0,
+      "hitl": 0,
+      "precision": 100.0,
+      "recall": 100.0
+    },
+    "Alias Tag": {
+      "total": 1,
+      "tp": 1,
+      "fp": 0,
+      "tn": 0,
+      "fn": 0,
+      "hitl": 0,
+      "precision": 100.0,
+      "recall": 100.0
+    },
+    "Prefix Abbreviation": {
+      "total": 1,
+      "tp": 0,
+      "fp": 0,
+      "tn": 0,
+      "fn": 0,
+      "hitl": 1,
+      "precision": 100.0,
+      "recall": 100.0
+    },
+    "Surname Variant": {
+      "total": 1,
+      "tp": 1,
+      "fp": 0,
+      "tn": 0,
+      "fn": 0,
+      "hitl": 0,
+      "precision": 100.0,
+      "recall": 100.0
+    },
+    "Corp Suffix": {
+      "total": 60,
+      "tp": 45,
+      "fp": 0,
+      "tn": 0,
+      "fn": 11,
+      "hitl": 4,
+      "precision": 100.0,
+      "recall": 80.36
+    },
+    "Adversarial Org": {
+      "total": 45,
+      "tp": 0,
+      "fp": 0,
+      "tn": 27,
+      "fn": 0,
+      "hitl": 18,
+      "precision": 100.0,
+      "recall": 100.0
+    },
+    "OCR Noise": {
+      "total": 40,
+      "tp": 40,
+      "fp": 0,
+      "tn": 0,
+      "fn": 0,
+      "hitl": 0,
+      "precision": 100.0,
+      "recall": 100.0
+    },
+    "OCR vs Different Entity": {
+      "total": 40,
+      "tp": 0,
+      "fp": 0,
+      "tn": 40,
+      "fn": 0,
+      "hitl": 0,
+      "precision": 100.0,
+      "recall": 100.0
+    },
+    "Phone Format": {
+      "total": 20,
+      "tp": 20,
+      "fp": 0,
+      "tn": 0,
+      "fn": 0,
+      "hitl": 0,
+      "precision": 100.0,
+      "recall": 100.0
+    },
+    "Phone Collision Guard": {
+      "total": 10,
+      "tp": 0,
+      "fp": 0,
+      "tn": 9,
+      "fn": 0,
+      "hitl": 1,
+      "precision": 100.0,
+      "recall": 100.0
+    },
+    "Account Format": {
+      "total": 12,
+      "tp": 12,
+      "fp": 0,
+      "tn": 0,
+      "fn": 0,
+      "hitl": 0,
+      "precision": 100.0,
+      "recall": 100.0
+    },
+    "Account Collision Guard": {
+      "total": 4,
+      "tp": 0,
+      "fp": 0,
+      "tn": 0,
+      "fn": 0,
+      "hitl": 4,
+      "precision": 100.0,
+      "recall": 100.0
+    },
+    "Account Bank Collision": {
+      "total": 4,
+      "tp": 0,
+      "fp": 0,
+      "tn": 4,
+      "fn": 0,
+      "hitl": 0,
+      "precision": 100.0,
+      "recall": 100.0
+    },
+    "Geospatial": {
+      "total": 55,
+      "tp": 15,
+      "fp": 0,
+      "tn": 20,
+      "fn": 0,
+      "hitl": 20,
+      "precision": 100.0,
+      "recall": 100.0
+    },
+    "Regional Honorific": {
+      "total": 20,
+      "tp": 20,
+      "fp": 0,
+      "tn": 0,
+      "fn": 0,
+      "hitl": 0,
+      "precision": 100.0,
+      "recall": 100.0
+    },
+    "Regional Middle Name": {
+      "total": 20,
+      "tp": 20,
+      "fp": 0,
+      "tn": 0,
+      "fn": 0,
+      "hitl": 0,
+      "precision": 100.0,
+      "recall": 100.0
+    },
+    "Common First Name Collision": {
+      "total": 20,
+      "tp": 0,
+      "fp": 0,
+      "tn": 20,
+      "fn": 0,
+      "hitl": 0,
+      "precision": 100.0,
+      "recall": 100.0
+    },
+    "Common Surname Collision": {
+      "total": 20,
+      "tp": 0,
+      "fp": 0,
+      "tn": 20,
+      "fn": 0,
+      "hitl": 0,
+      "precision": 100.0,
+      "recall": 100.0
+    }
+  },
+  "details_sample": [
+    {
+      "pair": "'Vikram Mehta' vs 'Vicky Hawala'",
+      "type": "Person",
+      "category": "Alias",
+      "lexical_score": 0.5,
+      "structural_score": 1.0,
+      "total_confidence": 0.725,
+      "decision": "REVIEW_QUEUE",
+      "ground_truth": "SAME",
+      "outcome": "HITL"
+    },
+    {
+      "pair": "'Vikram Mehta' vs 'Vikram M.'",
+      "type": "Person",
+      "category": "Abbreviation",
+      "lexical_score": 0.781,
+      "structural_score": 1.0,
+      "total_confidence": 0.8795,
+      "decision": "AUTO_MERGE",
+      "ground_truth": "SAME",
+      "outcome": "TP"
+    },
+    {
+      "pair": "'Vikram Mehta' vs 'V. Mehta'",
+      "type": "Person",
+      "category": "Initial",
+      "lexical_score": 0.7346,
+      "structural_score": 1.0,
+      "total_confidence": 0.854,
+      "decision": "AUTO_MERGE",
+      "ground_truth": "SAME",
+      "outcome": "TP"
+    },
+    {
+      "pair": "'Vikram Mehta' vs 'Mr. Vikram Mehta'",
+      "type": "Person",
+      "category": "Honorific",
+      "lexical_score": 0.9286,
+      "structural_score": 1.0,
+      "total_confidence": 0.9607,
+      "decision": "AUTO_MERGE",
+      "ground_truth": "SAME",
+      "outcome": "TP"
+    },
+    {
+      "pair": "'Vikram Mehta' vs 'Shri Vikram Mehta'",
+      "type": "Person",
+      "category": "Honorific",
+      "lexical_score": 0.9138,
+      "structural_score": 1.0,
+      "total_confidence": 0.9526,
+      "decision": "AUTO_MERGE",
+      "ground_truth": "SAME",
+      "outcome": "TP"
+    },
+    {
+      "pair": "'Vikram Mehta' vs 'Vikramaditya Mehta'",
+      "type": "Person",
+      "category": "Collision",
+      "lexical_score": 0.8,
+      "structural_score": 0.0,
+      "total_confidence": 0.44,
+      "decision": "CREATE_NEW",
+      "ground_truth": "DIFFERENT",
+      "outcome": "TN"
+    },
+    {
+      "pair": "'Vikram Mehta' vs 'Vikram Sharma'",
+      "type": "Person",
+      "category": "Collision",
+      "lexical_score": 0.72,
+      "structural_score": 0.0,
+      "total_confidence": 0.396,
+      "decision": "CREATE_NEW",
+      "ground_truth": "DIFFERENT",
+      "outcome": "TN"
+    },
+    {
+      "pair": "'Vikram Mehta' vs 'Vikas Mehta'",
+      "type": "Person",
+      "category": "Collision",
+      "lexical_score": 0.8696,
+      "structural_score": 0.0,
+      "total_confidence": 0.4783,
+      "decision": "CREATE_NEW",
+      "ground_truth": "DIFFERENT",
+      "outcome": "TN"
+    },
+    {
+      "pair": "'Elena Rostova' vs 'Madam Russian'",
+      "type": "Person",
+      "category": "Alias",
+      "lexical_score": 0.3846,
+      "structural_score": 1.0,
+      "total_confidence": 0.6615,
+      "decision": "REVIEW_QUEUE",
+      "ground_truth": "SAME",
+      "outcome": "HITL"
+    },
+    {
+      "pair": "'Elena Rostova' vs 'Elena R.'",
+      "type": "Person",
+      "category": "Abbreviation",
+      "lexical_score": 0.7179,
+      "structural_score": 1.0,
+      "total_confidence": 0.8449,
+      "decision": "REVIEW_QUEUE",
+      "ground_truth": "SAME",
+      "outcome": "HITL"
+    }
+  ]
+}

@@ -2,6 +2,8 @@ name: InLegalNER
 official_url: https://huggingface.co/datasets/opennyaiorg/InLegalNER
 source_archive_url: https://storage.googleapis.com/indianlegalbert/OPEN_SOURCED_FILES/NER/NER_TRAIN.zip
 version: 1.0.0 (OpenNyAI)
+classification: Real Research Corpus
+provenance_class: REAL_EXTERNAL
 download_date: '2026-09-06'
 license: MIT License
 original_sha256: 90cc6ee9dc88e2fbb88fec6bfcec36ebe397d1ec256710a1600572d74088185f

@@ -1,0 +1,26 @@
+{
+  "total_claims_evaluated": 1,
+  "supported_claims": 0,
+  "partially_supported_claims": 0,
+  "unsupported_claims": 1,
+  "contradicted_claims": 0,
+  "claim_support_rate": 0.0,
+  "partial_support_rate": 0.0,
+  "unsupported_claim_rate": 100.0,
+  "total_candidate_entities": 14,
+  "grounded_entities_count": 7,
+  "unfounded_entities_count": 7,
+  "entity_grounding_rate": 50.0,
+  "total_citations": 1,
+  "valid_citations": 1,
+  "entailed_citations": 1,
+  "citation_validity_rate": 100.0,
+  "citation_entailment_rate": 100.0,
+  "claim_breakdown_sample": [
+    {
+      "claim": "\u2022 Review linked transaction paths for offshore intermediary conduits.",
+      "status": "UNSUPPORTED",
+      "triples": []
+    }
+  ]
+}

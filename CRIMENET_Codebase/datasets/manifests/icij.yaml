@@ -6,6 +6,7 @@ investigations_covered:
 - Paradise Papers
 - Bahamas Leaks
 classification: Real Public Investigative Registry Data
+provenance_class: REAL_EXTERNAL
 version: ICIJ 2024 Release
 download_date: '2026-09-06'
 license: Open Database License (ODbL) / CC-BY-SA
@@ -14,6 +15,10 @@ sampling_methodology: Two-Pass Canonical Entity Resolution Registry Slice (Entit
   Officers, Intermediaries, Addresses)
 source_record_count: 810000
 selected_record_count: 11
+parsed_record_count: 11
+rejected_record_count: 0
+canonical_entity_count: 11
+canonical_relationship_count: 7
 adapter_version: datasets.adapters.icij_adapter.ICIJOffshoreAdapter (v4.2 Two-Pass)
 entity_taxonomy:
 - Person (Officer)

@@ -47,13 +47,10 @@ def test_extractor_api_error(extractor, mock_genai_client):
     mock_client_instance.models.generate_content.side_effect = Exception("API down")
     
     with pytest.raises(GeminiAPIError):
-        extractor.extract("text", "test.txt")
+        extractor._extract_with_retry("text")
 
 
 def test_extractor_validation_error_after_retries(extractor, mock_genai_client):
-    # Simulate API returning invalid JSON (not adhering to schema)
-    # The current extractor doesn't have a retry loop in the class itself (it's handled by Celery),
-    # but it should raise ExtractionValidationError or pydantic ValidationError if JSON is bad.
     mock_response = MagicMock()
     mock_response.text = '{"bad_key": "not a graph"}'
     
@@ -61,4 +58,4 @@ def test_extractor_validation_error_after_retries(extractor, mock_genai_client):
     mock_client_instance.models.generate_content.return_value = mock_response
     
     with pytest.raises(Exception):
-        extractor.extract("text", "test.txt")
+        extractor._extract_with_retry("text")
