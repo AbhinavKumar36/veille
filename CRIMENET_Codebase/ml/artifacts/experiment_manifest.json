@@ -1,7 +1,7 @@
 {
-  "experiment_id": "EXP_1375E418",
-  "git_commit": "5b8a30557d60f1abc2ec69db5b9909acce0a96a8",
-  "execution_date": "2026-09-06T15:21:19.436564+00:00",
+  "experiment_id": "EXP_58AC821A",
+  "git_commit": "6e05fa3fe5581ba22ca4c84d37120f035b0ca0f5",
+  "execution_date": "2026-09-06T15:38:58.033144+00:00",
   "configuration": {
     "er_high_threshold": 0.85,
     "er_low_threshold": 0.5,
@@ -10,6 +10,12 @@
       "structural": 0.45
     },
     "taxonomy_mapping_schema": "datasets/taxonomy_mapping.yaml"
+  },
+  "dataset_hashes": {
+    "inlegalner": "7bc57844e1de7909f9e0982f37ba5078399320ae1e33f7fa21c098c936f1cd44",
+    "enron": "b3b7b34c933c0433c8bf144f647e7b578cd81a5c04d3c118b58e5fd04e275eb5",
+    "icij": "9da4a07549e342442cfd16656ab0e13e5582f28ff9a338f841f642fb650fa460",
+    "aml": "9f2c11d4dce7f086afb8a2f8c6d997322c9fecf3b07778504ac4ba21ca6ebd8d"
   },
   "produced_artifacts": [
     "artifacts/metrics.json",

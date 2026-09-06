@@ -1,10 +1,10 @@
 # VEILLE Empirical Evaluation & Two-Tier Benchmark Report
 
-> **Experiment ID:** `EXP_1375E418`  
-> **Git Commit:** `5b8a30557d60f1abc2ec69db5b9909acce0a96a8`  
-> **Execution Date:** 2026-09-06T15:21:19.436564+00:00  
+> **Experiment ID:** `EXP_58AC821A`  
+> **Git Commit:** `6e05fa3fe5581ba22ca4c84d37120f035b0ca0f5`  
+> **Execution Date:** 2026-09-06T15:38:58.033144+00:00  
 > **Evaluation Mode:** Dual-Tier (Controlled Ground-Truth Validation + External Canonical Adapter Standardization)  
-> **Status:** Fully Reproducible & Production Aligned  
+> **Status:** Research Prototype — Controlled Empirical Validation  
 
 ---
 
@@ -21,17 +21,17 @@ VEILLE operates on a **Two-Tiered Evaluation Methodology**:
 │ Tier 1 Overall Entity Recovery F1      │ 62.96%                            │
 │ Tier 1 Entity Recovery Recall          │ 89.47%                            │
 │ Production ER Auto-Merge Precision     │ 100.0%                            │
-│ Production ER Auto-Merge Recall        │ 94.47%                            │
+│ Production ER Auto-Merge Recall        │ 95.58%                            │
 │ Production ER False Merge Rate         │ 0.0%                              │
-│ Production ER False Split Rate         │ 5.53%                             │
-│ HITL Review / Quarantine Rate          │ 13.63% (56 ambiguous pairs)   │
+│ Production ER False Split Rate         │ 4.42%                             │
+│ HITL Review / Quarantine Rate          │ 17.91% (96 ambiguous pairs)   │
 │ GraphRAG Claim Support Rate            │ 0.0%                            │
 │ GraphRAG Partial Support Rate          │ 0.0%                            │
 │ GraphRAG Unsupported Claim Rate        │ 100.0%                              │
 │ GraphRAG Citation Validity Rate        │ 100.0%                            │
 │ GraphRAG Citation Entailment Rate      │ 100.0%                            │
 │ Tier 2 Unit Fixtures Standardized      │ 4 Domains (33 Nodes, 26 Edges)   │
-│ Tier 2 Raw Corpora Standardized        │ 4 Domains (214 Nodes, 133 Edges) │
+│ Tier 2 Raw Corpora Standardized        │ 4 Domains (336 Nodes, 209 Edges) │
 └────────────────────────────────────────┴───────────────────────────────────┘
 ```
 
@@ -63,16 +63,16 @@ VEILLE operates on a **Two-Tiered Evaluation Methodology**:
 | **WEIGHTED TOTAL** | **48.57%** | **89.47%** | **62.96%** | **17** | **2** |
 
 ### 3.2 Production Entity Resolution Performance (500+ Pair Benchmark)
-* **Total Labeled Pairs Evaluated:** 411
-* **True Positives (Correct Auto-Merges):** 188
+* **Total Labeled Pairs Evaluated:** 536
+* **True Positives (Correct Auto-Merges):** 238
 * **False Positives (Erroneous Auto-Merges):** 0
-* **True Negatives (Correct Distinctions):** 156
+* **True Negatives (Correct Distinctions):** 191
 * **False Negatives (False Splits):** 11
-* **Ambiguous Pairs Quarantined (HITL):** 56 (13.63%)
+* **Ambiguous Pairs Quarantined (HITL):** 96 (17.91%)
 * **Production Auto-Merge Precision:** **100.0%**
-* **Production Auto-Merge Recall:** **94.47%**
+* **Production Auto-Merge Recall:** **95.58%**
 * **Empirical False Merge Rate:** **0.0%** (Zero false merges of innocent citizens)
-* **False Split Rate:** **5.53%**
+* **False Split Rate:** **4.42%**
 
 ### 3.3 Structured GraphRAG Grounding & Entailment
 * **Total Factual Claims Evaluated:** 1
@@ -98,18 +98,18 @@ VEILLE operates on a **Two-Tiered Evaluation Methodology**:
 ### 4.2 Raw Multi-Source Corpus Standardization (`datasets/external/*/raw/`)
 | Raw External Corpus | Official Classification | Extracted Entities | Extracted Relationships | Validation Status |
 | :--- | :--- | :--- | :--- | :--- |
-| **InLegalNER Multi-Case Corpus** | Real Research Corpus | 100 Entities | 98 Edges | **PASS (Canonical)** |
-| **ICIJ Panama/Pandora Slice** | Real Public Data (Registry Standard) | 11 Entities | 7 Edges | **PASS (Canonical)** |
-| **Enron Corporate Email Chain** | Real Public Data | 52 Entities | 52 Edges | **PASS (Canonical)** |
-| **IBM AML Multi-Hop Matrix** | Synthetic Research Benchmark | 9 Entities | 8 Edges | **PASS (Canonical)** |
-| **SUBTOTAL (RAW CORPUS)** | **Multi-Modal External Data** | **214 Entities** | **133 Edges** | **PASS** |
+| **InLegalNER Research Corpus** | Real Research Corpus | 160 Entities | 101 Edges | **PASS (Canonical)** |
+| **ICIJ Panama/Pandora Registry Slice** | Real Public Data (Registry Standard) | 100 Entities | 0 Edges | **PASS (Canonical)** |
+| **Enron Corporate Email Corpus** | Real Public Data | 67 Entities | 100 Edges | **PASS (Canonical)** |
+| **IBM AML Layering Transaction Matrix** | Synthetic Research Benchmark | 9 Entities | 8 Edges | **PASS (Canonical)** |
+| **SUBTOTAL (RAW CORPUS)** | **Multi-Modal External Data** | **336 Entities** | **209 Edges** | **PASS** |
 
 ---
 
 ## 5. Machine-Readable Experiment Artifacts
 
 The following machine-readable evaluation artifacts have been generated in `artifacts/`:
-* `experiment_manifest.json` — Immutable run metadata, Git commit `5b8a30557d60f1abc2ec69db5b9909acce0a96a8`, and configuration parameters.
+* `experiment_manifest.json` — Immutable run metadata, Git commit `6e05fa3fe5581ba22ca4c84d37120f035b0ca0f5`, and configuration parameters.
 * `metrics.json` — Consolidated headline metrics across both tiers.
 * `er_results.json` — Full confusion matrix and per-category breakdown for Entity Resolution.
 * `rag_results.json` — Claim decomposition and citation entailment breakdown for GraphRAG.

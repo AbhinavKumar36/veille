@@ -197,7 +197,7 @@ def generate_comprehensive_er_benchmark() -> List[LabeledPair]:
             pairs.append(LabeledPair(f"{loc_a}", ctx_a, f"{loc_b}", ctx_b, "Location", is_same, "Geospatial", f"{desc} variant {i+1}"))
 
     # ──────────────────────────────────────────────────────────────────────────
-    # 6. INDIAN REGIONAL NAME GENERATOR (Common collisions) — 100 pairs
+    # 6. INDIAN REGIONAL NAME GENERATOR (Common collisions) — 80 pairs
     # ──────────────────────────────────────────────────────────────────────────
     first_names = ["Amit", "Sanjay", "Deepak", "Manoj", "Pradeep", "Vijay", "Rahul", "Pooja", "Sunita", "Neeta"]
     surnames = ["Patel", "Shah", "Gupta", "Agarwal", "Singh", "Joshi", "Kulkarni", "Reddy", "Choudhury", "Das"]
@@ -216,5 +216,63 @@ def generate_comprehensive_er_benchmark() -> List[LabeledPair]:
             # False match with same surname, different first name (CRITICAL FALSE MERGE TEST)
             diff_fn = "Arun" if fn != "Arun" else "Kiran"
             pairs.append(LabeledPair(full, [], f"{diff_fn} {sn}", [], "Person", False, "Common Surname Collision", "Same surname different individual"))
+
+    # ──────────────────────────────────────────────────────────────────────────
+    # 7. VEHICLE REGISTRATION & IDENTIFIERS — 40 pairs
+    # ──────────────────────────────────────────────────────────────────────────
+    vehicles = [
+        ("MH-01-AB-1234", "MH01AB1234", True, "Format Variance: Spacing/Dashes"),
+        ("MH-01-AB-1234", "MH 01 AB 1234", True, "Format Variance: Spaces"),
+        ("MH-01-AB-1234", "MH-01-AB-1235", False, "Different Plate: Single Digit Difference"),
+        ("MH-01-AB-1234", "DL-01-AB-1234", False, "Different State RTO Code"),
+        ("DL-10-CA-9988", "DL10CA9988", True, "Format Variance: Delhi RTO"),
+        ("DL-10-CA-9988", "DL-10-CB-9988", False, "Different Series Letter"),
+        ("KA-03-MG-4567", "KA03MG4567", True, "Format Variance: Karnataka RTO"),
+        ("KA-03-MG-4567", "KA-03-MG-4568", False, "Different Vehicle Number"),
+    ]
+    for v_a, v_b, is_same, desc in vehicles:
+        for k in range(5):
+            ctx_a = [f"Owner_Person_{k}"] if is_same else []
+            ctx_b = [f"Owner_Person_{k}"] if is_same else []
+            pairs.append(LabeledPair(v_a, ctx_a, v_b, ctx_b, "Vehicle", is_same, "Vehicle Resolution", f"{desc} {k+1}"))
+
+    # ──────────────────────────────────────────────────────────────────────────
+    # 8. PASSPORT & NATIONAL ID RESOLUTION — 40 pairs
+    # ──────────────────────────────────────────────────────────────────────────
+    passports = [
+        ("Z1234567", "Z-1234567", True, "Passport Dash Variance"),
+        ("Z1234567", "Z1234568", False, "Different Passport (1 digit difference)"),
+        ("P9876543", "P 9876543", True, "Passport Space Variance"),
+        ("P9876543", "Q9876543", False, "Different Passport Series"),
+        ("AADHAAR-8901-2345-6789", "890123456789", True, "National ID Formatting"),
+        ("AADHAAR-8901-2345-6789", "AADHAAR-8901-2345-6780", False, "Different National ID"),
+        ("PAN-ABCDE1234F", "ABCDE1234F", True, "Tax ID Prefix Variance"),
+        ("PAN-ABCDE1234F", "PAN-ABCDE1234G", False, "Different Tax ID Checksum"),
+    ]
+    for p_a, p_b, is_same, desc in passports:
+        for k in range(5):
+            ctx_a = [f"Citizen_{k}"] if is_same else []
+            ctx_b = [f"Citizen_{k}"] if is_same else []
+            pairs.append(LabeledPair(p_a, ctx_a, p_b, ctx_b, "IdentityDocument", is_same, "Document Resolution", f"{desc} {k+1}"))
+
+    # ──────────────────────────────────────────────────────────────────────────
+    # 9. OFFSHORE CORPORATE HOLDINGS & SHELL ENTITIES — 45 pairs
+    # ──────────────────────────────────────────────────────────────────────────
+    offshore_corps = [
+        ("Orion Holdings Ltd (BVI)", "Orion Holdings Limited", ["Elena Rostova", "Port_Trust"], ["Elena Rostova", "Port_Trust"], True, "Offshore BVI Suffix Match"),
+        ("Orion Holdings Ltd (BVI)", "Orion Investment Corp (Cayman)", [], [], False, "Different Offshore Shell Entity"),
+        ("Zenith Financial Services Ltd", "Zenith Financial Services Limited", ["Vikram Mehta"], ["Vikram Mehta"], True, "MCA Registered Entity Match"),
+        ("Zenith Financial Services Ltd", "Zenith Mutual Fund Ltd", [], [], False, "Different Financial Subsidiary"),
+        ("Black Sea Shipping Corp", "Black Sea Maritime Corp", ["Port_Trust"], ["Port_Trust"], True, "Maritime Operational Alias"),
+        ("Black Sea Shipping Corp", "Baltic Sea Shipping Corp", [], [], False, "Different Maritime Carrier"),
+        ("Al-Wasl Trading FZE", "Al Wasl General Trading LLC", ["Tariq Mansoor"], ["Tariq Mansoor"], True, "UAE Free Zone vs Mainland Entity"),
+        ("Al-Wasl Trading FZE", "Al-Wasl Real Estate LLC", [], [], False, "Different Dubai Corporate Entity"),
+        ("Trans-Eurasian Logistics NV", "Trans Eurasian Logistics", ["Vessel_Titan"], ["Vessel_Titan"], True, "Dutch NV Corporate Suffix"),
+    ]
+    for c_a, c_b, ctx_a, ctx_b, is_same, desc in offshore_corps:
+        for k in range(5):
+            ctx_a_mod = [f"{x}_{k}" for x in ctx_a] if is_same else []
+            ctx_b_mod = [f"{x}_{k}" for x in ctx_b] if is_same else []
+            pairs.append(LabeledPair(c_a, ctx_a_mod, c_b, ctx_b_mod, "Organization", is_same, "Offshore Shell Resolution", f"{desc} {k+1}"))
 
     return pairs

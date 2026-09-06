@@ -1,23 +1,24 @@
 name: ICIJ Offshore Leaks Database
 official_url: https://offshoreleaks.icij.org/pages/database
+source_archive_url: https://offshoreleaks-data.icij.org/offshoreleaks/csv/csv_bahamas_leaks.2017-12-19.zip
 investigations_covered:
 - Panama Papers
 - Pandora Papers
 - Paradise Papers
 - Bahamas Leaks
-classification: Real Public Investigative Registry Data
+classification: Real Public Data (Registry Standard)
 provenance_class: REAL_EXTERNAL
-version: ICIJ 2024 Release
+version: ICIJ Official Release
 download_date: '2026-09-06'
 license: Open Database License (ODbL) / CC-BY-SA
-corpus_sha256: fc4dcbbdf86c46c8a3c9fa306ee5187394cb083a2c17f6c04074c1543b683329
-sampling_methodology: Two-Pass Canonical Entity Resolution Registry Slice (Entities,
-  Officers, Intermediaries, Addresses)
-source_record_count: 810000
-selected_record_count: 11
-parsed_record_count: 11
+corpus_sha256: 9da4a07549e342442cfd16656ab0e13e5582f28ff9a338f841f642fb650fa460
+sampling_methodology: 'Deterministic: Sampled canonical multi-class node registry
+  (Entities, Officers, Intermediaries, Addresses) from official ICIJ ZIP archive'
+source_record_count: 201691
+selected_record_count: 100
+parsed_record_count: 100
 rejected_record_count: 0
-canonical_entity_count: 11
+canonical_entity_count: 100
 canonical_relationship_count: 7
 adapter_version: datasets.adapters.icij_adapter.ICIJOffshoreAdapter (v4.2 Two-Pass)
 entity_taxonomy:

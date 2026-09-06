@@ -1,16 +1,16 @@
 {
-  "experiment_id": "EXP_1375E418",
-  "git_commit": "5b8a30557d60f1abc2ec69db5b9909acce0a96a8",
-  "timestamp": "2026-09-06T15:21:19.436564+00:00",
+  "experiment_id": "EXP_58AC821A",
+  "git_commit": "6e05fa3fe5581ba22ca4c84d37120f035b0ca0f5",
+  "timestamp": "2026-09-06T15:38:58.033144+00:00",
   "tier1_controlled_validation": {
     "entity_recovery_f1": 62.96,
     "entity_recovery_recall": 89.47,
-    "exact_span_f1": 44.44,
+    "exact_span_f1": 56.1,
     "er_auto_merge_precision": 100.0,
-    "er_auto_merge_recall": 94.47,
+    "er_auto_merge_recall": 95.58,
     "er_false_merge_rate": 0.0,
-    "er_false_split_rate": 5.53,
-    "er_hitl_quarantine_rate": 13.63,
+    "er_false_split_rate": 4.42,
+    "er_hitl_quarantine_rate": 17.91,
     "graphrag_claim_support_rate": 0.0,
     "graphrag_partial_support_rate": 0.0,
     "graphrag_unsupported_claim_rate": 100.0,
@@ -20,7 +20,7 @@
   "tier2_adapter_standardization": {
     "fixture_nodes": 33,
     "fixture_edges": 26,
-    "raw_corpus_nodes": 214,
-    "raw_corpus_edges": 133
+    "raw_corpus_nodes": 336,
+    "raw_corpus_edges": 209
   }
 }

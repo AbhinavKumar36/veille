@@ -91,8 +91,8 @@ def evaluate_entity_resolution(
     total_pairs = len(benchmark_pairs)
     auto_decisions = tp + fp
 
-    precision = (tp / (tp + fp)) * 100 if (tp + fp) > 0 else 100.0
-    recall = (tp / (tp + fn)) * 100 if (tp + fn) > 0 else 100.0
+    precision = (tp / (tp + fp)) * 100 if (tp + fp) > 0 else 0.0
+    recall = (tp / (tp + fn)) * 100 if (tp + fn) > 0 else 0.0
     f1 = (2 * precision * recall) / (precision + recall) if (precision + recall) > 0 else 0.0
 
     false_merge_rate = (fp / (tp + fp)) * 100 if (tp + fp) > 0 else 0.0

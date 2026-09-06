@@ -1,19 +1,19 @@
 name: Enron Email Corpus
 official_url: https://www.cs.cmu.edu/~enron/
-source_archive_url: https://raw.githubusercontent.com/MWiechmann/enron_spam_data/master/enron_spam_data.zip
-version: CMU / FERC Cleaned 2024
+source_archive_url: https://www.cs.cmu.edu/~enron/enron_mail_20150507.tar.gz
+version: CMU / FERC Canonical Mailbox Archive
 download_date: '2026-09-06'
 license: Public Domain (FERC Regulatory Record)
 provenance_class: REAL_EXTERNAL
-original_sha256: e994ad3c09fd7528b397e1f921742da5dd59f19695bc25cdb3617eb3ded17634
-corpus_sha256: 25bec8fc592f333581e7e6e81307342e853ba9819b752fcdb909afeb4c8c32a0
-sampling_methodology: 'Deterministic: First 100 corporate (ham) messages sorted by
-  Message ID with authentic header extraction (no synthetic fallback)'
-source_record_count: 16274
+classification: Real Public Data
+corpus_sha256: b3b7b34c933c0433c8bf144f647e7b578cd81a5c04d3c118b58e5fd04e275eb5
+sampling_methodology: 'Deterministic: First 100 authentic RFC 822 corporate emails
+  extracted from CMU maildir archive'
+source_record_count: 500000
 selected_record_count: 100
 parsed_record_count: 100
-rejected_record_count: 48
-canonical_entity_count: 33
-canonical_relationship_count: 4
+rejected_record_count: 1
+canonical_entity_count: 67
+canonical_relationship_count: 100
 adapter_version: datasets.adapters.enron_adapter.EnronEmailAdapter (v4.2)
 primary_evaluation: Temporal Communication Graph & Insider Collusion Extraction

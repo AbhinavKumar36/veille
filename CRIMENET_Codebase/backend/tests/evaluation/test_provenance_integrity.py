@@ -40,9 +40,14 @@ def test_taxonomy_mapping_schema():
 
 
 def test_manifest_cryptographic_hashes():
-    """Verify all manifests exist and match the actual corpus SHA-256."""
-    domains = ["inlegalner", "enron", "icij", "aml"]
-    for dom in domains:
+    """Verify all manifests exist and match the actual corpus SHA-256 on disk."""
+    corpus_map = {
+        "inlegalner": os.path.join(DATASETS_DIR, "external", "inlegalner", "raw", "inlegalner_corpus.json"),
+        "enron": os.path.join(DATASETS_DIR, "external", "enron", "raw", "enron_corporate_emails.json"),
+        "icij": os.path.join(DATASETS_DIR, "external", "icij", "raw", "icij_panama_pandora_slice.csv"),
+        "aml": os.path.join(DATASETS_DIR, "external", "ibm_aml", "raw", "aml_synthetic_matrix.csv")
+    }
+    for dom, corpus_path in corpus_map.items():
         mf_path = os.path.join(MANIFESTS_DIR, f"{dom}.yaml")
         assert os.path.exists(mf_path), f"Manifest {dom}.yaml must exist."
         with open(mf_path, "r", encoding="utf-8") as f:
@@ -50,6 +55,10 @@ def test_manifest_cryptographic_hashes():
         assert "corpus_sha256" in mf
         assert len(mf["corpus_sha256"]) == 64, "SHA-256 must be a 64-character hex string."
         assert "provenance_class" in mf or "classification" in mf
+
+        if os.path.exists(corpus_path):
+            actual_sha = sha256_of_file(corpus_path)
+            assert actual_sha == mf["corpus_sha256"], f"Cryptographic SHA-256 mismatch for {dom}: manifest claims {mf['corpus_sha256']}, but file computes to {actual_sha}"
 
 
 def test_enron_zero_fabricated_identities():

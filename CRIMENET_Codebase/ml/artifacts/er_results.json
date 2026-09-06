@@ -1,17 +1,17 @@
 {
-  "total_pairs_evaluated": 411,
-  "true_positives": 188,
+  "total_pairs_evaluated": 536,
+  "true_positives": 238,
   "false_positives": 0,
-  "true_negatives": 156,
+  "true_negatives": 191,
   "false_negatives": 11,
-  "hitl_quarantined": 56,
+  "hitl_quarantined": 96,
   "auto_merge_precision": 100.0,
-  "auto_merge_recall": 94.47,
-  "auto_merge_f1": 97.16,
+  "auto_merge_recall": 95.58,
+  "auto_merge_f1": 97.74,
   "false_merge_rate": 0.0,
-  "false_split_rate": 5.53,
-  "hitl_quarantine_rate": 13.63,
-  "auto_merge_coverage": 45.74,
+  "false_split_rate": 4.42,
+  "hitl_quarantine_rate": 17.91,
+  "auto_merge_coverage": 44.4,
   "category_breakdown": {
     "Alias": {
       "total": 4,
@@ -250,6 +250,36 @@
       "tn": 20,
       "fn": 0,
       "hitl": 0,
+      "precision": 100.0,
+      "recall": 100.0
+    },
+    "Vehicle Resolution": {
+      "total": 40,
+      "tp": 15,
+      "fp": 0,
+      "tn": 5,
+      "fn": 0,
+      "hitl": 20,
+      "precision": 100.0,
+      "recall": 100.0
+    },
+    "Document Resolution": {
+      "total": 40,
+      "tp": 15,
+      "fp": 0,
+      "tn": 10,
+      "fn": 0,
+      "hitl": 15,
+      "precision": 100.0,
+      "recall": 100.0
+    },
+    "Offshore Shell Resolution": {
+      "total": 45,
+      "tp": 20,
+      "fp": 0,
+      "tn": 20,
+      "fn": 0,
+      "hitl": 5,
       "precision": 100.0,
       "recall": 100.0
     }

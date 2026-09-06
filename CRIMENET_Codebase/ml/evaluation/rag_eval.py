@@ -83,16 +83,34 @@ def evaluate_graphrag_response(
     # 3. Query PostgreSQL for valid Evidence IDs and Content
     db = SessionLocal()
     evidence_contents = []
+    demo_data_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "backend", "scripts", "demo_data")
     try:
         ev_records = db.query(Evidence).filter(Evidence.case_id == case_id).all()
         valid_evidence_ids = {str(ev.id) for ev in ev_records}
         valid_evidence_files = {ev.original_filename.lower() for ev in ev_records if ev.original_filename}
         for ev in ev_records:
+            doc_content = ""
+            if ev.file_path and os.path.exists(ev.file_path):
+                try:
+                    with open(ev.file_path, "r", encoding="utf-8", errors="ignore") as f:
+                        doc_content = f.read()
+                except Exception:
+                    pass
+            elif ev.original_filename:
+                demo_file = os.path.join(demo_data_dir, ev.original_filename)
+                if os.path.exists(demo_file):
+                    try:
+                        with open(demo_file, "r", encoding="utf-8", errors="ignore") as f:
+                            doc_content = f.read()
+                    except Exception:
+                        pass
+
             evidence_contents.append({
                 "id": str(ev.id),
                 "filename": ev.original_filename or "",
                 "source_type": ev.source_type or "",
-                "hash": ev.hash or ""
+                "hash": ev.hash or "",
+                "content": doc_content
             })
     finally:
         db.close()
@@ -108,7 +126,7 @@ def evaluate_graphrag_response(
     unfounded_entities = [e for e in filtered_entities if e not in grounded_entities]
     entity_grounding_rate = (len(grounded_entities) / len(filtered_entities)) * 100 if filtered_entities else 100.0
 
-    # 5. Citation Validity (ID exists in SoR) vs Citation Entailment (text supports claim)
+    # 5. Citation Validity (ID exists in SoR) vs Citation Entailment (content actually contains claim entities)
     valid_citations_count = 0
     entailed_citations_count = 0
 
@@ -119,16 +137,21 @@ def evaluate_graphrag_response(
         is_valid = (cid in valid_evidence_ids or any(ctitle in ef for ef in valid_evidence_files) or "document #" in ctitle)
         if is_valid:
             valid_citations_count += 1
-            # Entailment check: does the cited evidence contain any key entities from query/response?
-            ev_match = [ec for ec in evidence_contents if ec["id"] == cid or ec["filename"].lower() in ctitle]
-            if ev_match:
+            # True Entailment check: does the cited evidence document text actually contain any grounded entities?
+            ev_match = [ec for ec in evidence_contents if ec["id"] == cid or (ec["filename"] and ec["filename"].lower() in ctitle)]
+            if ev_match and ev_match[0]["content"]:
+                doc_text_lower = ev_match[0]["content"].lower()
+                # Check if any grounded entity or key subject/object appears in the actual text
+                if any(ge.lower() in doc_text_lower for ge in grounded_entities):
+                    entailed_citations_count += 1
+            elif ev_match:
+                # If content unavailable, verify against known filename/metadata keywords
                 ev_str = (ev_match[0]["filename"] + " " + ev_match[0]["source_type"]).lower()
-                entailed_citations_count += 1
-            else:
-                entailed_citations_count += 1  # Standard document reference
+                if any(ge.lower() in ev_str for ge in grounded_entities):
+                    entailed_citations_count += 1
 
     citation_validity_rate = (valid_citations_count / len(returned_citations)) * 100 if returned_citations else 100.0
-    citation_entailment_rate = (entailed_citations_count / len(returned_citations)) * 100 if returned_citations else 100.0
+    citation_entailment_rate = (entailed_citations_count / valid_citations_count) * 100 if valid_citations_count > 0 else (100.0 if not returned_citations else 0.0)
 
     # 6. Structured Claim-Level Entailment (4-tier classification)
     supported_claims = 0
@@ -145,16 +168,26 @@ def evaluate_graphrag_response(
         # Check if verified triples exist in Neo4j
         has_exact_edge = False
         has_any_edge = False
+        has_contradiction = False
+
         for s, rel, o in extracted_triples:
             s_l, o_l = s.lower().strip(), o.lower().strip()
-            if any((s_l in s_edge and o_l in t_edge) or (o_l in s_edge and s_l in t_edge) for s_edge, _, t_edge in graph_edges):
+            edge_exists = any((s_l in s_edge and o_l in t_edge) or (o_l in s_edge and s_l in t_edge) for s_edge, _, t_edge in graph_edges)
+            if edge_exists:
                 has_any_edge = True
             if any(((s_l in s_edge and o_l in t_edge) or (o_l in s_edge and s_l in t_edge)) and rel_edge == rel for s_edge, rel_edge, t_edge in graph_edges):
                 has_exact_edge = True
 
+            # Contradiction check: negation in sentence while graph affirms relationship
+            if any(neg in sent_lower for neg in ["not linked", "no connection", "never transferred", "unrelated", "innocent", "no association"]) and edge_exists:
+                has_contradiction = True
+
         has_verified_node = any(gn in sent_lower for gn in graph_nodes)
 
-        if has_exact_edge or (has_any_edge and len(extracted_triples) > 0):
+        if has_contradiction:
+            status = "CONTRADICTED"
+            contradicted_claims += 1
+        elif has_exact_edge or (has_any_edge and len(extracted_triples) > 0):
             status = "SUPPORTED"
             supported_claims += 1
         elif has_verified_node:
@@ -170,7 +203,7 @@ def evaluate_graphrag_response(
             "triples": extracted_triples
         })
 
-    claim_support_rate = (supported_claims / total_claims) * 100 if total_claims > 0 else 100.0
+    claim_support_rate = (supported_claims / total_claims) * 100 if total_claims > 0 else 0.0
     partial_support_rate = (partially_supported_claims / total_claims) * 100 if total_claims > 0 else 0.0
     unsupported_claim_rate = (unsupported_claims / total_claims) * 100 if total_claims > 0 else 0.0
 
