@@ -2,7 +2,7 @@
 
 > **Evaluation Date:** September 2026  
 > **Evaluation Mode:** Dual-Tier (Controlled System Validation + External Dataset Adapter Validation)  
-> **Target Cases:** Operation Storm Watch (Controlled Ground Truth) & External Public Domain Corpora  
+> **Target Cases:** Operation Storm Watch (Controlled Ground Truth) & External Public Corpora  
 > **Status:** Academic & SIH Jury-Ready Forensic Evaluation  
 
 ---
@@ -10,7 +10,7 @@
 ## 1. Executive Summary
 
 VEILLE employs a **Two-Tiered Evaluation Methodology**:
-1. **Tier 1 (Controlled Ground-Truth System Validation):** Evaluates the entire forensic pipeline (Unstructured Ingestion $\to$ NLP $\to$ Entity Resolution $\to$ Neo4j Graph $\to$ GraphRAG) against an exact, known ground truth of 19 entities and 13 multi-modal relationships.
+1. **Tier 1 (Controlled Ground-Truth System Validation):** Evaluates the entire forensic pipeline (Unstructured Ingestion $\to$ NLP $\to$ Pairwise Entity Resolution $\to$ Neo4j Graph $\to$ Claim-Level GraphRAG) against an exact, known ground truth of 19 entities, 13 multi-modal relationships, and 24 labeled ER pairs.
 2. **Tier 2 (External Dataset Adapter Validation):** Evaluates VEILLE's Canonical Adapter Layer across 4 external research corpora and public domain datasets (**InLegalNER**, **ICIJ Offshore Leaks**, **Enron Email Corpus**, and **IBM AML Transactions**), using both unit fixtures and raw multi-source samples.
 
 ```
@@ -19,13 +19,16 @@ VEILLE employs a **Two-Tiered Evaluation Methodology**:
 ├────────────────────────────────────────┬───────────────────────────────────┤
 │ Tier 1 Overall Entity Recovery F1      │ 62.96%                            │
 │ Tier 1 Entity Recovery Recall          │ 89.47%                            │
-│ False Merge Rate (among auto-merges)   │ 0.0%                              │
-│ HITL Review / Quarantine Rate          │ 22.22% (10 ambiguous pairs quarantined)   │
-│ GraphRAG Entity Mention Coverage       │ 100.0%                            │
-│ GraphRAG Knowledge Graph Grounding     │ 100.0%                            │
-│ GraphRAG Evidence Citation Score       │ 100.0%                            │
+│ ER Auto-Merge Precision (TP / (TP+FP)) │ 100.0%                            │
+│ ER False Merge Rate (FP / (TP+FP))     │ 0.0%                              │
+│ ER False Split Rate (FN / (TP+FN))     │ 69.23%                             │
+│ HITL Review / Quarantine Rate          │ 4.17% (1 ambiguous pairs)    │
+│ GraphRAG Claim Support Rate            │ 77.78%                            │
+│ GraphRAG Unsupported Claim Rate        │ 22.22%                              │
+│ GraphRAG Knowledge Graph Grounding     │ 34.78%                            │
+│ GraphRAG Citation Verification Rate    │ 100.0%                            │
 │ Tier 2 Unit Fixtures Standardized      │ 4 Domains (33 Nodes, 26 Edges)   │
-│ Tier 2 Raw Corpora Standardized        │ 4 Domains (52 Nodes, 44 Edges)   │
+│ Tier 2 Raw Corpora Standardized        │ 4 Domains (199 Nodes, 223 Edges) │
 └────────────────────────────────────────┴───────────────────────────────────┘
 ```
 
@@ -56,18 +59,23 @@ VEILLE employs a **Two-Tiered Evaluation Methodology**:
 | **Location** | 20.0% | 50.0% | 28.57% | 2 | 2 |
 | **WEIGHTED TOTAL** | **48.57%** | **89.47%** | **62.96%** | **17** | **2** |
 
-### 3.2 Entity Resolution & Safeguards Formulation
-* **Total Collision Candidates Detected:** 45
-* **Auto-Merged Entity Pairs:** 16 (Coverage: 35.56%)
-* **False Merges Observed in Auto-Merges:** 0 (False Merge Rate: **0.0%**)
-* **HITL Review / Quarantine Rate:** 22.22% (10 ambiguous pairs quarantined) (ambiguous cross-case overlaps quarantined to `/review-queue`)
-* **Semantic Preservation Rate:** **100.0%** across all multi-modal edge types.
+### 3.2 Pairwise Entity Resolution Confusion Matrix
+* **Total Labeled Pairs Evaluated:** 24
+* **True Positives (Correct Merges):** 4
+* **False Positives (Erroneous Merges):** 0
+* **True Negatives (Correct Distinctions):** 10
+* **False Negatives (False Splits):** 9
+* **Ambiguous Pairs Quarantined (HITL):** 1 (4.17%)
+* **Auto-Merge Precision:** **100.0%**
+* **Empirical False Merge Rate:** **0.0%** (Zero false mergers of innocent citizens)
+* **False Split Rate:** **69.23%**
 
-### 3.3 GraphRAG Grounding & Hallucination Resistance
-* **Entity Mention Coverage:** **100.0%** (All 4 core syndicate leaders & fronts referenced in AI synthesis)
-* **Knowledge Graph Grounding Rate:** **100.0%** (Every referenced entity verified against Neo4j nodes)
-* **Evidence Citation Score:** **100.0%** (Grounding claims to verified evidence markers)
-* **Unsupported Claim Rate (Hallucination):** **0.0%**
+### 3.3 Claim-Level GraphRAG Grounding & Verification
+* **Total Factual Claims Evaluated:** 27
+* **Backed by Neo4j Triples (Supported Claims):** 21 (77.78%)
+* **Unsupported Claim Rate (Hallucination Rate):** **22.22%**
+* **Knowledge Graph Entity Grounding Rate:** **34.78%** (8/23 entities verified in Neo4j)
+* **Citation Verification Rate:** **100.0%** (Directly mapped to PostgreSQL evidence IDs)
 
 ---
 
@@ -76,20 +84,20 @@ VEILLE employs a **Two-Tiered Evaluation Methodology**:
 ### 4.1 Unit Fixture Validation (`datasets/external/*/fixtures/`)
 | Fixture Source | Classification | Extracted Entities | Extracted Relationships | Validation Status |
 | :--- | :--- | :--- | :--- | :--- |
-| **InLegalNER Legal Fixture** | Local Research Fixture | 16 Entities | 14 Edges | **PASS (Canonical)** |
-| **ICIJ Offshore Leaks Fixture** | Local Investigative Fixture | 6 Entities | 4 Edges | **PASS (Canonical)** |
-| **Enron Email Fixture** | Local Communication Fixture | 4 Entities | 3 Edges | **PASS (Canonical)** |
-| **IBM AML Transaction Fixture** | Local Synthetic Fixture | 7 Entities | 5 Edges | **PASS (Canonical)** |
+| **InLegalNER Legal Fixture** | Real Research Corpus | 16 Entities | 14 Edges | **PASS (Canonical)** |
+| **ICIJ Offshore Leaks Fixture** | Real Public Data (Registry Standard) | 6 Entities | 4 Edges | **PASS (Canonical)** |
+| **Enron Email Fixture** | Real Public Data | 4 Entities | 3 Edges | **PASS (Canonical)** |
+| **IBM AML Transaction Fixture** | Synthetic Research Benchmark | 7 Entities | 5 Edges | **PASS (Canonical)** |
 | **SUBTOTAL (FIXTURES)** | **Unit Test Suite** | **33 Entities** | **26 Edges** | **PASS** |
 
 ### 4.2 Raw Multi-Source Corpus Standardization (`datasets/external/*/raw/`)
 | Raw External Corpus | Official Classification | Extracted Entities | Extracted Relationships | Validation Status |
 | :--- | :--- | :--- | :--- | :--- |
-| **InLegalNER Multi-Case Corpus** | Real Research Corpus | 27 Entities | 24 Edges | **PASS (Canonical)** |
+| **InLegalNER Multi-Case Corpus** | Real Research Corpus | 100 Entities | 98 Edges | **PASS (Canonical)** |
 | **ICIJ Panama/Pandora Slice** | Real Public Data (Registry Standard) | 11 Entities | 7 Edges | **PASS (Canonical)** |
-| **Enron Corporate Email Chain** | Real Public Data | 5 Entities | 5 Edges | **PASS (Canonical)** |
+| **Enron Corporate Email Chain** | Real Public Data | 79 Entities | 110 Edges | **PASS (Canonical)** |
 | **IBM AML Multi-Hop Matrix** | Synthetic Research Benchmark | 9 Entities | 8 Edges | **PASS (Canonical)** |
-| **SUBTOTAL (RAW CORPUS)** | **Multi-Modal External Data** | **52 Entities** | **44 Edges** | **PASS** |
+| **SUBTOTAL (RAW CORPUS)** | **Multi-Modal External Data** | **199 Entities** | **223 Edges** | **PASS** |
 
 ---
 

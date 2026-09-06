@@ -38,31 +38,30 @@ VEILLE employs a **Dual-Lakehouse / Polyglot Persistence Pattern** that cleanly 
 
 ---
 
-## 2. Core Capabilities & Workspace Suite
+## 2. Core Capabilities & Forensic Pipeline
 
 * **Maltego-Style Investigation Board (`NetworkExplorer.tsx`)**:
   - Powered by `@xyflow/react` (React Flow) with customized entity cards (`Person`, `Vehicle`, `Phone`, `Account`, `Location`, `Organization`, `Event`).
-  - Threat score pills (`RISK 85` critical, `RISK 70` elevated, `RISK 30` nominal).
+  - Risk score badges (`RISK 85` critical, `RISK 70` elevated, `RISK 30` nominal).
   - Curved directional splines with relationship type badges (`COMMUNICATES_WITH`, `OWNS`, `LOCATED_AT`, `ASSOCIATED_WITH`).
-  - Interactive radar mini-map navigator, filter strip, category auto-alignment (Dagre layout), and 1-click camera glide on neighbor selection.
+  - Interactive radar mini-map navigator, category filtering, auto-alignment (Dagre layout), and 1-click camera glide on neighbor selection.
 * **Geospatial Intelligence Explorer (`GeospatialExplorer.tsx`)**:
-  - Esri Dark Gray Canvas base tiles (clean, zero CARTO watermark clutter).
+  - Dark canvas base tiles with clean vector overlays.
   - Cell tower azimuth coverage cones, signal triangulation, and suspect movement breadcrumbs.
-* **Entity Resolution & Review Queue (`ReviewQueue.tsx`)**:
+* **Pairwise Entity Resolution & Review Queue (`ReviewQueue.tsx`)**:
   - Hybrid scoring formula: $\text{Score} = 0.55 \times \text{Lexical (Jaro-Winkler)} + 0.45 \times \text{Structural (Graph Proximity)}$.
-  - Automated triaging: $\ge 0.85$ (`AUTO_MERGE`), $0.50 - 0.85$ (`REVIEW_QUEUE`), $< 0.50$ (`CREATE_NEW`).
-  - Human-in-the-loop conflict arbitration with live side-by-side attribute comparison.
+  - Triaging zones: $\ge 0.85$ (`AUTO_MERGE`), $0.50 - 0.85$ (`REVIEW_QUEUE` quarantine), $< 0.50$ (`CREATE_NEW`).
+  - Human-in-the-loop (HITL) conflict arbitration with side-by-side attribute comparison to prevent erroneous merges of innocent lookalikes.
 * **Transactional Outbox Engine (`outbox_processor.py`)**:
   - Celery Beat poller utilizing row-level locking (`with_for_update(skip_locked=True)`) in PostgreSQL to guarantee multi-worker eventual consistency with Neo4j.
-* **AI & NLP Intelligence Engine (`ai.py`)**:
-  - Google Gemini 2.5 Flash with strict JSON schema constraints.
-  - Offline fallback regex heuristics for phone numbers, bank accounts, vehicle registration numbers, and geo-coordinates.
-* **Cryptographic Evidentiary Chain-of-Custody**:
-  - Tamper-evident Merkle PBFT append-only audit trail for court admissibility.
-  - SHA-256 evidence digests in MinIO S3 object storage.
-  - Post-Quantum Cryptography (PQC ML-KEM-1024), HSM enclave quorum ceremonies, and X.509 CRL broadcast.
+* **Claim-Level GraphRAG Intelligence Engine (`ai.py`)**:
+  - Graph-grounded contextual query synthesis using Google Gemini.
+  - Sentence-level verification against live Neo4j triples and PostgreSQL evidence records to prevent hallucinations.
+* **Tamper-Evident Evidentiary Audit Trail**:
+  - SHA-256 evidence hashing and immutable audit logging for chain-of-custody tracking.
+  - MinIO S3-compatible encrypted object storage for raw evidence files.
 * **Clinical Tactical UI (`DESIGN.md`)**:
-  - Obsidian dark substrates (`#090C10`, `#0F141C`), hairline borders (`#212B3A`), and signature emerald/mint green interactive accents (`#4edea3`, `#6ffbbe`, `#00a572`).
+  - Obsidian dark substrates (`#090C10`, `#0F141C`), hairline borders (`#212B3A`), and emerald interactive accents (`#4edea3`, `#6ffbbe`, `#00a572`).
 
 ---
 
@@ -72,20 +71,25 @@ VEILLE employs a **Dual-Lakehouse / Polyglot Persistence Pattern** that cleanly 
 | :--- | :--- |
 | **Frontend** | React 18, Vite, TypeScript, Tailwind CSS, `@xyflow/react` (React Flow), Leaflet, Lucide Icons |
 | **Backend** | FastAPI, Uvicorn, Celery, Pydantic v2, SQLAlchemy, Alembic |
-| **Databases** | PostgreSQL 16 (Relational SoR), Neo4j 5.x (Knowledge Graph & GDS), Redis 7 (Broker & Cache) |
-| **Streaming & Storage** | Apache Kafka & Zookeeper, MinIO (S3-compatible Encrypted Object Storage) |
-| **AI / NLP & Audio** | Google Gemini 2.5 Flash, RapidFuzz (Jaro-Winkler), OpenAI Whisper STT, Tesseract OCR |
-| **Security & Crypto** | JWT (HttpOnly cookies / Bearer), Argon2, Merkle Tree hashing, ML-KEM-1024, Ed25519 |
+| **Databases** | PostgreSQL (Relational SoR), Neo4j 5.x (Knowledge Graph & GDS), Redis 7 (Broker & Cache) |
+| **Storage & Ingestion** | MinIO (S3-compatible Object Storage), Canonical Dataset Adapter Layer |
+| **AI / NLP** | Google Gemini, RapidFuzz (Jaro-Winkler), Tesseract OCR heuristics |
+| **Security & Auth** | JWT Authentication (Bearer / HttpOnly cookies), Argon2 password hashing, RBAC |
 
 ---
 
-## 4. Prerequisites
+## 4. Dataset Taxonomy & Provenance
 
-Ensure the following tools are installed on your host system:
-* [Docker Desktop](https://www.docker.com/products/docker-desktop)
-* [Python 3.11+](https://www.python.org/downloads/)
-* [Node.js 18+](https://nodejs.org/) & `npm`
-* [Git](https://git-scm.com/)
+VEILLE categorizes all evaluation data into three distinct tiers:
+
+1. **Real External Datasets (Public / Research)**:
+   - **InLegalNER**: Official Indian High Court & Supreme Court legal judgments corpus (OpenNyAI).
+   - **ICIJ Offshore Leaks**: Panama & Pandora Papers entity registry slice (ODbL / CC-BY-SA).
+   - **Enron Email Corpus**: FERC / CMU corporate email records with authentic communication headers.
+2. **Synthetic Research Benchmarks**:
+   - **IBM AMLWorld**: Controlled transaction graph matrix for multi-hop layering and smurfing detection.
+3. **Controlled Ground-Truth Benchmark**:
+   - **Operation Storm Watch**: End-to-end multi-modal ground-truth case (FIR, CDR, AML) for zero-defect pipeline validation.
 
 ---
 
@@ -100,55 +104,21 @@ cd CRIMENET_Codebase
 docker-compose up -d
 ```
 
-*Verifies the following ports:*
-* **PostgreSQL**: `localhost:5432`
-* **Neo4j**: `localhost:7474` (HTTP) / `localhost:7687` (Bolt)
-* **Redis**: `localhost:6379`
-* **Kafka**: `localhost:9092`
-* **MinIO**: `localhost:9000` (API) / `localhost:9001` (Console)
-
 ---
 
-### Step 2: Configure the Backend Environment
-
-In a terminal, navigate to the `backend/` directory and configure the Python virtual environment:
+### Step 2: Initialize Backend Database & Demo Seed
 
 ```bash
 cd CRIMENET_Codebase/backend
-
-# Create and activate virtual environment
 python -m venv venv
-
-# On Windows (PowerShell):
-.\venv\Scripts\Activate.ps1
+# On Windows:
+.\venv\Scripts\activate
 # On Linux/macOS:
 source venv/bin/activate
 
-# Install dependencies
 pip install -r requirements.txt
-```
 
-Create or verify the `.env` file inside `CRIMENET_Codebase/backend/.env`:
-```env
-DATABASE_URL=postgresql://veille_user:veille_pass@localhost:5432/veille_db
-NEO4J_URI=bolt://localhost:7687
-NEO4J_USER=neo4j
-NEO4J_PASSWORD=veille_password
-REDIS_URL=redis://localhost:6379/0
-KAFKA_BOOTSTRAP_SERVERS=localhost:9092
-MINIO_ENDPOINT=localhost:9000
-MINIO_ACCESS_KEY=minioadmin
-MINIO_SECRET_KEY=minioadmin
-JWT_SECRET=super-secret-jwt-key-for-veille-intelligence-v4
-GEMINI_API_KEY=your_gemini_api_key_here
-```
-
-**Run Database Migrations & Seed Default Data:**
-```bash
-# Run database migrations
-alembic upgrade head
-
-# Seed admin/investigator accounts and demo cases
+# Run migrations and seed baseline accounts
 python seed.py
 ```
 
@@ -179,12 +149,6 @@ cd CRIMENET_Codebase/backend
 celery -A workers.celery_app beat --loglevel=info
 ```
 
-**Terminal 4 — Kafka Consumer (Optional for live stream simulation):**
-```bash
-cd CRIMENET_Codebase/backend
-python -m workers.kafka_consumer
-```
-
 ---
 
 ### Step 4: Configure & Launch Frontend
@@ -201,43 +165,43 @@ Open `http://localhost:5173` in your browser.
 
 ---
 
-## 6. Access Clearance & Default Credentials
+## 6. Access Control & Configuration
 
-The system provides 1-click role presets directly on the redesigned **Operator Login Screen** (`http://localhost:5173/login`):
-
-| Role | Government Identifier / Email | Security Passphrase | Clearance Level |
-| :--- | :--- | :--- | :--- |
-| **Administrator** | `admin@veille.gov.in` | `admin123` | Top Secret // System-Wide Oversight |
-| **Investigator** | `investigator@veille.gov.in` | `investigator123` | Case Restricted // Evidentiary Ingress |
+Authentication credentials and API keys are managed securely via environment configuration:
+- Copy `.env.example` to `.env` in `backend/` and configure secret keys and database URLs.
+- Initial seed accounts (`Administrator` and `Investigator` roles) are generated during `python seed.py` for local development.
 
 ---
 
-## 7. Sample Intelligence Datasets
+## 7. Empirical Evaluation & Reproducibility
 
-Pre-built forensic datasets are available under `synthetic_data/samples/` for rapid testing and demonstration:
+To execute the two-tier empirical benchmark suite across both the controlled ground-truth case and external dataset adapters:
 
-* **Operation Smuggling Syndicate (`Case 1`)**:
-  - `FIR_001_Rajesh_Smuggling.txt` — Unstructured police complaint.
-  - `CDR_Oct_2023.csv` — Telecom call detail records.
-  - `FIN_Ledger_2023.csv` — Banking transaction records.
-* **Operation Falcon Hawala (`Case 2`)**:
-  - `FIR_002_Vikram_Hawala.txt` — Cross-border Hawala syndicate complaint.
-  - `CDR_Nov_2023_Falcon.csv` — Burner phone intercepts with cell tower coordinates.
-  - `FIN_Hawala_Falcon.csv` — Currency layering and shell company ledgers.
-  - `INTERROGATION_002_Vikram.txt` — Forensic suspect interrogation transcript.
+```bash
+cd CRIMENET_Codebase
+# Run dataset acquisition and manifest generation
+python datasets/download_datasets.py
+
+# Run Canonical Adapters
+python datasets/run_adapters.py
+
+# Run Live Empirical Benchmark Suite
+python ml/evaluation/benchmark_suite.py
+```
+
+Benchmark output and confusion matrices are published to [BENCHMARK_REPORT.md](file:///d:/project/Crimenet/CRIMENET_Documentation/BENCHMARK_REPORT.md).
 
 ---
 
-## 8. Comprehensive Architectural Review
+## 8. Comprehensive Documentation Suite
 
-For an in-depth evaluation of the platform's distributed design, cryptographic rigor, entity resolution mathematics, bundle scalability, and production scorecard, consult:
-
-* **[project_review.md](file:///d:/project/Crimenet/project_review.md)** — Comprehensive Technical & Architectural Review (Score: **9.4 / 10**).
+* **[BENCHMARK_REPORT.md](file:///d:/project/Crimenet/CRIMENET_Documentation/BENCHMARK_REPORT.md)** — Two-Tier Empirical Benchmark Report (Controlled Ground Truth + External Corpora).
+* **[project_review.md](file:///d:/project/Crimenet/project_review.md)** — Architectural Review & Production Topology.
 * **[DESIGN.md](file:///d:/project/Crimenet/DESIGN.md)** — Clinical Design System Specifications.
 
 ---
 
-## 9. License & Institutional Attribution
+## 9. License & Attribution
 
-*Restricted Access — For Law Enforcement, Intelligence Directorates, and Forensic Audit Units Only.*  
-*Copyright © 2026 VEILLE Intelligence Platform. All Rights Reserved.*
+*Research and educational forensic intelligence prototype.*  
+*MIT License — Developed for Smart India Hackathon (SIH).*

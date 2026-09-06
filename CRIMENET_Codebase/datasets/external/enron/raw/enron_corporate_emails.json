@@ -1,800 +1,800 @@
 [
   {
     "id": "ENRON_MSG_1",
-    "from": "jeff.skilling@enron.com",
-    "to": "kenneth.lay@enron.com",
+    "from": "george.weissman@enron.com",
+    "to": "gary@enron.com",
     "date": "1999-12-13",
     "subject": "Vastar Resources , Inc .",
     "body": "gary , production from the high island larger block a - 1 # 2 commenced on\nsaturday at 2 : 00 p . m . at about 6 , 500 gross . carlos expects between 9 , 500 and\n10 , 000 gross for tomorrow . vastar owns 68 % of the gross production .\ngeorge x 3 - 6992\n- - - - - - - - - - - - - - - - - - - - - - forwarded by george weissman / hou / ect on 12 / 13 / 99 10 : 16\nam - - - - - - - - - - - - - - - - - - - - - - - - - - -\ndaren j farmer\n12 / 10 / 99 10 : 38 am\nto : carlos j rodriguez / hou / ect @ ect\ncc : george weissman / hou / ect @ ect , melissa graves / hou / ect @ ect\nsubject : vastar resources , inc .\ncarlos ,\nplease call linda and get everything set up .\ni ' m going to estimate 4 , 500 coming up tomorrow , with a 2 , 000 increase each\nfollowing day based on my conversations with bill fisc"
   },
   {
     "id": "ENRON_MSG_3",
-    "from": "kenneth.lay@enron.com",
-    "to": "richard.causey@enron.com",
+    "from": "sherlyn.schumack@enron.com",
+    "to": "Enron_Trading_Desk_202@enron.com",
     "date": "1999-12-14",
     "subject": "Re : Issue",
     "body": "fyi - see note below - already done .\nstella\n- - - - - - - - - - - - - - - - - - - - - - forwarded by stella l morris / hou / ect on 12 / 14 / 99 10 : 18\nam - - - - - - - - - - - - - - - - - - - - - - - - - - -\nfrom : sherlyn schumack on 12 / 14 / 99 10 : 06 am\nto : stella l morris / hou / ect @ ect\ncc : howard b camp / hou / ect @ ect\nsubject : re : issue\nstella ,\nthis has already been taken care of . you did this for me yesterday .\nthanks .\nhoward b camp\n12 / 14 / 99 09 : 10 am\nto : stella l morris / hou / ect @ ect\ncc : sherlyn schumack / hou / ect @ ect , howard b camp / hou / ect @ ect , stacey\nneuweiler / hou / ect @ ect , daren j farmer / hou / ect @ ect\nsubject : issue\nstella ,\ncan you work with stacey or daren to resolve\nhc\n- - - - - - - - - - - - - - - - - - - - - - forwarded by "
   },
   {
     "id": "ENRON_MSG_4",
-    "from": "andrew.fastow@enron.com",
-    "to": "vince.kaminski@enron.com",
+    "from": "lauri.a.allen@enron.com",
+    "to": "Enron_Trading_Desk_203@enron.com",
     "date": "1999-12-14",
     "subject": "Meter 7268 Nov Allocation",
     "body": "fyi .\n- - - - - - - - - - - - - - - - - - - - - - forwarded by lauri a allen / hou / ect on 12 / 14 / 99 12 : 17\npm - - - - - - - - - - - - - - - - - - - - - - - - - - -\nkimberly vaughn\n12 / 10 / 99 02 : 54 pm\nto : lauri a allen / hou / ect @ ect\ncc : mary m smith / hou / ect @ ect\nsubject : meter 7268 nov allocation\nlauri . . i have put this on strangas gas until i can get a contract from\ndaren .\n- - - - - - - - - - - - - - - - - - - - - - forwarded by kimberly vaughn / hou / ect on 12 / 10 / 99 01 : 52\npm - - - - - - - - - - - - - - - - - - - - - - - - - - -\nlauri a allen\n12 / 09 / 99 01 : 20 pm\nto : kimberly vaughn / hou / ect @ ect , anita luong / hou / ect @ ect\ncc : howard b camp / hou / ect @ ect , mary m smith / hou / ect @ ect\nsubject : meter 7268 nov allocation\nkim / anita -\na vo"
   },
   {
     "id": "ENRON_MSG_5",
-    "from": "richard.causey@enron.com",
-    "to": "sherron.watkins@enron.com",
+    "from": "Enron_Employee_104@enron.com",
+    "to": "jackie@enron.com",
     "date": "1999-12-14",
     "subject": "Mcmullen Gas For 11 / 99",
     "body": "jackie ,\nsince the inlet to 3 river plant is shut in on 10 / 19 / 99 ( the last day of\nflow ) :\nat what meter is the mcmullen gas being diverted to ?\nat what meter is hpl buying the residue gas ? ( this is the gas from teco ,\nvastar , vintage , tejones , and swift )\ni still see active deals at meter 3405 in path manager for teco , vastar ,\nvintage , tejones , and swift\ni also see gas scheduled in pops at meter 3404 and 3405 .\nplease advice . we need to resolve this as soon as possible so settlement\ncan send out payments .\nthanks"
   },
   {
     "id": "ENRON_MSG_6",
-    "from": "sherron.watkins@enron.com",
-    "to": "sally.beck@enron.com",
+    "from": "Enron_Employee_105@enron.com",
+    "to": "george@enron.com",
     "date": "1999-12-14",
     "subject": "Meter 1517 - Jan 1999",
     "body": "george ,\ni need the following done :\njan 13\nzero out 012 - 27049 - 02 - 001 receipt package id 2666\nallocate flow of 149 to 012 - 64610 - 02 - 055 deliv package id 392\njan 26\nzero out 012 - 27049 - 02 - 001 receipt package id 3011\nzero out 012 - 64610 - 02 - 055 deliv package id 392\nthese were buybacks that were incorrectly nominated to transport contracts\n( ect 201 receipt )\nlet me know when this is done\nhc"
   },
   {
     "id": "ENRON_MSG_7",
-    "from": "vince.kaminski@enron.com",
-    "to": "mark.frevert@enron.com",
+    "from": "antoine.v.pierre@enron.com",
+    "to": "Enron_Trading_Desk_206@enron.com",
     "date": "1999-12-14",
     "subject": "Duns Number Changes",
     "body": "fyi\n- - - - - - - - - - - - - - - - - - - - - - forwarded by gary l payne / hou / ect on 12 / 14 / 99 02 : 35 pm\n- - - - - - - - - - - - - - - - - - - - - - - - - - -\nfrom : antoine v pierre 12 / 14 / 99 02 : 34 pm\nto : tommy j yanowski / hou / ect @ ect , kathryn bussell / hou / ect @ ect , gary l\npayne / hou / ect @ ect , diane e niestrath / hou / ect @ ect , romeo d ' souza / hou / ect @ ect ,\nmichael eiben / hou / ect @ ect , clem cernosek / hou / ect @ ect , scotty\ngilbert / hou / ect @ ect , dave nommensen / hou / ect @ ect , david rohan / hou / ect @ ect ,\nkevin heal / cal / ect @ ect , richard pinion / hou / ect @ ect\ncc : mary g gosnell / hou / ect @ ect , jason moore / hou / ect @ ect , samuel\nschott / hou / ect @ ect , bernice rodriguez / hou / ect @ ect\nsubject : duns number ch"
   },
   {
     "id": "ENRON_MSG_8",
-    "from": "sally.beck@enron.com",
-    "to": "louise.kitchen@enron.com",
+    "from": "Enron_Employee_107@enron.com",
+    "to": "Enron_Trading_Desk_207@enron.com",
     "date": "1999-12-14",
     "subject": "King Ranch",
     "body": "there are two fields of gas that i am having difficulty with in the unify\nsystem .\n1 . cage ranch - since there is no processing agreement that accomodates this\ngas on king ranch , it is my understanding hpl is selling the liquids and\nking ranch is re - delivering to stratton . it is also my understanding that\nthere is a . 05 cent fee\nto deliver this gas . we need a method to accomodate the volume flow on hpl\nat meter 415 and 9643 . this gas\nwill not be reflected on trans . usage ticket # 123395 and # 95394 since it is\nnot being nominated from a processing agreement . we either , need to input\na point nom ( on hpl or krgp ) at these meters to match the nom at meter 9610 ,\nor a deal for purchase and sale ( if king ranch is taking title to the gas )\nneeds to be input into sitara at these met"
   },
   {
     "id": "ENRON_MSG_9",
-    "from": "louise.kitchen@enron.com",
-    "to": "greg.whalley@enron.com",
+    "from": "Enron_Employee_108@enron.com",
+    "to": "Enron_Trading_Desk_208@enron.com",
     "date": "1999-12-14",
     "subject": "Re : Entex Transistion",
     "body": "thanks so much for the memo . i would like to reiterate my support on two key\nissues :\n1 ) . thu - best of luck on this new assignment . howard has worked hard and\ndone a great job ! please don ' t be shy on asking questions . entex is\ncritical to the texas business , and it is critical to our team that we are\ntimely and accurate .\n2 ) . rita : thanks for setting up the account team . communication is\ncritical to our success , and i encourage you all to keep each other informed\nat all times . the p & l impact to our business can be significant .\nadditionally , this is high profile , so we want to assure top quality .\nthanks to all of you for all of your efforts . let me know if there is\nanything i can do to help provide any additional support .\nrita wynne\n12 / 14 / 99 02 : 38 : 45 pm\nto : "
   },
   {
     "id": "ENRON_MSG_10",
-    "from": "mark.frevert@enron.com",
-    "to": "david.delainey@enron.com",
+    "from": "Enron_Employee_109@enron.com",
+    "to": "Enron_Trading_Desk_209@enron.com",
     "date": "1999-12-14",
     "subject": "Entex Transistion",
     "body": "the purpose of the email is to recap the kickoff meeting held on yesterday\nwith members from commercial and volume managment concernig the entex account :\neffective january 2000 , thu nguyen ( x 37159 ) in the volume managment group ,\nwill take over the responsibility of allocating the entex contracts . howard\nand thu began some training this month and will continue to transition the\naccount over the next few months . entex will be thu ' s primary account\nespecially during these first few months as she learns the allocations\nprocess and the contracts .\nhoward will continue with his lead responsibilites within the group and be\navailable for questions or as a backup , if necessary ( thanks howard for all\nyour hard work on the account this year ! ) .\nin the initial phases of this transistion "
   },
   {
     "id": "ENRON_MSG_11",
-    "from": "greg.whalley@enron.com",
-    "to": "john.lavorato@enron.com",
+    "from": "susan.d.trevino@enron.com",
+    "to": "Enron_Trading_Desk_210@enron.com",
     "date": "1999-12-15",
     "subject": "Lst Rev Dec . 1999 Josey Ranch Nom",
     "body": "fyi\n- - - - - - - - - - - - - - - - - - - - - - forwarded by susan d trevino / hou / ect on 12 / 15 / 99 08 : 40\nam - - - - - - - - - - - - - - - - - - - - - - - - - - -\nbob withers on 12 / 14 / 99 05 : 11 : 06 pm\nto : susan d trevino / hou / ect @ ect\ncc : stretch brennan , kevin mclarney ,\n\" taylor vance ( e - mail ) \"\nsubject : lst rev dec . 1999 josey ranch nom\nsusan : as we discussed , this change was missed but was discussed with you\nlast week . i apologize for the omission . i am checking with my field\npersonnel and anticipate a further reduction ( due to well production\ndecreases ) effective 12 / 15 which i will send under a separate email for an\n\" intra - day \" change wednesday .\nhere ' s revised december 1999 ( effective 12 / 9 / 99 ) setup for\njosey : ( using 1 . 081 btu / mcf )"
   },
   {
     "id": "ENRON_MSG_12",
-    "from": "john.lavorato@enron.com",
-    "to": "jeff.skilling@enron.com",
+    "from": "susan.d.trevino@enron.com",
+    "to": "Enron_Trading_Desk_211@enron.com",
     "date": "1999-12-15",
     "subject": "2 Nd Rev Dec . 1999 Josey Ranch Nom",
     "body": "- - - - - - - - - - - - - - - - - - - - - - forwarded by susan d trevino / hou / ect on 12 / 15 / 99 08 : 41\nam - - - - - - - - - - - - - - - - - - - - - - - - - - -\nbob withers on 12 / 15 / 99 08 : 28 : 08 am\nto : susan d trevino / hou / ect @ ect\ncc : stretch brennan , kevin mclarney ,\n\" ' taylor vance ( e - mail ) ' \"\nsubject : 2 nd rev dec . 1999 josey ranch nom\nhere ' s revised december 1999 ( effective 12 / 15 / 99 ) setup for\njosey : ( using 1 . 081 btu / mcf )\n* gas deliveries into hpl\n9 , 300 mmbtu / d for kri ( net reduction of\n3 , 000 mmbtu / d )\n9 , 300 mmbtu / d into hpl\nbob withers > <\nkcs energy , 5555 san felipe , suite 1200\nhouston , tx 77056\nvoice mail / page 713 - 964 - 9434"
   },
   {
     "id": "ENRON_MSG_13",
-    "from": "david.delainey@enron.com",
-    "to": "andrew.fastow@enron.com",
+    "from": "Enron_Employee_112@enron.com",
+    "to": "Enron_Trading_Desk_212@enron.com",
     "date": "1999-12-15",
     "subject": "Unify Close Schedule",
     "body": "the following is the close schedule for this coming month ( year - end . ) please\nkeep in the mind the following key times . . . .\nunify to sitara bridge back 1 : 45 p . m . thursday , dec 30 th ( all errors must be\nclear by this time )\nmass draft at 6 p . m . thursday evening , dec 30 th .\naccrual process begins friday morning , dec 31 st at 6 : 30 a . m . ( if your group\nimpacts the accrual , please ensure that the necessary people are available\nfor support if needed , as this is an enron holiday . )\nplease feel free to contact me should you have any questions .\nthank you , melissa x 35615"
   },
   {
     "id": "ENRON_MSG_14",
-    "from": "jeff.skilling@enron.com",
-    "to": "kenneth.lay@enron.com",
+    "from": "Enron_Employee_113@enron.com",
+    "to": "aimee@enron.com",
     "date": "1999-12-15",
     "subject": "Meter 1431 - Nov 1999",
     "body": "aimee ,\nsitara deal 92943 for meter 1431 has expired on oct 31 , 1999 . settlements\nis unable to draft an invoice for this deal . this deal either needs to be\nextended or a new deal needs to be set up . please let me know when this is\nresolved . we need it resolved by friday , dec 17 .\nhc"
   },
   {
     "id": "ENRON_MSG_15",
-    "from": "kenneth.lay@enron.com",
-    "to": "richard.causey@enron.com",
+    "from": "aimee.lannou@enron.com",
+    "to": "Enron_Trading_Desk_214@enron.com",
     "date": "1999-12-15",
     "subject": "Meter 1431 - Nov 1999",
     "body": "daren -\ncould you please resolve this issue for howard ? i will be out of the office\nthe next two days .\nwhen this is done , please let george know . thanks .\naimee\n- - - - - - - - - - - - - - - - - - - - - - forwarded by aimee lannou / hou / ect on 12 / 15 / 99 01 : 27 pm\n- - - - - - - - - - - - - - - - - - - - - - - - - - -\nhoward b camp\n12 / 15 / 99 01 : 01 pm\nto : aimee lannou / hou / ect @ ect\ncc : daren j farmer / hou / ect @ ect , stacey neuweiler / hou / ect @ ect , mary m\nsmith / hou / ect @ ect\nsubject : meter 1431 - nov 1999\naimee ,\nsitara deal 92943 for meter 1431 has expired on oct 31 , 1999 . settlements\nis unable to draft an invoice for this deal . this deal either needs to be\nextended or a new deal needs to be set up . please let me know when this is\nresolved . we need it r"
   },
   {
     "id": "ENRON_MSG_16",
-    "from": "andrew.fastow@enron.com",
-    "to": "vince.kaminski@enron.com",
+    "from": "Enron_Employee_115@enron.com",
+    "to": "Enron_Trading_Desk_215@enron.com",
     "date": "1999-12-15",
     "subject": "Y 2 K - Texas Log",
     "body": "name home pager\ngeorge grant 281 - 282 - 9084 713 - 764 - 5128\ncharlotte hawkins 281 - 655 - 0952 713 - 506 - 4006\naimee lannou 713 - 594 - 6562 713 - 698 - 7722\nrobert lloyd 281 - 847 - 2808 713 - 698 - 5446\nstella morris 281 - 448 - 9067 713 - 200 - 8376\nsusan trevino 713 - 688 - 6186 713 - 200 - 8368\nkim vaughn 281 - 586 - 0910 713 - 761 - 8153\njackie young 713 - 528 - 4562 713 - 990 - 6400\ncarlos rodriguez 281 - 344 - 0991 713 - 761 - 2722\nmandy allen 281 - 970 - 6561 713 - 990 - 8332"
   },
   {
     "id": "ENRON_MSG_17",
-    "from": "richard.causey@enron.com",
-    "to": "sherron.watkins@enron.com",
+    "from": "Enron_Employee_116@enron.com",
+    "to": "Enron_Trading_Desk_216@enron.com",
     "date": "1999-12-16",
     "subject": "Re : Lyondell Citgo",
     "body": "my latest understanding is the buyback will be in place through 12 / 31 / 99 .\na new deal for 15 , 000 / day begins 1 / 1 / 00 and currently has no buyback\nprovision .\nken\nhoward b camp\n12 / 16 / 99 12 : 27 pm\nto : gary w lamphier / hou / ect @ ect\ncc : kenneth seaman / hou / ect @ ect , kristen j hanson / hou / ect @ ect , tina\nvaladez / hou / ect @ ect , howard b camp / hou / ect @ ect\nsubject : lyondell citgo\ngary ,\ni have been notified that there is a possibility that the buyback was not\neffective for lyondell citgo . could you please inform me via cc mail what\nthe status of the buyback is once you have reviewed it .\nhc"
   },
   {
     "id": "ENRON_MSG_18",
-    "from": "sherron.watkins@enron.com",
-    "to": "sally.beck@enron.com",
+    "from": "gregg.lenart@enron.com",
+    "to": "fyi@enron.com",
     "date": "1999-12-16",
     "subject": "Hpl Fuel Gas Buy - Back For December 1999",
     "body": "fyi :\n- - - - - - - - - - - - - - - - - - - - - - forwarded by gregg lenart / hou / ect on 12 / 16 / 99 02 : 02 pm\n- - - - - - - - - - - - - - - - - - - - - - - - - - -\nenron north america corp .\nfrom : sally shuler @ enron 12 / 16 / 99 01 : 55 pm\nto : gregg lenart / hou / ect @ ect\ncc :\nsubject : hpl fuel gas buy - back for december 1999\n- - - - - - - - - - - - - - - - - - - - - - forwarded by sally shuler / gpgfin / enron on 12 / 16 / 99\n02 : 02 pm - - - - - - - - - - - - - - - - - - - - - - - - - - -\nmichael mitcham\n12 / 16 / 99 01 : 45 pm\nto : james prentice / gpgfin / enron @ enron , kerry roper / gpgfin / enron @ enron , sally\nshuler / gpgfin / enron @ enron , mark diedrich / gpgfin / enron @ enron , paul\nfox / ecf / enron @ enron\ncc :\nsubject : hpl fuel gas buy - back for december 1"
   },
   {
     "id": "ENRON_MSG_19",
-    "from": "vince.kaminski@enron.com",
-    "to": "mark.frevert@enron.com",
+    "from": "Enron_Employee_118@enron.com",
+    "to": "Enron_Trading_Desk_218@enron.com",
     "date": "1999-12-16",
     "subject": "Ua 4 - Meter 1441 For 11 / 97 - Falfurrias",
     "body": "daren - i need your help in resolving this issue . there wasn ' t any deal in\noss for the above reference meter , nor could i find anything in cpr . the\ncontract shows 089 - 41500 - 102 representing a sale in the amount of 9448 .\nthanks , stella"
   },
   {
     "id": "ENRON_MSG_20",
-    "from": "sally.beck@enron.com",
-    "to": "louise.kitchen@enron.com",
+    "from": "Enron_Employee_119@enron.com",
+    "to": "Enron_Trading_Desk_219@enron.com",
     "date": "1999-12-16",
     "subject": "Ua 4 For Meter 8608 - 6 / 98 - Deal 96731",
     "body": "daren - deal 96731 is not in cpr for 6 / 98 or oss . please enter deal for\nsale on contract 078 - 15631 - 102 for 17 , 462 mmbtu .\nthanks , stella"
   },
   {
     "id": "ENRON_MSG_21",
-    "from": "louise.kitchen@enron.com",
-    "to": "greg.whalley@enron.com",
+    "from": "Enron_Employee_120@enron.com",
+    "to": "daren@enron.com",
     "date": "1999-12-17",
     "subject": "January Spot Tickets",
     "body": "daren ,\nhplc is purchasing gas from the following list of producers . this\nproduction is currently being purchased on a spot basis and deal tickets\nshould be entered into sitara for the follow :\ncounterparty meter mmbtu / d price\nengage energy us , lp 5839 600 100 % less $ 0 . 18\nengage energy us , lp 5848 500 100 % less $ 0 . 18\nengage energy us , lp 5923 700 100 % less $ 0 . 18\nengage energy us , lp 6801 1 , 100 100 % less $ 0 . 18\ngasper rice resources , ltd . 9810 1 100 % less $ 0 . 11\nprize resources 4028 1 , 300 100 % less $ 0 . 20\nprize resources 4965 200 100 % less $ 0 . 35\nprize resources 5121 800 100 % less $ 0 . 11\nprize resources 6523 40 100 % less $ 0 . 35\nswift energy 2630 20 90 % less $ 0 . 258\nwhiting petroleum 6523 500 ? ? ?\nadditionally , i asked carlos to search sitara f"
   },
   {
     "id": "ENRON_MSG_22",
-    "from": "mark.frevert@enron.com",
-    "to": "david.delainey@enron.com",
+    "from": "ami.chokshi@enron.com",
+    "to": "Enron_Trading_Desk_221@enron.com",
     "date": "1999-12-17",
     "subject": "Pennzenergy Property Details",
     "body": "- - - - - - - - - - - - - - - - - - - - - - forwarded by ami chokshi / corp / enron on 12 / 17 / 99 04 : 03\npm - - - - - - - - - - - - - - - - - - - - - - - - - - -\ndscottl @ . com on 12 / 14 / 99 10 : 56 : 01 am\nto : ami chokshi / corp / enron @ enron\ncc :\nsubject : pennzenergy property details\nami , attached is some more details on the devon south texas properties . let\nme\nknow if you have any questions .\ndavid\n- devon stx . xls"
   },
   {
     "id": "ENRON_MSG_23",
-    "from": "greg.whalley@enron.com",
-    "to": "john.lavorato@enron.com",
+    "from": "ami.chokshi@enron.com",
+    "to": "Enron_Trading_Desk_222@enron.com",
     "date": "1999-12-17",
     "subject": "Miscellaneous",
     "body": "- - - - - - - - - - - - - - - - - - - - - - forwarded by ami chokshi / corp / enron on 12 / 17 / 99 03 : 46\npm - - - - - - - - - - - - - - - - - - - - - - - - - - -\ndscottl @ . com on 12 / 17 / 99 03 : 34 : 44 pm\nto : ami chokshi / corp / enron @ enron\ncc :\nsubject : miscellaneous\nsorry i ' m just now getting back to you . here are some answers to your\nquestions .\nwaskom is a field in east texas ( harrison county ) where we purchase gas from\npennzenergy at the bryson c . p . and jeter # 2 wells . the gas is termed up to\nnew\nwaskom gas gathering ( nwgg ) through june 2001 ( the term of the pennzenergy\npurchase ) . we then buy the gas back from nwgg into our tetco east texas pool\n. . . also termed up through 6 / 01 .\nvirginia field used to be associated with ngpl , but several years ago\npenn"
   },
   {
     "id": "ENRON_MSG_24",
-    "from": "john.lavorato@enron.com",
-    "to": "jeff.skilling@enron.com",
+    "from": "dave.nommensen@enron.com",
+    "to": "Enron_Trading_Desk_223@enron.com",
     "date": "1999-12-20",
     "subject": "Re : Purge Of Old Contract _ Event _ Status",
     "body": "fyi - what do you all think ?\n- - - - - - - - - - - - - - - - - - - - - - forwarded by brenda f herod / hou / ect on 12 / 20 / 99 08 : 19\nam - - - - - - - - - - - - - - - - - - - - - - - - - - -\nfrom : dave nommensen on 12 / 17 / 99 05 : 29 pm\nto : scotty gilbert / hou / ect @ ect\ncc : george smith / hou / ect @ ect , edward terry / hou / ect @ ect , katherine l\nkelly / hou / ect @ ect , bryce baxter / hou / ect @ ect , randall l gay / hou / ect @ ect ,\nbrenda f herod / hou / ect @ ect , richard pinion / hou / ect @ ect\nsubject : re : purge of old contract _ event _ status\njust to clarify , its not the relative age of the production date , but the age\nof the event itself .\nd . n .\nto : george smith , edward terry / hou / ect @ ect , katherine l kelly / hou / ect @ ect ,\nbryce baxter / hou "
   },
   {
     "id": "ENRON_MSG_25",
-    "from": "david.delainey@enron.com",
-    "to": "andrew.fastow@enron.com",
+    "from": "Enron_Employee_124@enron.com",
+    "to": "fyi@enron.com",
     "date": "1999-12-20",
     "subject": "Out On Vacation",
     "body": "fyi ,\ni will be out of the office ( actually out of the country ) starting from\n22 nd of dec 1999 through the 20 th of jan 2000 . i will be back in the\noffice on the 21 st of jan 2000 .\nin my absence please contact the following persons for any pops\nsupport questions / problems :\nchristine pham ext 34202\nshawn macphail ext 31837\npops support pager : 713 - 796 - 4149 ( pages oncall personell )\npops support cellular : 713 - 562 - 2458 ( oncall person carries this cell phone )\nhave a great holiday season ,\nromeo d ' souza"
   },
   {
     "id": "ENRON_MSG_26",
-    "from": "jeff.skilling@enron.com",
-    "to": "kenneth.lay@enron.com",
+    "from": "thu.nguyen@enron.com",
+    "to": "Enron_Trading_Desk_225@enron.com",
     "date": "1999-12-20",
     "subject": "Re : Meter 1428 Oct 99 - Beaumont Methanol",
     "body": "i ' m sorry , did we discuss bmc ? ? ? .\nlee can confirm the accuracy of this , but bmc bought 20 , 000 from us and\nintended no swing and no buyback . brandywine ( dorcheus ) controlled the meter ,\ntherefore it is their responsibility to make up the overs and unders . i\nbelieve a deal is in place with brandywine to cover that very issue for\nnovember . if not please let me know .\nlee , if this is not your understanding for nov . business please let us all\nknow .\nthanks\nken\nhoward b camp\n12 / 20 / 99 07 : 36 pm\nto : lee l papayoti / hou / ect @ ect\ncc : thu nguyen / hou / ect @ ect , kenneth seaman / hou / ect @ ect , howard b\ncamp / hou / ect @ ect , kristen j hanson / hou / ect @ ect , stella l morris / hou / ect @ ect ,\njulie meyers / hou / ect @ ect\nsubject : re : meter 1428 oct 99 - bea"
   },
   {
     "id": "ENRON_MSG_27",
-    "from": "kenneth.lay@enron.com",
-    "to": "richard.causey@enron.com",
+    "from": "Enron_Employee_126@enron.com",
+    "to": "Enron_Trading_Desk_226@enron.com",
     "date": "1999-12-20",
     "subject": "Re : Evergreen Deals",
     "body": "no that is a gtc firm that will expire when the contract does .\njulie\ndaren j farmer\n12 / 20 / 99 04 : 05 pm\nto : julie meyers / hou / ect @ ect\ncc :\nsubject : re : evergreen deals\nvintage should be 93730 .\njulie meyers\n12 / 20 / 99 02 : 27 pm\nto : daren j farmer / hou / ect @ ect\ncc :\nsubject : re : evergreen deals\nlook at comments below .\njulie\ndaren j farmer\n12 / 20 / 99 01 : 43 pm\nto : julie meyers / hou / ect @ ect\ncc :\nsubject : evergreen deals\njulie ,\ni need to know if the following deals have evergreen provisions to roll into\njan 2000 .\ncokinos / 9676 95912 - no this is a gtc firm contract , deal expires with\ncontract\ncokinos / 6373 128952 - this is a gtc spot\ncoral / 4120 93883 - this is on a single transaction contract , we would need\nto check with the trader\nencina / 6392 93487 "
   },
   {
     "id": "ENRON_MSG_28",
-    "from": "andrew.fastow@enron.com",
-    "to": "vince.kaminski@enron.com",
+    "from": "Enron_Employee_127@enron.com",
+    "to": "Enron_Trading_Desk_227@enron.com",
     "date": "1999-12-20",
     "subject": "Re : Evergreen Deals",
     "body": "look at comments below .\njulie\ndaren j farmer\n12 / 20 / 99 01 : 43 pm\nto : julie meyers / hou / ect @ ect\ncc :\nsubject : evergreen deals\njulie ,\ni need to know if the following deals have evergreen provisions to roll into\njan 2000 .\ncokinos / 9676 95912 - no this is a gtc firm contract , deal expires with\ncontract\ncokinos / 6373 128952 - this is a gtc spot\ncoral / 4120 93883 - this is on a single transaction contract , we would need\nto check with the trader\nencina / 6392 93487 - yes , this is a committed reserve . i marked the\nevergreen flag .\nmidcoast / 5097 92956 - no , gtc lst purchaser , deal expires with contract .\nunited o & m / 5053 93728 - no , this deal was moved to the wellhead portfolio\nfor january , but the deal was terminated per legal .\nvintage / 2540 93750 - not the right de"
   },
   {
     "id": "ENRON_MSG_29",
-    "from": "richard.causey@enron.com",
-    "to": "sherron.watkins@enron.com",
+    "from": "Enron_Employee_128@enron.com",
+    "to": "darren@enron.com",
     "date": "1999-12-20",
     "subject": "Potential Well Head - January 2000",
     "body": "darren :\nthe following is the potential new wellhead volume for january 2000 that i\nam currently aware of . this was not included in the production estimate\nnumber given by vance .\neog - hortense # 1 , polk county , new meter , 5 , 000 mmbtu / day\nbrayton operating - brayton - drushell # 1 , jackson county , possibly new\nmeter or meter 9720 , 3 , 000 mmbtu / day\nlet me know if you have any questions ,\nsusan x 33321"
   },
   {
     "id": "ENRON_MSG_30",
-    "from": "sherron.watkins@enron.com",
-    "to": "sally.beck@enron.com",
+    "from": "susan.smith@enron.com",
+    "to": "Enron_Trading_Desk_229@enron.com",
     "date": "1999-12-20",
     "subject": "January Production Estimate",
     "body": "daren / carlos :\ni did not receive any more customer nominations . therefore , the attached\nfile should not have changed from what was provided to carlos last week .\nplease let me know if you have any questions ,\nthanks , scs x 33321\n- - - - - - - - - - - - - - - - - - - - - - forwarded by susan smith / hou / ect on 12 / 20 / 99 11 : 23 am\n- - - - - - - - - - - - - - - - - - - - - - - - - - -\nvance l taylor\n12 / 17 / 99 04 : 07 pm\nto : susan smith / hou / ect @ ect\ncc : melissa graves / hou / ect @ ect\nsubject : january production estimate\nsusan ,\nplease see the attached file for january ' s production estimate . this is\npretty much the final estimate except that i have calls in to costilla &\nwalter ( superior ) . they both said that they would fax their nom once it was\ncomplete . hopefull"
   },
   {
     "id": "ENRON_MSG_31",
-    "from": "vince.kaminski@enron.com",
-    "to": "mark.frevert@enron.com",
+    "from": "ami.chokshi@enron.com",
+    "to": "Enron_Trading_Desk_230@enron.com",
     "date": "1999-12-20",
     "subject": "Re : Pennzoil Avails",
     "body": "- - - - - - - - - - - - - - - - - - - - - - forwarded by ami chokshi / corp / enron on 12 / 20 / 99 03 : 05\npm - - - - - - - - - - - - - - - - - - - - - - - - - - -\ndscottl @ . com on 12 / 20 / 99 02 : 46 : 42 pm\nto : ami chokshi / corp / enron @ enron\ncc :\nsubject : re : pennzoil avails\nhere are the january 1999 devon south texas volumes . you may notice that some\nif them are not different from december ' s . . . but i reviewed their list and\nthese are the january numbers .\ndavid\n- devon stx . xls"
   },
   {
     "id": "ENRON_MSG_32",
-    "from": "sally.beck@enron.com",
-    "to": "louise.kitchen@enron.com",
+    "from": "Enron_Employee_131@enron.com",
+    "to": "Enron_Trading_Desk_231@enron.com",
     "date": "1999-12-21",
     "subject": "Valero 8018 And 1394",
     "body": "it is my understanding the outages valero incurred at the above locations are\nforce majure situations during december and should not trigger the buyback\nfeature of the contract .\ngary , i have not seen any documentation of this from valero . please follow up\nwith your counterpart to secure the letter of notice or we will need to\nprocess the deal as if the buyback is active .\nthanks\nken"
   },
   {
     "id": "ENRON_MSG_33",
-    "from": "louise.kitchen@enron.com",
-    "to": "greg.whalley@enron.com",
+    "from": "kimberly.vaughn@enron.com",
+    "to": "Enron_Trading_Desk_232@enron.com",
     "date": "1999-12-21",
     "subject": "Hl & P",
     "body": "daren . sorry i forgot to include you\n- - - - - - - - - - - - - - - - - - - - - - forwarded by kimberly vaughn / hou / ect on 12 / 21 / 99 01 : 33\npm - - - - - - - - - - - - - - - - - - - - - - - - - - -\nkimberly vaughn\n12 / 21 / 99 02 : 01 pm\nto : janet h wallis / hou / ect @ ect\ncc : howard b camp / hou / ect @ ect\nsubject : hl & p\njanet . i am back from vacation . i have updated the hl & p flow mtd . jill\ntold me that on the 18 th , 19 th and 20 th the san jac . nom should be 29 , 209 .\nis this correct ? we ' ll need to change sitara . i have had scada problems at\nmeter 1401 . gas control has given me a verbal from the 14 th on . i will\nmonitor scada and adjust as necessary . let me know if there is anything else\nthat i can do . thanks ."
   },
   {
     "id": "ENRON_MSG_34",
-    "from": "mark.frevert@enron.com",
-    "to": "david.delainey@enron.com",
+    "from": "Enron_Employee_133@enron.com",
+    "to": "Enron_Trading_Desk_233@enron.com",
     "date": "1999-12-21",
     "subject": "Phillips Petroleum",
     "body": "i wanted to update you on those phillips deals that the counterparty is\nsaying are booked wrong . i have left gary l . a voice mail , but i have a\nfeeling i won ' t be hearing from him . so , we might not be getting an answer\nuntil next week on these deals . the deals are ; 131054 & 131048 .\nif i hear from gary i ' ll let you know . i ' m hoping that they are ok .\njulie"
   },
   {
     "id": "ENRON_MSG_35",
-    "from": "greg.whalley@enron.com",
-    "to": "john.lavorato@enron.com",
+    "from": "kimberly.vaughn@enron.com",
+    "to": "Enron_Trading_Desk_234@enron.com",
     "date": "1999-12-21",
     "subject": "Re : Meter # 1512",
     "body": "no one resolved this . it still needs to be done . you , robert , and volume\nmanagement need to be involved for november . you and robert can take care of\ndec . if you need more input let me know .\nthanks\nken\nkimberly vaughn\n12 / 21 / 99 04 : 17 pm\nto : kenneth seaman / hou / ect @ ect\ncc :\nsubject : re : meter # 1512\ni was on vacation the week that sent this note out . i was just wondering if\nanyone helped you resolve this ? and if not do you need help ?\n- - - - - - - - - - - - - - - - - - - - - - forwarded by kimberly vaughn / hou / ect on 12 / 21 / 99 03 : 15\npm - - - - - - - - - - - - - - - - - - - - - - - - - - -\nkenneth seaman 12 / 21 / 99 03 : 28 pm\nto : kimberly vaughn / hou / ect @ ect\ncc :\nsubject : re : meter # 1512\ni think i know what you are asking , but not for sure . what do"
   },
   {
     "id": "ENRON_MSG_36",
-    "from": "john.lavorato@enron.com",
-    "to": "jeff.skilling@enron.com",
+    "from": "Enron_Employee_135@enron.com",
+    "to": "Enron_Trading_Desk_235@enron.com",
     "date": "1999-12-21",
     "subject": "98 - 1052 ( Pasadena Plant Phillips ) And 98 - 6614 ( Lehrer \" C \" # 1 )",
     "body": "98 - 1052 ( del . meter ) has flow for 11 / 10 / 99 and 11 / 11 / 99 . maxey walters\n( field guy ) informed me that he rec ' d a call from our mktg . people asking him\nto flow gas these two days due to problems ocurring at phillips on these two\ndays . can you please look into this for me and see if you can provide me\nwith a k # to assess this business to ? thanks .\n98 - 6614 ( rec . meter ) has flow for every day this month but no k . last month\nit was on the 215 k , sitara # 93035 . the start date on this deal is 7 / 1 / 99 and\nthe stop date is 11 / 30 / 99 . sitara # 130917 ' s start and stop date is 10 / 1 / 99\nand 1 / 31 / 00 but the expected vols for 12 / 99 are \" 0 \" . can you look into this\nand tell me is the expected vols . for 12 / 99 should be different ?\nthanks again .\n- jackie "
   },
   {
     "id": "ENRON_MSG_37",
-    "from": "david.delainey@enron.com",
-    "to": "andrew.fastow@enron.com",
+    "from": "Enron_Employee_136@enron.com",
+    "to": "Enron_Trading_Desk_236@enron.com",
     "date": "1999-12-21",
     "subject": "01 / 00 Natural Gas Nomination",
     "body": "enron methanol company nominates the following requirements for the methanol\nplant for january 2000 :\n35 , 000 mmbtu per day\negpfc nominates the following requirements for the mtbe plant at morgan ' s\npoint for january 2000 :\n2 , 000 mmbtu per day from 01 / 01 / 00 through 01 / 04 / 00\n5 , 000 mmbtu per day from 01 / 05 / 00 through 01 / 08 / 00\n8 , 500 mmbtu per day from 01 / 09 / 00 through 01 / 31 / 00"
   },
   {
     "id": "ENRON_MSG_38",
-    "from": "jeff.skilling@enron.com",
-    "to": "kenneth.lay@enron.com",
+    "from": "ami.chokshi@enron.com",
+    "to": "dscottl@enron.com",
     "date": "1999-12-21",
     "subject": "Misc . Questions",
     "body": "hhere are some questions for david that i already sent . do you have anything\nelse ?\n- - - - - - - - - - - - - - - - - - - - - - forwarded by ami chokshi / corp / enron on 12 / 21 / 99 01 : 49\npm - - - - - - - - - - - - - - - - - - - - - - - - - - -\nenron north america corp .\nfrom : ami chokshi 12 / 21 / 99 12 : 35 pm\nto : dscottl @ . com\ncc :\nsubject : misc . questions\nquestions :\n1 . at agua dulce , which pipe can the gp plant go into ? can it go into hpl ?\n2 . do you have nom forms for any plant nominations we may need ?\n3 . for gemc , is the tejas plant at thompsonville ? do you know how any of\nthose points tie into hpl ?\n4 . do you have avails for mops production ? the gas that is transported to\ntivoli - - what contract do you use ?\n5 . for kerr mcgee , do you have the entex contacts "
   },
   {
     "id": "ENRON_MSG_39",
-    "from": "kenneth.lay@enron.com",
-    "to": "richard.causey@enron.com",
+    "from": "ami.chokshi@enron.com",
+    "to": "Enron_Trading_Desk_238@enron.com",
     "date": "1999-12-21",
     "subject": "Kerr Mcgee : Tomcat",
     "body": "hey joe ,\nhere ' s the response i got with regards to tomcat . i ' ve place another call\ninto david and let him know that the information we received included most\npoints except for tomcat . i ' ll keep you informed .\nwhat i know is that the gas is sourced at mi 587 and moved on km ' s firm\ncontract . for as long as ces remembers , they sell the gas to entex . entex\nchooses the pipe off which they take - - usually midcon - - also , hpl channel , or\ntejas . km is invoiced directly . volume is approx . 2395 . the deal with entex\nis written up monthly . km pays on a basket of indices . entex pays on the\nhighest index .\nami\n- - - - - - - - - - - - - - - - - - - - - - forwarded by ami chokshi / corp / enron on 12 / 21 / 99 09 : 32\nam - - - - - - - - - - - - - - - - - - - - - - - - - - -\ndscottl"
   },
   {
     "id": "ENRON_MSG_40",
-    "from": "andrew.fastow@enron.com",
-    "to": "vince.kaminski@enron.com",
+    "from": "Enron_Employee_139@enron.com",
+    "to": "Enron_Trading_Desk_239@enron.com",
     "date": "1999-12-22",
     "subject": "Holiday On - Call Data",
     "body": "pipeline contact phone fax pager\nblack marlin blair lichentwalter 713 853 - 7367 713 646 - 3201 ( h )\n281 370 - 1866\ndebbie thompson 713 853 - 3144 713 646 - 3201\n( noms due today for 23 rd through 27 th )\nchannel jim tobacco 713 420 - 2159\ngas control 1 505 599 - 2333\n( open thursday . noms will be due through monday )\ncentana william spekels 713 627 - 6290 713 762 - 3450\ndonna spencer 713 627 - 6255\ngas control 1 888 204 - 1718\n( noms due today for 23 rd through 27 th )\nduke energy annette anderson 713 260 - 8603 713 949 - 3026\n( on call ) bob moseman 713 - 260 - 8698 ( thursday )\nopen tomorrow - noms will be due thru the 27 th )\nlonestar gary gafford 214 670 - 2674 214 875 - 3810\ngas control 214 875 - 2455 or 2456\n( noms due today , 23 rd thru 27 th )\nnorthern natural ben markey 853 - 7"
   },
   {
     "id": "ENRON_MSG_41",
-    "from": "richard.causey@enron.com",
-    "to": "sherron.watkins@enron.com",
+    "from": "Enron_Employee_140@enron.com",
+    "to": "Enron_Trading_Desk_240@enron.com",
     "date": "1999-12-22",
     "subject": "New Nat Gas Delivery Location",
     "body": "pursuant to our recent confirmation i have drafted some suggested language\nfor the houston ship channel pooling point :\nabbreviation : hpl - hsc\nsort code : [ tbd ]\ndescription : the transaction is for delivery via the houston pipe line\ncompany to the houston ship channel , zone 10 .\nelsa and darren ; please approve or offer comments regarding the content of\ndescription ."
   },
   {
     "id": "ENRON_MSG_42",
-    "from": "sherron.watkins@enron.com",
-    "to": "sally.beck@enron.com",
+    "from": "Enron_Employee_141@enron.com",
+    "to": "Enron_Trading_Desk_241@enron.com",
     "date": "1999-12-22",
     "subject": "Out Of The Office",
     "body": "i will be out of the office beginning thursday , 12 / 24 , returning on tuesday ,\n1 / 4 . in my absence , i have asked steve venturatos to be the point person for\ntexas operations .\ni realize that many of you will be working over the new year ' s week - end to\nensure a smooth transaction into the new year . in advance , i truly\nappreciate all of the efforts . additionally , i would like to be kept\ninformed on any critical issues , mainly so that i have no surprises when i\nreturn . therefore , i have provided numbers below where i can be reached . i\nwill leave it to your discretion as to whether you call me or leave me a\nvoice mail in the office . as you all know , i would rather be informed than\nsurprised !\npager 877 - 497 - 3757\ncellular 713 - 417 - 2995\nhome 970 - 920 - 2293 &\n970 - 920 "
   },
   {
     "id": "ENRON_MSG_43",
-    "from": "vince.kaminski@enron.com",
-    "to": "mark.frevert@enron.com",
+    "from": "ami.chokshi@enron.com",
+    "to": "Enron_Trading_Desk_242@enron.com",
     "date": "1999-12-22",
     "subject": "Re : Misc . Questions",
     "body": "- - - - - - - - - - - - - - - - - - - - - - forwarded by ami chokshi / corp / enron on 12 / 22 / 99 08 : 19\nam - - - - - - - - - - - - - - - - - - - - - - - - - - -\ndscottl @ . com on 12 / 21 / 99 08 : 06 : 49 pm\nto : ami chokshi / corp / enron @ enron\ncc :\nsubject : re : misc . questions\nquestions :\n1 . at agua dulce , which pipe can the gp plant go into ? can it go into hpl ?\n2 . do you have nom forms for any plant nominations we may need ?\n3 . for gemc , is the tejas plant at thompsonville ? do you know how any of\nthose points tie into hpl ?\n4 . do you have avails for mops production ? the gas that is transported to\ntivoli - - what contract do you use ?\n5 . for kerr mcgee , do you have the entex contacts you speak with ?\n6 . is there a waskom nom form ? with whom do you speak over there"
   },
   {
     "id": "ENRON_MSG_44",
-    "from": "sally.beck@enron.com",
-    "to": "louise.kitchen@enron.com",
+    "from": "ami.chokshi@enron.com",
+    "to": "Enron_Trading_Desk_243@enron.com",
     "date": "1999-12-23",
     "subject": "23 Rd Noms",
     "body": "- - - - - - - - - - - - - - - - - - - - - - forwarded by ami chokshi / corp / enron on 12 / 23 / 99 10 : 30\nam - - - - - - - - - - - - - - - - - - - - - - - - - - -\nroyal _ b _ edmondson @ reliantenergy . com on 12 / 22 / 99 11 : 32 : 52 am\nto : ami chokshi / corp / enron @ enron\ncc :\nsubject : 23 rd noms\nhow could i ever be mad at someone so nice as you . . . . just real busy . . .\n( see attached file : hpldecl 999 . xls )\n- hpldecl 999 . xls"
   },
   {
     "id": "ENRON_MSG_45",
-    "from": "louise.kitchen@enron.com",
-    "to": "greg.whalley@enron.com",
+    "from": "ami.chokshi@enron.com",
+    "to": "Enron_Trading_Desk_244@enron.com",
     "date": "1999-12-23",
     "subject": "Re : Best Guess Right Now . . . . Should Go Up But A Little To Soon To",
     "body": "be sure . . .\n- - - - - - - - - - - - - - - - - - - - - - forwarded by ami chokshi / corp / enron on 12 / 23 / 99 10 : 30\nam - - - - - - - - - - - - - - - - - - - - - - - - - - -\nroyal _ b _ edmondson @ reliantenergy . com on 12 / 22 / 99 02 : 31 : 09 pm\nto : ami chokshi / corp / enron @ enron\ncc :\nsubject : re : best guess right now . . . . should go up but a little to soon to\nbe sure . . .\n( see attached file : hpl - jan . xls )\n- hpl - jan . xls"
   },
   {
     "id": "ENRON_MSG_46",
-    "from": "mark.frevert@enron.com",
-    "to": "david.delainey@enron.com",
+    "from": "ami.chokshi@enron.com",
+    "to": "Enron_Trading_Desk_245@enron.com",
     "date": "1999-12-23",
     "subject": "Revision",
     "body": "huntsville / woodlands / conroe 11500 by 8 days = 92 , 000\nbig ticket 120000 @ 4 days = 480 , 000\n50000 @ 4 days = 200 , 000\n- - - - - - - - - - - - - - - - - - - - - - forwarded by ami chokshi / corp / enron on 12 / 23 / 99 09 : 16\nam - - - - - - - - - - - - - - - - - - - - - - - - - - -\nenron north america corp .\nfrom : ami chokshi 12 / 23 / 99 08 : 27 am\nto : david baumbach / hou / ect @ ect , daren j farmer / hou / ect @ ect\ncc :\nsubject :\nentex increase rom :\nhuntsville / woodlands / conroe 11500 by 8 days = 92 , 000\nbig ticket 50000 by 8 days = 400 , 000\nami"
   },
   {
     "id": "ENRON_MSG_47",
-    "from": "greg.whalley@enron.com",
-    "to": "john.lavorato@enron.com",
+    "from": "Enron_Employee_146@enron.com",
+    "to": "Enron_Trading_Desk_246@enron.com",
     "date": "1999-12-23",
     "subject": "Entex Increase Rom :",
     "body": "huntsville / woodlands / conroe 11500 by 8 days = 92 , 000\nbig ticket 50000 by 8 days = 400 , 000\nami"
   },
   {
     "id": "ENRON_MSG_48",
-    "from": "john.lavorato@enron.com",
-    "to": "jeff.skilling@enron.com",
+    "from": "ami.chokshi@enron.com",
+    "to": "Enron_Trading_Desk_247@enron.com",
     "date": "1999-12-23",
     "subject": "Re : Counties / Meter Types For Gemc And Midcon Tx",
     "body": "- - - - - - - - - - - - - - - - - - - - - - forwarded by ami chokshi / corp / enron on 12 / 23 / 99 12 : 42\npm - - - - - - - - - - - - - - - - - - - - - - - - - - -\nfaye ellis @ ect\n12 / 23 / 99 12 : 37 pm\nto : ami chokshi / corp / enron @ enron\ncc :\nsubject : re : counties / meter types for gemc and midcon tx\nfyi . . .\nthe online notification will go back to stacy , since she submitted the\nrequests , therefore i am sending you the following :\ngulf energy meters :\nmeter # facility type flow direction description\n19 - 1043 - 00 pool both e . mcfaddin\n29320 pool both tejas plant\n31 - 504 - 04 pool both trevino plant\n440 - 552 pool both garza plant\n440 - 557 pool both haynes plant\n440 - 559 pool both comitas south\n440 - 565 pdc receipt jennings 63 plant\nmidcon texas meters :\nmeter # facility "
   },
   {
     "id": "ENRON_MSG_49",
-    "from": "david.delainey@enron.com",
-    "to": "andrew.fastow@enron.com",
+    "from": "ami.chokshi@enron.com",
+    "to": "Enron_Trading_Desk_248@enron.com",
     "date": "1999-12-23",
     "subject": "Jan Net Position - Revised",
     "body": "- - - - - - - - - - forwarded by ami chokshi / corp / enron on 12 / 23 / 99 11 : 38 am\n- - - - - - - - - - - - - - - - - - - - - - - - - - -\nenron north america corp .\nfrom : ami chokshi 12 / 23 / 99 11 : 32 am\nto : daren j farmer / hou / ect @ ect , bryan hull / hou / ect @ ect , o ' neal d\nwinfree / hou / ect @ ect\ncc :\nsubject : jan net position"
   },
   {
     "id": "ENRON_MSG_50",
-    "from": "jeff.skilling@enron.com",
-    "to": "kenneth.lay@enron.com",
+    "from": "Enron_Employee_149@enron.com",
+    "to": "Enron_Trading_Desk_249@enron.com",
     "date": "1999-12-27",
     "subject": "Mcmullen Line Maintenance",
     "body": "from this mornings morning meeting , it is my understanding that the gas from\nmcmullen into humble ( then king ranch ) will ve lowered due to line pigging\nfor the next few days . please keep in mind that there are interstate sales\nout of king ranch . you may want to notify the traders that there will not be\nas much supply in king ranch to meet these sales .\ni have estimates for the sales and supply for the 27 th .\ntotal interstate sales out of the king ranch gas plant = 26 , 422 mmbtu\ntotal supply ( less pvr ) =\ncage ranch = 37 , 600\nforest oil = 3 , 696\nlaencantada = 767\nbig cowboy = 34 , 697\nthree rivers ( current ) = 18690\ntotal supply for sale on 27 th . = 95 , 450 mmbtu\nthese supply volumes are based on the supply deals in the unify system . if\nthere are variances operationally , then"
   },
   {
     "id": "ENRON_MSG_51",
-    "from": "kenneth.lay@enron.com",
-    "to": "richard.causey@enron.com",
+    "from": "Enron_Employee_150@enron.com",
+    "to": "Enron_Trading_Desk_250@enron.com",
     "date": "1999-12-27",
     "subject": "Hpl Nominations For December 28 , 1999",
     "body": "( see attached file : hpll 228 . xls )\n- hpll 228 . xls"
   },
   {
     "id": "ENRON_MSG_52",
-    "from": "andrew.fastow@enron.com",
-    "to": "vince.kaminski@enron.com",
+    "from": "dale.neuner@enron.com",
+    "to": "Enron_Trading_Desk_251@enron.com",
     "date": "1999-12-27",
     "subject": "New Nat Gas Delivery Location",
     "body": "ed and elsa\nhere ' s is some suggested language , based upon our conversation . please\nreview and offer comments .\nfyi : all new trade components ( i . e . delivery location ) require the review of\nlegal , david forster and marcello romano for approval .\nthe transaction is for delivery of pool gas via the houston pipe line\ncompany , as scheduled by the counterparty , to either ( i ) houston ship channel\nzone 10 , meter # 7342 or ( ii ) houston ship channel zone 10 at any one of the\nfollowing points : brandywine ( meter # 1505 ) ; destec enerfin ( meter # 1563 ) ;\ndupont ( meter # 1019 ) ; equistar ( meter # 1373 ) ; ethyl ( albemarle ) ( meter #\n1188 ) ; exxon ( meter # 1031 ) ; georgia gulf corp . ( meter # 713 ) ; phibro energy\ninc . ( valero ref . ) ( meter # 1394 ) ; shell east ( meter"
   },
   {
     "id": "ENRON_MSG_53",
-    "from": "richard.causey@enron.com",
-    "to": "sherron.watkins@enron.com",
+    "from": "stella.l.morris@enron.com",
+    "to": "Enron_Trading_Desk_252@enron.com",
     "date": "1999-12-27",
     "subject": "Re : Ua 4 - Meter 1441 For 11 / 97 - Falfurrias",
     "body": "howard - the above meter indicates a daily swing with no one in volume\nmanagement ' s initials in oss . i need some information for daren before it\ncan be determined if a deal should be set up to cover the 089 contract for\n11 / 97 forward .\ni ' ve done some research as follows :\n1 / 95 shows delivery on transport contract # 012 - 82269 - 02 - 002 ( southeastern\nmarketing co . as counterparty )\n1 / 96 thru 10 / 31 / 97 shows delivery on transport contract # 012 - 27182 - 02 - 001\n( esperanza marketing corp as counterparty ) .\n11 / 97 thru 12 / 97 shows delivery on 089 - 41500 - 102\n1 / 98 shows delivery on 089 - 41500 - 101\nno other transactions at this meter since 1 / 98 .\nsome questions i need answered are - why was volume allocated to transport\ncontracts through 10 / 31 / 97 and then sta"
   },
   {
     "id": "ENRON_MSG_54",
-    "from": "sherron.watkins@enron.com",
-    "to": "sally.beck@enron.com",
+    "from": "Enron_Employee_153@enron.com",
+    "to": "Enron_Trading_Desk_253@enron.com",
     "date": "1999-12-27",
     "subject": "Unify Down - Unix Team Working On It",
     "body": "the unix server that unify production runs on ( proton ) went down this\nmorning . the unix team is working on it . i will let you know as soon as\nunify is available .\nd . n ."
   },
   {
     "id": "ENRON_MSG_55",
-    "from": "vince.kaminski@enron.com",
-    "to": "mark.frevert@enron.com",
+    "from": "Enron_Employee_154@enron.com",
+    "to": "Enron_Trading_Desk_254@enron.com",
     "date": "1999-12-28",
     "subject": "Calpine January 2000 Nomination",
     "body": "- calpine monthly gas nomination _ _ _ . doc"
   },
   {
     "id": "ENRON_MSG_56",
-    "from": "sally.beck@enron.com",
-    "to": "louise.kitchen@enron.com",
+    "from": "ami.chokshi@enron.com",
+    "to": "Enron_Trading_Desk_255@enron.com",
     "date": "1999-12-28",
     "subject": "Jan Noms",
     "body": "- - - - - - - - - - - - - - - - - - - - - - forwarded by ami chokshi / corp / enron on 12 / 28 / 99 10 : 51\nam - - - - - - - - - - - - - - - - - - - - - - - - - - -\ntroy _ a _ benoit @ reliantenergy . com on 12 / 28 / 99 10 : 47 : 23 am\nto : ami chokshi / corp / enron @ enron\ncc :\nsubject : jan noms\n( see attached file : egmnom - jan . xls )\n- egmnom - jan . xls"
   },
   {
     "id": "ENRON_MSG_57",
-    "from": "louise.kitchen@enron.com",
-    "to": "greg.whalley@enron.com",
+    "from": "Enron_Employee_156@enron.com",
+    "to": "Enron_Trading_Desk_256@enron.com",
     "date": "1999-12-28",
     "subject": "Black Marlin - Meter 986782 For 8 / 98 - Ua 4",
     "body": "according to measurement , there is flow of 7 , 394 in 8 / 98 , however , there is\nnothing to indicate this is gas that was received on hpl in oss . i checked\nmips and there is a measurement statement that supports the flow rate of\n7 , 394 mmbtu .\ndaren is there a deal in cpr which may not have fed over to oss ?\nthanks , stella"
   },
   {
     "id": "ENRON_MSG_58",
-    "from": "mark.frevert@enron.com",
-    "to": "david.delainey@enron.com",
+    "from": "Enron_Employee_157@enron.com",
+    "to": "Enron_Trading_Desk_257@enron.com",
     "date": "1999-12-28",
     "subject": "Revision - Black Marlin - Meter 986782 For 8 / 98 - Ua 4",
     "body": "revision - according to measurement , there is flow of 7 , 394 in 8 / 98 , however ,\nthere is nothing to indicate this is gas that was received on hpl in oss . i\nchecked mips and there is a measurement statement that supports the flow rate\nof 7 , 394 mmbtu .\ndaren is there a deal in cpr which may not have fed over to oss ? i checked\noss for the whole year of 1998 and there are no other deals in oss . it does\nseem strange that this is the only month of flow .\nthanks , stella"
   },
   {
     "id": "ENRON_MSG_59",
-    "from": "greg.whalley@enron.com",
-    "to": "john.lavorato@enron.com",
+    "from": "Enron_Employee_158@enron.com",
+    "to": "Enron_Trading_Desk_258@enron.com",
     "date": "1999-12-28",
     "subject": "Y 2 K Deal",
     "body": "details for the deal to be entered on jan . 1 , 2000 :\nbuy / sell : buy\nctpty : aquila energy marketing corporation\nzone : agua dulce @ 0584\nvolume : 5 , 000 / d\npricing : hsc - 0 . 065\nperiod : 1 / 8 / 00 - 1 / 31 / 00\nthis deal will be the second part of sitara deal # 143974 .\nplease let me know if there are any questions or concerns .\ndave"
   },
   {
     "id": "ENRON_MSG_60",
-    "from": "john.lavorato@enron.com",
-    "to": "jeff.skilling@enron.com",
+    "from": "Enron_Employee_159@enron.com",
+    "to": "Enron_Trading_Desk_259@enron.com",
     "date": "1999-12-28",
     "subject": "New Pooling Point # 7342",
     "body": "the new pooling point will be handled by robert lloyd , with jackie young as\nhis backup .\nplease call either of them with any updates . thanks , pat"
   },
   {
     "id": "ENRON_MSG_61",
-    "from": "david.delainey@enron.com",
-    "to": "andrew.fastow@enron.com",
+    "from": "Enron_Employee_160@enron.com",
+    "to": "Enron_Trading_Desk_260@enron.com",
     "date": "1999-12-28",
     "subject": "Unify Production Back - Eol Deals Highlighted",
     "body": "the proton machine is up and unify production is now available .\nfor being so patient , path manager will now highlight your eol deals in\nyellow .\nthanks , d . n ."
   },
   {
     "id": "ENRON_MSG_62",
-    "from": "jeff.skilling@enron.com",
-    "to": "kenneth.lay@enron.com",
+    "from": "Enron_Employee_161@enron.com",
+    "to": "stacey@enron.com",
     "date": "1999-12-28",
     "subject": "Missing Txu Lonestar And Oasis Paths",
     "body": "stacey ,\nit looks like your missing paths revealed a quirk in our suppression of zero\npaths . there were 4 paths initially entered as zero , then changed to\nnon - zero on a later date . the system did not correctly determine that the\nzero path should no longer be suppressed .\nwe have fixed the 4 paths affected and have corrected the code so this won ' t\nhappen any more . below is a screen print of the nov 22 problem that is now\nfixed .\nthanks , d . n ."
   },
   {
     "id": "ENRON_MSG_63",
-    "from": "kenneth.lay@enron.com",
-    "to": "richard.causey@enron.com",
+    "from": "howard.b.camp@enron.com",
+    "to": "gary@enron.com",
     "date": "1999-12-29",
     "subject": "Valero 8018 And 1394",
     "body": "gary ,\nwhat is the status of this ?\nhc\n- - - - - - - - - - - - - - - - - - - - - - forwarded by howard b camp / hou / ect on 12 / 29 / 99 10 : 06\nam - - - - - - - - - - - - - - - - - - - - - - - - - - -\nkenneth seaman 12 / 21 / 99 01 : 02 pm\nto : gary w lamphier / hou / ect @ ect , howard b camp / hou / ect @ ect , joanie h\nngo / hou / ect @ ect , robert e lloyd / hou / ect @ ect\ncc : daren j farmer / hou / ect @ ect\nsubject : valero 8018 and 1394\nit is my understanding the outages valero incurred at the above locations are\nforce majure situations during december and should not trigger the buyback\nfeature of the contract .\ngary , i have not seen any documentation of this from valero . please follow up\nwith your counterpart to secure the letter of notice or we will need to\nprocess the deal "
   },
   {
     "id": "ENRON_MSG_65",
-    "from": "andrew.fastow@enron.com",
-    "to": "vince.kaminski@enron.com",
+    "from": "Enron_Employee_163@enron.com",
+    "to": "Enron_Trading_Desk_263@enron.com",
     "date": "1999-12-29",
     "subject": "Hpl Nomination For December 30 , 1999",
     "body": "( see attached file : hpll 230 . xls )\n- hpll 230 . xls"
   },
   {
     "id": "ENRON_MSG_66",
-    "from": "richard.causey@enron.com",
-    "to": "sherron.watkins@enron.com",
+    "from": "Enron_Employee_164@enron.com",
+    "to": "daren@enron.com",
     "date": "1999-12-29",
     "subject": "Meter 74 , December Bridgeback Error",
     "body": "daren :\ni have an error for transco bammel for that 20 . 0 / day on days 23 through 27 -\ndo you change the volumes as they are sent back ?\nthe volumes are :\n23 133\n24 20783\n25 20738\n26 20787\n27 20123\nthanks !\ncharlotte\nps i have to be clear by noon tomorrow . . . . . . . . . . . . . . . . . . . . . . . . ."
   },
   {
     "id": "ENRON_MSG_67",
-    "from": "sherron.watkins@enron.com",
-    "to": "sally.beck@enron.com",
+    "from": "Enron_Employee_165@enron.com",
+    "to": "Enron_Trading_Desk_265@enron.com",
     "date": "1999-12-29",
     "subject": "Hl & P Flow",
     "body": "janet . attached are the most recent numbers ."
   },
   {
     "id": "ENRON_MSG_68",
-    "from": "vince.kaminski@enron.com",
-    "to": "mark.frevert@enron.com",
+    "from": "Enron_Employee_166@enron.com",
+    "to": "Enron_Trading_Desk_266@enron.com",
     "date": "1999-12-29",
     "subject": "Koch Three Rivers , # 6722",
     "body": "aimee -\ngas control has some line work scheduled for 1 / 4 , 5 , 6 that will affect the\nreferenced point . dynegy has nom ' d 1800 at this point which i ' m assuming\nthey ' ll want baseload for january . the desk also appears to have some gas\nnom ' d out here ( approx 1200 mm ) . rather than cut these volumes , would you\ntry to negotiate with koch not to flow this gas during the outage , but to\nmake it up as soon as the outage is over ( they may be able to begin flow on\n1 / 6 ) ? please let me know as soon as possible .\nthanks ."
   },
   {
     "id": "ENRON_MSG_69",
-    "from": "sally.beck@enron.com",
-    "to": "louise.kitchen@enron.com",
+    "from": "gary.a.hanks@enron.com",
+    "to": "Enron_Trading_Desk_267@enron.com",
     "date": "1999-12-29",
     "subject": "Producer Shut - In List For Victoria 18 \" Line Work",
     "body": "think he forgot you on this list ! !\n- - - - - - - - - - - - - - - - - - - - - - forwarded by lauri a allen / hou / ect on 12 / 29 / 99 03 : 05\npm - - - - - - - - - - - - - - - - - - - - - - - - - - -\nenron north america corp .\nfrom : gary a hanks 12 / 29 / 99 02 : 49 pm\nto : connie sutton / hou / ect @ ect , lauri a allen / hou / ect @ ect , pat\nclynes / corp / enron @ enron , melissa graves / hou / ect @ ect , mary\nsolmonson / hou / ect @ ect , james mckay / hou / ect @ ect\ncc : earl tisdale / hou / ect @ ect , gary besancon / gco / enron @ enron , rodney\nrogers / gco / enron @ enron , shawna flynn / hou / ect @ ect\nsubject : producer shut - in list for victoria 18 \" line work\nhpl will be completing tie - ins to replace the guadalupe river crossing on the\nswinney to victoria 18 \" . the f"
   },
   {
     "id": "ENRON_MSG_70",
-    "from": "louise.kitchen@enron.com",
-    "to": "greg.whalley@enron.com",
+    "from": "melissa.graves@enron.com",
+    "to": "Enron_Trading_Desk_268@enron.com",
     "date": "1999-12-29",
     "subject": "Producer Shut - In List For Victoria 18 \" Line Work",
     "body": "fyi\n- - - - - - - - - - - - - - - - - - - - - - forwarded by gary a hanks / hou / ect on 12 / 29 / 99 03 : 15 pm\n- - - - - - - - - - - - - - - - - - - - - - - - - - -\nenron north america corp .\nfrom : melissa graves 12 / 29 / 99 03 : 12 pm\nto : george weissman / hou / ect @ ect\ncc : gary a hanks / hou / ect @ ect , mary jo johnson / hou / ect @ ect , gary\nbryan / hou / ect @ ect , jill t zivley / hou / ect @ ect\nsubject : producer shut - in list for victoria 18 \" line work\ngeorge ,\ngary called me about this shut in situation a few minutes ago , specifically\nregarding meter 6722 . this meter is at the tailgate of three rivers ,\ntherefore , an hpl field employee will not be able to contact the producer\n( they probably have no idea where the gas is coming from that goes through\nthis meter ) ."
   },
   {
     "id": "ENRON_MSG_71",
-    "from": "mark.frevert@enron.com",
-    "to": "david.delainey@enron.com",
+    "from": "Enron_Employee_169@enron.com",
+    "to": "aimee@enron.com",
     "date": "1999-12-29",
     "subject": "Re : Koch Three Rivers , # 6722",
     "body": "aimee ,\nplease let us know as soon as possible . thanks , pat\nlauri a allen @ ect\n12 / 29 / 99 02 : 50 pm\nto : aimee lannou / hou / ect @ ect\ncc : pat clynes / corp / enron @ enron , daren j farmer / hou / ect @ ect\nsubject : koch three rivers , # 6722\naimee -\ngas control has some line work scheduled for 1 / 4 , 5 , 6 that will affect the\nreferenced point . dynegy has nom ' d 1800 at this point which i ' m assuming\nthey ' ll want baseload for january . the desk also appears to have some gas\nnom ' d out here ( approx 1200 mm ) . rather than cut these volumes , would you\ntry to negotiate with koch not to flow this gas during the outage , but to\nmake it up as soon as the outage is over ( they may be able to begin flow on\n1 / 6 ) ? please let me know as soon as possible .\nthanks ."
   },
   {
     "id": "ENRON_MSG_72",
-    "from": "greg.whalley@enron.com",
-    "to": "john.lavorato@enron.com",
+    "from": "Enron_Employee_170@enron.com",
+    "to": "ami@enron.com",
     "date": "1999-12-29",
     "subject": "Meter 73 - Dec 1999",
     "body": "ami ,\nwe need to make sure that there is a nom ( even if 0 with always send ) for\nconroe ( sitara deal 70222 ) for every month . entex has volume there every\nmonth , but in nov there was no nom set up .\nhc"
   },
   {
     "id": "ENRON_MSG_73",
-    "from": "john.lavorato@enron.com",
-    "to": "jeff.skilling@enron.com",
+    "from": "Enron_Employee_171@enron.com",
+    "to": "daren@enron.com",
     "date": "1999-12-30",
     "subject": "Transco Bammel , Meter 74 , December 29",
     "body": "daren , elsa :\nthe 12 , 200 that was being delivered into transco off of the 216 for txu was\ncut a / o pipeline capacity constraints . transco gas control left me a message\nlate yesterday evening - i picked it up this morning .\nquestions ? ? just call .\ncharlotte"
   },
   {
     "id": "ENRON_MSG_74",
-    "from": "david.delainey@enron.com",
-    "to": "andrew.fastow@enron.com",
+    "from": "Enron_Employee_172@enron.com",
+    "to": "Enron_Trading_Desk_272@enron.com",
     "date": "1999-12-30",
     "subject": "Koch Three Rivers , # 6722",
     "body": "i spoke with larry zamit this morning regarding the outage january 1 through\n6 . he agreed to hold the gas for us and batch it throughout the rest of\njanuary . at this point we have 3 , 007 nominated for 1 / 1 / 00 and that is what\nhe has agreed to hold .\nquestions ? ? give me a call .\ncharlotte / aimee"
   },
   {
     "id": "ENRON_MSG_75",
-    "from": "jeff.skilling@enron.com",
-    "to": "kenneth.lay@enron.com",
+    "from": "Enron_Employee_173@enron.com",
+    "to": "Enron_Trading_Desk_273@enron.com",
     "date": "1999-12-30",
     "subject": "United Oil & Minerals , Inc .",
     "body": "please establish a spot ticket for united oil & minerals , inc . at meter 5053\nfor january . the ticket will be priced at 100 % if / hsc less $ 0 . 14 and provide\nfor 1 , 400 mmbtu / d . this spot deal will be executed under globla contract\n96002441 .\nplease call if i can be of any additional assistance .\nthanks !\ndonald\nx 37008"
   },
   {
     "id": "ENRON_MSG_76",
-    "from": "kenneth.lay@enron.com",
-    "to": "richard.causey@enron.com",
+    "from": "Enron_Employee_174@enron.com",
+    "to": "Enron_Trading_Desk_274@enron.com",
     "date": "1999-12-30",
     "subject": "Thanks For January 1 , 2000",
     "body": "i wanted to extend my thanks in advance to all of you who will join me in the\noffice on january 1 , 2000 . i appreciate your willingness to devote part of\nyour holiday weekend to the continuing success story at enron .\nas a company , enron has spent much time and effort to ensure that business\nwill continue smoothly as we move into the year 2000 . ken walther , in\nworking with many of you , has done an excellent job of preparing a work plan\nfor january 1 . your work on the first will be the final step in this\nprocess . your efforts that day will allow all ena employees to return to the\noffice on january 4 th with confidence in our ability to continue business as\nusual .\ni wish each one of you a happy new year . i continually feel privileged to\nwork with this dedicated and talented group of"
   },
   {
     "id": "ENRON_MSG_77",
-    "from": "andrew.fastow@enron.com",
-    "to": "vince.kaminski@enron.com",
+    "from": "charlotte.hawkins@enron.com",
+    "to": "Enron_Trading_Desk_275@enron.com",
     "date": "1999-12-30",
     "subject": "Koch Three Rivers , # 6722",
     "body": "the outage is scheduled for 1 / 4 / 00 to 1 / 6 / 00 . it will not effect 1 / 1 / 00\nthrought 1 / 3 / 00 . there is no need for duke to hold gas back until 1 / 4 / 00 .\ngary\n- - - - - - - - - - - - - - - - - - - - - - forwarded by gary a hanks / hou / ect on 12 / 30 / 99 10 : 47 am\n- - - - - - - - - - - - - - - - - - - - - - - - - - -\nfrom : charlotte hawkins 12 / 30 / 99 09 : 07 am\nto : pat clynes / corp / enron @ enron , lauri a allen / hou / ect @ ect , daren j\nfarmer / hou / ect @ ect , elsa villarreal / hou / ect @ ect , edward d gottlob / hou / ect @ ect\ncc : aimee lannou / hou / ect @ ect , gary a hanks / hou / ect @ ect\nsubject : koch three rivers , # 6722\ni spoke with larry zamit this morning regarding the outage january 1 through\n6 . he agreed to hold the gas for us and batch it "
   },
   {
     "id": "ENRON_MSG_78",
-    "from": "richard.causey@enron.com",
-    "to": "sherron.watkins@enron.com",
+    "from": "Enron_Employee_176@enron.com",
+    "to": "Enron_Trading_Desk_276@enron.com",
     "date": "1999-12-31",
     "subject": "Calpine",
     "body": "my cellular phone number is 713 - 562 - 2050 if you have any questions over the\nweekend or holiday do not hesitate to give me a call . thanks ."
   },
   {
     "id": "ENRON_MSG_79",
-    "from": "sherron.watkins@enron.com",
-    "to": "sally.beck@enron.com",
+    "from": "Enron_Employee_177@enron.com",
+    "to": "Enron_Trading_Desk_277@enron.com",
     "date": "1999-12-31",
     "subject": "Unresolved Issues For Jan 1 .",
     "body": "i think everyone agrees that there was a lot of confusion in desk assignments\nand responsibilities . with that said , i am listing some of the current\nissues that i have seen , that will need to be addressed quickly . most of\nthese issues are none of my business , but since i see unpathed gas i thought\nyou two might want to dicsuss these issues .\nenron field services - has not been nominated since september 99 . have we\nstopped doing business on this pipe ? ( just an fyi - ? ) do we need to get\nthis assigned ? i can find old\nnotes and try to get this pathed if necessary . someone just needs to let\nme know .\nlavaca expense transport - this is offsystem gas that hplc transports for\nena . ena has no nom at meter 1000 in pops for jan 1 .\nmidcon texas pipeline - there were deals left unpathed f"
   },
   {
     "id": "ENRON_MSG_80",
-    "from": "vince.kaminski@enron.com",
-    "to": "mark.frevert@enron.com",
+    "from": "Enron_Employee_178@enron.com",
+    "to": "specifically@enron.com",
     "date": "2000-01-04",
     "subject": "January Setup - - Mops",
     "body": "specifically , meter 1373 has several deals set up and 6 of them are ranked\n10 . these will not allocate properly as you know . suggest you double check\nall the industrials to ensure they are ranked correctly . january will then\nneed to be re - nomed .\nken"
   },
   {
     "id": "ENRON_MSG_81",
-    "from": "sally.beck@enron.com",
-    "to": "louise.kitchen@enron.com",
+    "from": "heidi.withers@enron.com",
+    "to": "Enron_Trading_Desk_279@enron.com",
     "date": "2000-01-04",
     "subject": "Re : Missing Service Rates For Ena / Hplc Cash Desk",
     "body": "- - - - - - - - - - - - - - - - - - - - - - forwarded by ami chokshi / corp / enron on 01 / 04 / 2000\n10 : 36 am - - - - - - - - - - - - - - - - - - - - - - - - - - -\nrhonda robinson @ ect\n01 / 04 / 2000 10 : 23 am\nto : stacey neuweiler / hou / ect @ ect , ami chokshi / corp / enron @ enron\ncc : gregory steagall / hou / ect @ ect\nsubject : re : missing service rates for ena / hplc cash desk\nlisted below are expense contracts that need rates input into sitara . please\nlet me know as soon as possible if you are responsible for the input of these\nrates .\nthanks !\n- - - - - - - - - - - - - - - - - - - - - - forwarded by rhonda robinson / hou / ect on 01 / 04 / 2000\n10 : 17 am - - - - - - - - - - - - - - - - - - - - - - - - - - -\nenron north america corp .\nfrom : heidi withers 01 / 04 / 2000 09"
   },
   {
     "id": "ENRON_MSG_82",
-    "from": "louise.kitchen@enron.com",
-    "to": "greg.whalley@enron.com",
+    "from": "Enron_Employee_180@enron.com",
+    "to": "Enron_Trading_Desk_280@enron.com",
     "date": "2000-01-04",
     "subject": "Hl & P December",
     "body": "janet . attached is the best available for december . i have split 3 rd party\nnoms and hpl noms .\ni ' ll be working on january today and forward it to you soon ."
   },
   {
     "id": "ENRON_MSG_83",
-    "from": "mark.frevert@enron.com",
-    "to": "david.delainey@enron.com",
+    "from": "Enron_Employee_181@enron.com",
+    "to": "Enron_Trading_Desk_281@enron.com",
     "date": "2000-01-04",
     "subject": "Buyback Deals - - January 2000",
     "body": "attached are the current buyback deals i ' m aware of . if you have further\ninformation please let me know .\nthanks\nken"
   },
   {
     "id": "ENRON_MSG_84",
-    "from": "greg.whalley@enron.com",
-    "to": "john.lavorato@enron.com",
+    "from": "kenneth.seaman@enron.com",
+    "to": "Enron_Trading_Desk_282@enron.com",
     "date": "2000-01-04",
     "subject": "Industrials",
     "body": "suggestions . . . . . .\n- - - - - - - - - - - - - - - - - - - - - - forwarded by kenneth seaman / hou / ect on 01 / 04 / 2000\n12 : 47 pm - - - - - - - - - - - - - - - - - - - - - - - - - - -\npat clynes @ enron\n01 / 04 / 2000 12 : 46 pm\nto : kenneth seaman / hou / ect @ ect , robert e lloyd / hou / ect @ ect\ncc :\nsubject : industrials\nken and robert ,\nthe industrials should be completely transitioned to robert as of january 1 ,\n2000 .\nplease let me know if this is not complete and what else is left to\ntransition .\nthanks , pat"
   },
   {
     "id": "ENRON_MSG_85",
-    "from": "john.lavorato@enron.com",
-    "to": "jeff.skilling@enron.com",
+    "from": "stephanie.gomes@enron.com",
+    "to": "Enron_Trading_Desk_283@enron.com",
     "date": "2000-01-04",
     "subject": "Re : C & E Operating , 11 / 99 Production",
     "body": "set out below is information regarding 660 mmbtu produced november 29 and 30\nat meter 9813 . please create a sitara record for this production at your\nearliest convenience . the price is if / hsc less $ 0 . 10 . the contract number\nis 96016884 . a confirmation is not necessary .\nplease call if i can be of any additional assistance .\ndonald\nx 37008\n- - - - - - - - - - - - - - - - - - - - - - forwarded by donald p reinhardt / hou / ect on 01 / 04 / 2000\n04 : 45 pm - - - - - - - - - - - - - - - - - - - - - - - - - - -\nfrom : stephanie gomes 01 / 04 / 2000 08 : 09 am\nto : donald p reinhardt / hou / ect @ ect\ncc :\nsubject : re : c & e operating , 11 / 99 production\ndonald , please see julie ' s email below . this is the deal that was not in the\nsystem that i had asked you about . please let me "
   },
   {
     "id": "ENRON_MSG_86",
-    "from": "david.delainey@enron.com",
-    "to": "andrew.fastow@enron.com",
+    "from": "Enron_Employee_184@enron.com",
+    "to": "Enron_Trading_Desk_284@enron.com",
     "date": "2000-01-04",
     "subject": "Thanks From Ken Walther",
     "body": "i can not begin to express my heart filled \" thanks \" for all of the time and\neffort that everyone put into this successful y 2 k effort . it was truly great\nto see everyone working together to ensure that enron continues in it winning\nway by being the best at what we do . i was truly blessed with the group of\nindividuals listed above and their staffs that put the heart and soul into\nthis process . we have an outstanding team of individuals who in my opinion\nwill always go the extra mile for enron . . again , thanks everyone you have a\nlot to be proud - \" we successfully survived the y 2 k event ! ! ! \""
   },
   {
     "id": "ENRON_MSG_87",
-    "from": "jeff.skilling@enron.com",
-    "to": "kenneth.lay@enron.com",
+    "from": "kenneth.seaman@enron.com",
+    "to": "Enron_Trading_Desk_285@enron.com",
     "date": "2000-01-05",
     "subject": "Re : Industrials",
     "body": "i leave this with you . my take is that the situation is as i suspected and\npat wants me to pretty much leave them be . i will do that unless i hear a\ndifferent plan from you .\n- - - - - - - - - - - - - - - - - - - - - - forwarded by kenneth seaman / hou / ect on 01 / 05 / 2000\n08 : 13 am - - - - - - - - - - - - - - - - - - - - - - - - - - -\npat clynes @ enron\n01 / 05 / 2000 08 : 08 am\nto : kenneth seaman / hou / ect @ ect\ncc : robert e lloyd / hou / ect @ ect\nsubject : re : industrials\nken ,\ni think robert has a good handle on things and can function on his own . with\nthat said , we always want different\nchecks and balances in place in order to capture the most accurate\ninformation , so if you see something that is\na problem please bring it to our attention . thanks , pat\nkenneth seaman @"
   },
   {
     "id": "ENRON_MSG_88",
-    "from": "kenneth.lay@enron.com",
-    "to": "richard.causey@enron.com",
+    "from": "Enron_Employee_186@enron.com",
+    "to": "Enron_Trading_Desk_286@enron.com",
     "date": "2000-01-05",
     "subject": "Bridge Back Error",
     "body": "meter 980068 has a bridge back error for 9 / 99 production . this meter is\nlinked to deal 76365 which started on 4 / 16 / 99 and ended on 4 / 30 / 99 .\nplease let me know what deal should be use for this meter for 9 / 99 . i need\nto have this error clear off by thursday .\nthanks ."
   },
   {
     "id": "ENRON_MSG_89",
-    "from": "andrew.fastow@enron.com",
-    "to": "vince.kaminski@enron.com",
+    "from": "Enron_Employee_187@enron.com",
+    "to": "Enron_Trading_Desk_287@enron.com",
     "date": "2000-01-05",
     "subject": "Updated Spreadsheet",
     "body": "here is the lastest and greatest . please make sure that you look at this\ncarefully . there are some weird changes that happened . please make sure\nthat you forward this on to whom ever needs it .\nif you have any questions , please feel free to call me .\njulie"
   },
   {
     "id": "ENRON_MSG_90",
-    "from": "richard.causey@enron.com",
-    "to": "sherron.watkins@enron.com",
+    "from": "Enron_Employee_188@enron.com",
+    "to": "Enron_Trading_Desk_288@enron.com",
     "date": "2000-01-05",
     "subject": "Enron Actuals For January 4 , 2000",
     "body": "teco tap 110 . 000 / hpl iferc\nteco tap 33 . 750 / enron\nls hpl - katy ic 22 . 500 / enron"
   },
   {
     "id": "ENRON_MSG_91",
-    "from": "sherron.watkins@enron.com",
-    "to": "sally.beck@enron.com",
+    "from": "Enron_Employee_189@enron.com",
+    "to": "Enron_Trading_Desk_289@enron.com",
     "date": "2000-01-05",
     "subject": "Hl & P Month To Date",
     "body": "attached is the hl & p spreadsheet for january ."
   },
   {
     "id": "ENRON_MSG_92",
-    "from": "vince.kaminski@enron.com",
-    "to": "mark.frevert@enron.com",
+    "from": "ami.chokshi@enron.com",
+    "to": "Enron_Trading_Desk_290@enron.com",
     "date": "2000-01-05",
     "subject": "5 Th Noms",
     "body": "- - - - - - - - - - - - - - - - - - - - - - forwarded by ami chokshi / corp / enron on 01 / 05 / 2000\n04 : 58 pm - - - - - - - - - - - - - - - - - - - - - - - - - - -\nroyal _ b _ edmondson @ reliantenergy . com on 01 / 04 / 2000 09 : 59 : 08 am\nto : ami chokshi / corp / enron @ enron\ncc :\nsubject : 5 th noms\nand i remembered to send these to you . . . . .\n( see attached file : hpl - jan . xls )\n- hpl - jan . xls"
   },
   {
     "id": "ENRON_MSG_93",
-    "from": "sally.beck@enron.com",
-    "to": "louise.kitchen@enron.com",
+    "from": "Enron_Employee_191@enron.com",
+    "to": "Enron_Trading_Desk_291@enron.com",
     "date": "2000-01-05",
     "subject": "Real Time Deal Updates To Path Manager - Test Group",
     "body": "beginning this week , we are actively testing the changes to path manager to\nreceive real - time deal updates from sitara . to prepare for this , we would\nlike to have a limited group of schedulers from each desk go thru a quick\nwalkthru / training of the new features sometime early next week . this should\nonly take about 30 minutes . once they are comfortable with the features and\nperformance , and once the testing is complete , we would like to migrate this\nto unify production either next week or the week after . this should give us\nan adequate adjustment period prior to the next bid week .\nonce it is migrated to production , we can either roll it out to all\nschedulers or to selected schedulers via security .\nheather , could you please schedule some time with the designated schedulers ,\n"
   },
   {
     "id": "ENRON_MSG_94",
-    "from": "louise.kitchen@enron.com",
-    "to": "greg.whalley@enron.com",
+    "from": "Enron_Employee_192@enron.com",
+    "to": "Enron_Trading_Desk_292@enron.com",
     "date": "2000-01-05",
     "subject": "January - Meter 2186 Clear Lake City Gate",
     "body": "i have flow without a nom each day at meter 2186 lst = 1375\n2 nd = 28\n3 rd = 2532\n4 th = 5952\ni assume that this is entex meter . is this volume captured at meter 2000 ? i\nwill need a nom to support this flow . please advise . thank you ."
   },
   {
     "id": "ENRON_MSG_95",
-    "from": "mark.frevert@enron.com",
-    "to": "david.delainey@enron.com",
+    "from": "Enron_Employee_193@enron.com",
+    "to": "Enron_Trading_Desk_293@enron.com",
     "date": "2000-01-05",
     "subject": "Ces Deals",
     "body": "rick ward manages their accounting group .\n713 / 693 - 2813\nthe accounts that affect the texas group include\nkerr mcgee ( tomcat )\ndevon / pennzoil ( south texas )\npipes\noasis / duke en field services ( republic royalty sells to duke )\ncorpus christi nat gas at the virginia plant ( devon pdn sold to ccng )\nbrazos 368 ( spinnaker ' s gas sold to dow )\ngulf energy ( devon production sold to various )\nmidcon tx ( devon pdn sold to midcon tx gas )\nlonestar at sandtrap ( devon pdn sold to txu energy )\nhpl ( entex sells to equistar )\ngulf plains plant / agua dulce ( devon pdn sold to various )\ncarthage hub ( devon production sold to various )\ndelhi ( devon pdn sold to delhi gas mktg )\ntomcat ( kerr mcgee pdn transported into hpl - - they used to sell it to entex )\nlet me know what i can do to he"
   },
   {
     "id": "ENRON_MSG_96",
-    "from": "greg.whalley@enron.com",
-    "to": "john.lavorato@enron.com",
+    "from": "Enron_Employee_194@enron.com",
+    "to": "Enron_Trading_Desk_294@enron.com",
     "date": "2000-01-06",
     "subject": "Lyondell - - # 1063",
     "body": "the gas looks like it is not allocating correctly in jan .\ni have not researched as to why , but if you like i can come down and go over\nsome things to help identify and correct these kinds of problems .\nlet me know .\nken"
   },
   {
     "id": "ENRON_MSG_97",
-    "from": "john.lavorato@enron.com",
-    "to": "jeff.skilling@enron.com",
+    "from": "Enron_Employee_195@enron.com",
+    "to": "Enron_Trading_Desk_295@enron.com",
     "date": "2000-01-06",
     "subject": "Expense",
     "body": "please notify me if you have any outstanding items that should be expensed .\nall invoices ( mobile , pager , etc . ) and travel arrangements should be passed\non to me as well .\nmany thanks ,\nbarbara lewis\nx 35085 ( bl / 635 )"
   },
   {
     "id": "ENRON_MSG_98",
-    "from": "david.delainey@enron.com",
-    "to": "andrew.fastow@enron.com",
+    "from": "Enron_Employee_196@enron.com",
+    "to": "daren@enron.com",
     "date": "2000-01-06",
     "subject": "Logistics Training",
     "body": "daren ,\nthanks for the sitara training class that you taught the logistics group . it\nwas extremely valuable\nfor me and the rest of the group . i appreciate all the time and effort that\nyou put into setting this up .\nthe handouts will be great reference material for us in the future . i have\nalready heard very positive\nfeedback from the group . very much appreciated . thanks again , pat clynes"
   },
   {
     "id": "ENRON_MSG_99",
-    "from": "jeff.skilling@enron.com",
-    "to": "kenneth.lay@enron.com",
+    "from": "ami.chokshi@enron.com",
+    "to": "Enron_Trading_Desk_297@enron.com",
     "date": "2000-01-06",
     "subject": "Revised 7 Th Noms",
     "body": "- - - - - - - - - - - - - - - - - - - - - - forwarded by ami chokshi / corp / enron on 01 / 06 / 2000\n11 : 20 am - - - - - - - - - - - - - - - - - - - - - - - - - - -\nroyal _ b _ edmondson @ reliantenergy . com on 01 / 06 / 2000 10 : 58 : 31 am\nto : ami chokshi / corp / enron @ enron\ncc :\nsubject : revised 7 th noms\n( see attached file : egmnom - jan . xls ) love ya . . . . . . miss ya . . . . .\n- egmnom - jan . xls"
   },
   {
     "id": "ENRON_MSG_100",
-    "from": "kenneth.lay@enron.com",
-    "to": "richard.causey@enron.com",
+    "from": "ami.chokshi@enron.com",
+    "to": "Enron_Trading_Desk_298@enron.com",
     "date": "2000-01-06",
     "subject": "7 Th Noms",
     "body": "- - - - - - - - - - - - - - - - - - - - - - forwarded by ami chokshi / corp / enron on 01 / 06 / 2000\n10 : 49 am - - - - - - - - - - - - - - - - - - - - - - - - - - -\ntroy _ a _ benoit @ reliantenergy . com on 01 / 06 / 2000 10 : 26 : 49 am\nto : ami chokshi / corp / enron @ enron\ncc :\nsubject : 7 th noms\n( see attached file : egmnom - jan . xls )\n- egmnom - jan . xls"
   },
   {
     "id": "ENRON_MSG_101",
-    "from": "andrew.fastow@enron.com",
-    "to": "vince.kaminski@enron.com",
+    "from": "Enron_Employee_199@enron.com",
+    "to": "Enron_Trading_Desk_299@enron.com",
     "date": "2000-01-06",
     "subject": "Ces - Blue Dolphin Pipeline",
     "body": "starts 1 / 7 / 99 for 30 days ( will eventually be termed up )\nbuy from spinnaker at galveston island 250 l at gd hsc - . 08 plus tsp and dehy\n( . 138 )\ntransported on blue dolphin pipeline ( agency has been given to enron per mary\njean at bdpl )\n$ . 123 transport ( contract bdpl - 064 - gtsa )\n$ . 015 dehy fee ( contract mei - 056 - da )\nsold to dow at its plant inlet in brazoria county at gd hsc - . 07\nblue dolphin does not require nominations . whatever is produced is allocated\nto dow . currently , the volumes are about 208 mmbtu / d .\nsamedan operates the production field . ( janene shipp 580 - 221 - 1200 )\nblue dolphin contacts\nvolumes - ken davenport 713 - 227 - 7660 xl 37\ntransport - mary jean krinke 713 - 227 - 7660 xl 55\nami\n3 - 9272"
   },
   {
     "id": "ENRON_MSG_102",
-    "from": "richard.causey@enron.com",
-    "to": "sherron.watkins@enron.com",
+    "from": "bryce.baxter@enron.com",
+    "to": "Enron_Trading_Desk_300@enron.com",
     "date": "2000-01-06",
     "subject": "Re : Request For Application Report List",
     "body": "this is a follow up to the earlier email i forwarded regarding ces historical\ninformation . note the deadline of 1 / 15 , i believe that should be friday 1 / 14\nso i need your responses by thursday 1 / 13 .\nplease fill out the spreadsheet for each area and forward back to me . i will\nconsolidate our responses from a logistics perspective . lets have them add\neverything they need and if challenged we can re - review later .\nthanks - bob\n- - - - - - - - - - - - - - - - - - - - - - forwarded by robert superty / hou / ect on 01 / 06 / 2000\n08 : 24 am - - - - - - - - - - - - - - - - - - - - - - - - - - -\nfrom : bryce baxter 01 / 05 / 2000 12 : 00 pm\nto : sheri thomas / hou / ect @ ect , robert superty / hou / ect @ ect , mark\nfriedman / hou / ect @ ect , mary solmonson / hou / ect @ ect , bob k"

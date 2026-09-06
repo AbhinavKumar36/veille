@@ -5,7 +5,9 @@ classification: Synthetic Research Benchmark (Not Raw Real Data)
 download_date: '2026-09-06'
 license: Apache 2.0
 corpus_sha256: 9f2c11d4dce7f086afb8a2f8c6d997322c9fecf3b07778504ac4ba21ca6ebd8d
+sampling_methodology: Multi-Hop Layering Matrix & Cycle Smurfing Controlled Graph
+  Slice
 source_record_count: 500000
-imported_record_count: 8
+selected_record_count: 8
 adapter_version: datasets.adapters.aml_adapter.AMLTransactionAdapter (v4.2)
 primary_evaluation: Multi-Hop Layering & Cycle Smurfing Detection

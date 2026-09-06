@@ -1,98 +1,699 @@
-I would create a branch:
+My verdict
 
-phase-3-real-data
+VEILLE has a strong architecture and a surprisingly complete prototype, but it is not yet scientifically defensible in a few critical places.
 
-and implement these five things:
+I would currently rate it:
 
-1. Real dataset acquisition
-datasets/external/
-├── inlegalner/raw/
-├── icij/raw/
-├── enron/raw/
-└── ibm_aml/raw/
+Area	Status
+Overall architecture	🟢 Strong
+Backend structure	🟢 Strong
+Canonical data model	🟢 Strong
+Graph integration	🟢 Strong
+Dataset adapter architecture	🟢 Strong
+Provenance concept	🟢 Good
+Real external-data acquisition	🟡 Partially correct
+Entity Resolution evaluation	🔴 Not valid yet
+GraphRAG evaluation	🔴 Not valid yet
+Security claims	🟡 Overstated
+Documentation accuracy	🟠 Needs cleanup
+SIH technical credibility	🟢 Potentially very strong after fixes
 
-Replace the current curated “raw” files with actual source-derived data, or rename the current ones to fixtures/.
+The important thing is: we don't need to rebuild VEILLE. We need to make the existing system honest, reproducible, and empirically measurable.
 
-2. Provenance manifest
+1. Repository structure
 
-Every dataset:
+The public repository currently contains:
 
-name:
-official_url:
-version:
-download_date:
-license:
-original_sha256:
-source_record_count:
-imported_record_count:
-adapter_version:
-3. Real ER evaluation
+veille/
+├── CRIMENET_Codebase/
+├── CRIMENET_Docs/
+├── CRIMENET_Documentation/
+├── stitch_crimmenet_user_interface/
+├── CN_v4.md
+├── DESIGN.md
+├── HACKATHON_COMPETITIVE_EDGE.md
+├── README.md
+├── chat.txt
+├── project_review.md
+└── CRIMENET_Codebase.zip
 
-No:
+Inside the main codebase, the architecture is essentially:
+
+                    ┌─────────────────────┐
+                    │      Evidence       │
+                    │ FIR / Email / AML   │
+                    │ Legal / CDR / etc.  │
+                    └──────────┬──────────┘
+                               │
+                               ▼
+                    ┌─────────────────────┐
+                    │ Ingestion / Adapters│
+                    └──────────┬──────────┘
+                               │
+                               ▼
+                    ┌─────────────────────┐
+                    │ Canonical Schema    │
+                    │ Entities + Relations│
+                    └───────┬─────┬───────┘
+                            │     │
+                 ┌──────────┘     └──────────┐
+                 ▼                           ▼
+        ┌────────────────┐          ┌────────────────┐
+        │ PostgreSQL     │          │ Neo4j          │
+        │ System of     │          │ Knowledge      │
+        │ Record        │          │ Graph          │
+        └───────┬────────┘          └───────┬────────┘
+                │                           │
+                └────────────┬──────────────┘
+                             ▼
+                    ┌─────────────────────┐
+                    │ Entity Resolution   │
+                    │ + Review Queue      │
+                    └──────────┬──────────┘
+                               ▼
+                    ┌─────────────────────┐
+                    │ GraphRAG / AI       │
+                    └──────────┬──────────┘
+                               ▼
+                    ┌─────────────────────┐
+                    │ Investigator UI     │
+                    └─────────────────────┘
+
+That is a good architecture for the problem you're solving.
+
+2. The dataset pipeline is better than before — but I found a major problem
+
+Your new downloader is real code, not just documentation.
+
+For example, InLegalNER actually downloads an archive, extracts the judgment JSON, processes the first 100 records, extracts annotations and writes a canonicalized corpus.
+
+That's good.
+
+However, Enron is currently problematic.
+
+Your code downloads:
+
+https://raw.githubusercontent.com/MWiechmann/enron_spam_data/master/enron_spam_data.zip
+
+and then does this:
+
+enron_key_personnel = [
+    "jeff.skilling@enron.com",
+    "kenneth.lay@enron.com",
+    ...
+]
+
+Then for each selected email, it assigns:
+
+sender = enron_key_personnel[s_idx]
+recipient = enron_key_personnel[r_idx]
+
+That's a serious data-integrity problem.
+
+The email body comes from a real dataset, but the sender/recipient relationship is being artificially constructed.
+
+So this:
+
+Real email
+      ↓
+Real message body
+      ↓
+Artificial sender
+      ↓
+Artificial recipient
+      ↓
+"Real communication graph"
+
+is not a real Enron communication graph.
+
+We absolutely should fix this before using Enron for evaluation.
+
+3. InLegalNER acquisition looks conceptually correct
+
+This part is much better.
+
+The code:
+
+Downloads the archive.
+Calculates SHA-256 of the original archive.
+Reads the judgment JSON.
+Extracts actual annotations.
+Writes a normalized corpus.
+Calculates SHA-256 of the resulting corpus.
+Writes a provenance manifest.
+
+That's exactly the architecture we want:
+
+Official source
+      ↓
+Downloaded artifact
+      ↓
+SHA-256
+      ↓
+Selection
+      ↓
+Normalized corpus
+      ↓
+Corpus SHA-256
+      ↓
+Adapter
+      ↓
+Canonical schema
+      ↓
+Graph
+
+This is the right direction.
+
+One improvement: don't call the first 100 records "top 100 genuine legal judgments."
+
+They're simply:
+
+first 100 records selected from the downloaded corpus.
+
+Unless we define a deterministic selection criterion such as:
+
+first 100 sorted by document ID
+
+or:
+
+random seed = 42
+
+we don't have a reproducible sampling methodology.
+
+4. ICIJ provenance is currently weaker than it looks
+
+The ICIJ manifest says:
+
+source_record_count: 810000
+imported_record_count: 11
+
+and calculates the hash of:
+
+icij_panama_pandora_slice.csv
+
+But unlike InLegalNER/Enron, the downloader doesn't actually download the ICIJ dataset.
+
+It merely does:
+
+icij_sha = sha256_of_file(icij_raw)
+
+and creates a manifest.
+
+So the current pipeline is:
+
+ICIJ official source
+       X
+       │
+       │ actual download missing
+       ▼
+existing local raw CSV
+       ↓
+SHA256
+       ↓
+manifest
+
+That's not the same as:
+
+ICIJ official source
+       ↓
+download
+       ↓
+SHA256
+       ↓
+selection
+       ↓
+corpus
+This is one of the things we should fix.
+5. IBM AML is correctly classified
+
+This one I actually like.
+
+Your manifest explicitly says:
+
+classification: Synthetic Research Benchmark (Not Raw Real Data)
+
+That's exactly how it should be presented.
+
+So our dataset taxonomy should remain:
+
+REAL
+├── InLegalNER
+├── ICIJ Offshore Leaks
+└── Enron
+
+SYNTHETIC
+└── IBM AMLWorld
+
+CONTROLLED BENCHMARK
+└── Operation Storm Watch
+
+That distinction will actually increase credibility with judges.
+
+6. Biggest technical issue: Entity Resolution benchmark
+
+This is currently the most important flaw in the code.
+
+Your benchmark calculates:
+
+auto_merged_count = max(0, len(extracted_nodes) - len(gt_entities))
+
+Then:
 
 false_merges_observed = 0
+auto_merge_precision = 100.0
 
-Instead use labeled candidate pairs.
+and reports:
 
-4. Real GraphRAG evaluation
+False Merge Rate = 0.0%
 
-Evaluate:
+This isn't a real ER evaluation.
 
-Claim
+You're effectively saying:
+
+number of extracted entities
+-
+number of ground truth entities
+=
+number of successful merges
+
+That doesn't establish whether the merges were correct.
+
+We need actual pair-level ground truth.
+
+For example:
+
+Mention A ── same entity ── Mention B
+Mention A ── different ─── Mention C
+Mention B ── same entity ── Mention D
+
+Then evaluate:
+
+TP
+FP
+FN
+TN
+
+and derive:
+
+Precision
+Recall
+F1
+False Merge Rate
+False Split Rate
+Auto-Merge Coverage
+HITL Rate
+This should be our first major code correction.
+7. GraphRAG itself is reasonably designed
+
+This part is actually quite good.
+
+The system takes the investigator's query and:
+
+Query
+  ↓
+keyword extraction
+  ↓
+Neo4j targeted search
+  ↓
+matched entities
+  ↓
+relationships
+  ↓
+source_evidence_id
+  ↓
+PostgreSQL evidence lookup
+  ↓
+citations
+  ↓
+LLM
+
+The graph query is case-scoped and retrieves entity properties, relationships, confidence and evidence IDs.
+
+That's a legitimate GraphRAG architecture.
+
+8. But the GraphRAG evaluation is not real yet
+
+This code is the problem:
+
+evidence_markers = [
+    "FIR",
+    "CDR",
+    "Hawala",
+    "Transfer",
+    "Logistics",
+    "Account",
+    "Vehicle",
+    "Evidence"
+]
+
+Then it checks whether those words appear in the answer.
+
+So:
+
+AI answer:
+"Account X transferred money through Logistics..."
+
+↓
+keyword found
+
+↓
+Evidence Citation Score increases
+
+That does not prove the claim is supported by evidence.
+
+Similarly:
+
+unsupported_claim_rate = 0.0
+
+is simply assigned rather than measured.
+
+We should replace this.
+
+Eventually the evaluation should look like:
+
+AI Claim
+   ↓
+Claim extraction
+   ↓
+Entity / relation grounding
+   ↓
+Graph lookup
+   ↓
+Evidence lookup
+   ↓
+Supported?
+   ├── YES
+   └── NO
+
+Then:
+
+Unsupported Claim Rate =
+unsupported claims / total factual claims
+
+That would be a real metric.
+
+9. There's another subtle issue with GraphRAG
+
+The retrieval currently limits:
+
+nodes → 15
+relationships → 25
+
+That's perfectly reasonable for a prototype, but eventually we should make this:
+
+query
  ↓
-Entity ID
+entity retrieval
  ↓
-Relationship ID
+relevance ranking
  ↓
-Evidence ID
+N-hop traversal
  ↓
-Evidence support
-5. Zero-shot experiment
+evidence ranking
+ ↓
+context budget
 
-Do not train anything yet.
+rather than simply:
 
-Run the current VEILLE against the real datasets first.
+LIMIT 15
+LIMIT 25
 
-That gives us the most valuable information in the entire project:
+Otherwise large investigations can silently lose relevant evidence.
 
-What does VEILLE currently fail at?
+10. Entity Resolution architecture itself is good
 
-Then we train only those components.
+The actual concept is solid:
 
-Final assessment
+Lexical similarity
+        +
+Graph structural similarity
+        ↓
+Composite score
+        ↓
+┌───────────────┐
+│ ≥ threshold   │ → AUTO MERGE
+├───────────────┤
+│ middle        │ → HUMAN REVIEW
+├───────────────┤
+│ low           │ → CREATE NEW
+└───────────────┘
 
-I want to emphasize this:
+The README documents a 0.55 lexical + 0.45 structural formula and three decision zones.
 
-I am considerably more positive about VEILLE after seeing the actual GitHub source.
+That's a defensible design.
 
-This isn't just a pretty frontend with a fake architecture.
+But the evaluation of it needs to catch up with the architecture.
 
-You have:
+11. The README currently overclaims the system
 
-real FastAPI backend
-PostgreSQL persistence
-Neo4j graph
-asynchronous processing
-transactional outbox
-case scoping
-evidence hashing
-entity resolution
-HITL review
-GraphRAG retrieval
-canonical dataset adapters
-benchmark automation
-frontend investigation workspace
+This needs a cleanup pass.
 
-Those are substantial engineering pieces.
+For example, the README currently describes:
 
-But the empirical layer is currently ahead of what the underlying experiment actually proves.
+“enterprise-grade”
 
-If we fix the three red issues — real external datasets, real ER evaluation, real claim/evidence evaluation — VEILLE goes from:
+and claims:
 
-“very impressive SIH prototype”
+“court admissibility”
 
-to:
+along with:
 
-“a technically defensible experimental intelligence platform with measurable generalization.”
+“Post-Quantum Cryptography (PQC ML-KEM-1024), HSM enclave quorum ceremonies, and X.509 CRL broadcast.”
 
-That's the version I'd want to take to the SIH jury.
+For an SIH project, this can actually hurt you if a judge asks:
+
+“Show me the implementation of the HSM quorum ceremony.”
+
+If the implementation isn't actually production-grade, don't claim it as such.
+
+I'd change the language to:
+
+prototype implementation
+research-grade architecture
+tamper-evident audit design
+cryptographic integrity layer
+designed for future institutional deployment
+
+rather than implying operational law-enforcement deployment.
+
+12. Credentials are another immediate cleanup item
+
+The public README currently exposes demo credentials:
+
+admin@veille.gov.in
+admin123
+
+and:
+
+investigator@veille.gov.in
+investigator123
+
+as well as a JWT secret example.
+
+Even though they're presumably demo credentials, don't publish them as if they are security credentials.
+
+Better:
+
+Demo credentials are generated during local initialization.
+See .env.template.
+
+And never commit an actual secret.
+
+13. The README is also stale
+
+There's a mismatch between the current implementation and the README.
+
+For example, README says PostgreSQL 16, while the actual project documentation/codebase has been moving around PostgreSQL versions. The repository README also still presents some older CRIMENET terminology.
+
+That's not catastrophic, but it makes the project look less controlled.
+
+We should eventually make:
+
+README
+    ↓
+Architecture
+    ↓
+Current implementation
+    ↓
+Dataset methodology
+    ↓
+Evaluation
+
+all agree.
+
+14. What I would NOT change
+
+This is important.
+
+I wouldn't rewrite VEILLE.
+
+The following architecture is worth keeping:
+
+Backend
+FastAPI
++ SQLAlchemy
++ PostgreSQL
++ Celery
+Graph
+Neo4j
+Event synchronization
+PostgreSQL Outbox
+        ↓
+Celery
+        ↓
+Neo4j
+AI
+GraphRAG
+        ↓
+Gemini
+NLP
+NER
++
+Entity Resolution
++
+Relation extraction
+Data abstraction
+Dataset
+   ↓
+Adapter
+   ↓
+Canonical Schema
+   ↓
+Graph
+
+This is the correct conceptual foundation.
+
+15. The architecture I want us to reach
+
+After the cleanup, VEILLE should be demonstrable as:
+
+                  ┌─────────────────────┐
+                  │ REAL PUBLIC DATA    │
+                  │                     │
+                  │ InLegalNER          │
+                  │ ICIJ                │
+                  │ Enron               │
+                  └──────────┬──────────┘
+                             │
+                             ▼
+                  ┌─────────────────────┐
+                  │ DATASET ADAPTERS    │
+                  │                     │
+                  │ source → canonical  │
+                  └──────────┬──────────┘
+                             │
+                             ▼
+                  ┌─────────────────────┐
+                  │ CANONICAL MODEL     │
+                  │                     │
+                  │ Entity              │
+                  │ Relation            │
+                  │ Evidence            │
+                  └──────────┬──────────┘
+                             │
+             ┌───────────────┼────────────────┐
+             ▼               ▼                ▼
+        ┌─────────┐    ┌───────────┐    ┌──────────┐
+        │   NER   │    │    ER     │    │Relation  │
+        │         │    │           │    │Extraction│
+        └────┬────┘    └─────┬─────┘    └────┬─────┘
+             │               │                │
+             └───────────────┼────────────────┘
+                             ▼
+                    ┌─────────────────┐
+                    │   NEO4J GRAPH   │
+                    └────────┬────────┘
+                             │
+                             ▼
+                    ┌─────────────────┐
+                    │    GraphRAG     │
+                    │                 │
+                    │ Retrieval       │
+                    │ Grounding       │
+                    │ Evidence         │
+                    └────────┬────────┘
+                             │
+                             ▼
+                    ┌─────────────────┐
+                    │ INVESTIGATOR UI │
+                    └─────────────────┘
+
+And underneath it:
+
+              ┌─────────────────────────────┐
+              │     EMPIRICAL EVALUATION    │
+              ├─────────────────────────────┤
+              │ NER → P/R/F1                │
+              │ ER  → P/R/F1 + false merge  │
+              │ RE  → P/R/F1                │
+              │ Retrieval → P@K/MRR         │
+              │ GraphRAG → claim grounding  │
+              └─────────────────────────────┘
+
+That is the real VEILLE story.
+
+16. Priority order
+
+I recommend we do not download more datasets yet.
+
+First:
+
+🔴 P0 — Fix evaluation validity
+Replace fake ER metrics with pair-level ground truth.
+Replace keyword-based GraphRAG citation score.
+Remove hardcoded unsupported_claim_rate = 0.
+Make benchmark results reproducible from actual outputs.
+🔴 P1 — Fix data provenance
+Fix Enron sender/recipient reconstruction.
+Make ICIJ downloader genuinely acquire the source.
+Define deterministic sampling rules.
+Store selection metadata in manifests.
+Separate source_records, selected_records, canonical_entities, canonical_relationships.
+🟠 P2 — Clean claims
+Rewrite README.
+Remove exposed demo credentials.
+Remove unsupported “court admissibility / enterprise-grade” claims.
+Clearly label:
+real
+synthetic
+controlled benchmark.
+🟢 P3 — Then expand datasets
+
+Only after that:
+
+InLegalNER
+      ↓
+ICIJ
+      ↓
+Enron
+      ↓
+IBM AML
+      ↓
+additional complementary datasets
+
+Then:
+
+ZERO-SHOT
+   ↓
+measure weaknesses
+   ↓
+TARGETED TRAINING
+   ↓
+re-evaluate
+   ↓
+compare
+Bottom line
+
+The repo is much further along than a normal SIH prototype. The architecture is not the problem.
+
+The problem is that some of the evaluation layer is currently pretending to be more rigorous than the underlying implementation actually is.
+
+That's actually good news, because we don't need to invent a new VEILLE.
+
+We need to make the existing one empirically honest.
+
+And I would make one major decision now:
+
+Do not train anything yet. Do not add more synthetic data. Do not chase more features. First make the current real-data → adapter → canonical graph → evaluation pipeline scientifically correct.
+
+After that, we can download the genuinely useful datasets and run VEILLE against them for real.

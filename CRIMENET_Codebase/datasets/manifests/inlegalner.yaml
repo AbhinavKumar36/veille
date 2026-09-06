@@ -5,9 +5,10 @@ version: 1.0.0 (OpenNyAI)
 download_date: '2026-09-06'
 license: MIT License
 original_sha256: 90cc6ee9dc88e2fbb88fec6bfcec36ebe397d1ec256710a1600572d74088185f
-corpus_sha256: 2357cc46eace15177d355dad54f3dddab77086b36dc9147ab650bc1a1d09fe55
+corpus_sha256: 7bc57844e1de7909f9e0982f37ba5078399320ae1e33f7fa21c098c936f1cd44
+sampling_methodology: 'Deterministic: First 100 records sorted by document ID'
 source_record_count: 9435
-imported_record_count: 100
+selected_record_count: 100
 adapter_version: datasets.adapters.inlegalner_adapter.InLegalNERAdapter (v4.2)
 entity_taxonomy:
 - Person
