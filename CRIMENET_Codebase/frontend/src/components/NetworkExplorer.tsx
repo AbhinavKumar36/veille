@@ -12,6 +12,7 @@ import {
   Edge,
   useReactFlow,
   ReactFlowProvider,
+  useViewport,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { InvestigationCardNode, InvestigationNodeData } from './InvestigationCardNode';
@@ -58,7 +59,101 @@ const nodeTypes = {
   investigationCard: InvestigationCardNode,
 };
 
-const calculateNodePositions = (rawNodes: any[]) => {
+type LayoutType = 'ORGANIC' | 'RADIAL' | 'HIERARCHY' | 'GRID';
+type LODMode = 'AUTO' | 'COMPACT' | 'MEDIUM' | 'FULL';
+
+// ================= LAYOUT ALGORITHMS =================
+const calculateLayoutPositions = (
+  rawNodes: any[],
+  rawEdges: any[],
+  layout: LayoutType = 'ORGANIC'
+): Record<string, { x: number; y: number }> => {
+  const positions: Record<string, { x: number; y: number }> = {};
+  const n = rawNodes.length;
+  if (n === 0) return positions;
+
+  if (layout === 'RADIAL') {
+    // Radial Concentric Ring layout based on node degree
+    const degrees: Record<string, number> = {};
+    rawNodes.forEach(node => { degrees[node.id] = 0; });
+    rawEdges.forEach(e => {
+      if (degrees[e.source] !== undefined) degrees[e.source]++;
+      if (degrees[e.target] !== undefined) degrees[e.target]++;
+    });
+
+    const sorted = [...rawNodes].sort((a, b) => (degrees[b.id] || 0) - (degrees[a.id] || 0));
+    const centerNode = sorted[0];
+    positions[centerNode.id] = { x: 500, y: 400 };
+
+    const remaining = sorted.slice(1);
+    const ring1Count = Math.min(8, remaining.length);
+    const ring1 = remaining.slice(0, ring1Count);
+    const ring2 = remaining.slice(ring1Count);
+
+    ring1.forEach((node, i) => {
+      const angle = (i / ring1Count) * 2 * Math.PI;
+      positions[node.id] = {
+        x: 500 + Math.cos(angle) * 320,
+        y: 400 + Math.sin(angle) * 320,
+      };
+    });
+
+    ring2.forEach((node, i) => {
+      const angle = (i / ring2.length) * 2 * Math.PI;
+      positions[node.id] = {
+        x: 500 + Math.cos(angle) * 580,
+        y: 400 + Math.sin(angle) * 580,
+      };
+    });
+
+    return positions;
+  }
+
+  if (layout === 'HIERARCHY') {
+    // Top-down hierarchical layout (Coordinators at top, Operatives/Brokers in middle, Peripheral at bottom)
+    const tiers: { TOP: any[]; MID: any[]; BASE: any[] } = { TOP: [], MID: [], BASE: [] };
+    rawNodes.forEach(node => {
+      const type = (node.type || node.label || '').toUpperCase();
+      const score = node.risk_score || node.properties?.risk_score || 50;
+      if (score >= 75 || type.includes('ORG')) tiers.TOP.push(node);
+      else if (type.includes('PERSON') || type.includes('ACCOUNT') || score >= 50) tiers.MID.push(node);
+      else tiers.BASE.push(node);
+    });
+
+    Object.entries(tiers).forEach(([tierKey, nodesInTier], rowIdx) => {
+      const count = nodesInTier.length;
+      nodesInTier.forEach((node, colIdx) => {
+        const spacingX = 300;
+        const startX = 500 - (count * spacingX) / 2 + spacingX / 2;
+        positions[node.id] = {
+          x: startX + colIdx * spacingX,
+          y: rowIdx * 240 + 80,
+        };
+      });
+    });
+
+    return positions;
+  }
+
+  if (layout === 'ORGANIC') {
+    // Organic Force-Spring Inspired Spacing with Natural Clustering
+    const centerX = 500;
+    const centerY = 400;
+    const phi = (1 + Math.sqrt(5)) / 2; // Golden ratio spiral distribution
+
+    rawNodes.forEach((node, i) => {
+      const radius = 110 * Math.sqrt(i + 1) * 1.8;
+      const angle = i * 2 * Math.PI * (1 - 1 / phi);
+      positions[node.id] = {
+        x: centerX + radius * Math.cos(angle),
+        y: centerY + radius * Math.sin(angle) * 0.85,
+      };
+    });
+
+    return positions;
+  }
+
+  // Fallback: Structured Categorical Columns
   const cols: Record<string, any[]> = {
     ORG: [],
     PERSON: [],
@@ -87,12 +182,11 @@ const calculateNodePositions = (rawNodes: any[]) => {
     k => cols[k].length > 0
   );
 
-  const positions: Record<string, { x: number; y: number }> = {};
   colOrder.forEach((cat, colIdx) => {
     cols[cat].forEach((node, rowIdx) => {
       positions[node.id] = {
-        x: colIdx * 350 + 60,
-        y: rowIdx * 165 + 60
+        x: colIdx * 340 + 80,
+        y: rowIdx * 170 + 80
       };
     });
   });
@@ -103,13 +197,22 @@ const calculateNodePositions = (rawNodes: any[]) => {
 const NetworkExplorerInternal: React.FC = () => {
   const navigate = useNavigate();
   const { setCenter, fitView } = useReactFlow();
+  const viewport = useViewport();
 
   const [cases, setCases] = useState<Array<{ id: string; title: string; case_number: string }>>([]);
   const [selectedCaseId, setSelectedCaseId] = useState<string>('');
   const [domainNodes, setDomainNodes] = useState<GraphNode[]>([]);
-  const [, setDomainEdges] = useState<GraphEdge[]>([]);
+  const [domainEdges, setDomainEdges] = useState<GraphEdge[]>([]);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+
+  // Layout Engine & LOD View Modes
+  const [currentLayout, setCurrentLayout] = useState<LayoutType>('ORGANIC');
+  const [lodMode, setLodMode] = useState<LODMode>('AUTO');
+
+  // Removed/Hidden entity IDs state
+  const [removedEntityIds, setRemovedEntityIds] = useState<Set<string>>(new Set());
 
   // React Flow state
   const [rfNodes, setRfNodes, onNodesChange] = useNodesState<Node>([]);
@@ -126,15 +229,35 @@ const NetworkExplorerInternal: React.FC = () => {
     EVENTS: true,
   });
 
+  const [minThreatFilter, setMinThreatFilter] = useState<number>(0);
   const [activeTab, setActiveTab] = useState<'BOARD' | 'CENTRALITY_MATRIX'>('BOARD');
   const [searchQuery, setSearchQuery] = useState('');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [selectedEdgeData, setSelectedEdgeData] = useState<any | null>(null);
 
+  // Shortest Path modal states
+  const [isPathModalOpen, setIsPathModalOpen] = useState(false);
+  const [pathSourceId, setPathSourceId] = useState('');
+  const [pathTargetId, setPathTargetId] = useState('');
+  const [highlightedPathIds, setHighlightedPathIds] = useState<Set<string>>(new Set());
+
   const triggerToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 4000);
   };
+
+  // Determine current active LOD Level (compact | medium | full)
+  const activeLOD: 'compact' | 'medium' | 'full' = useMemo(() => {
+    if (lodMode === 'COMPACT') return 'compact';
+    if (lodMode === 'MEDIUM') return 'medium';
+    if (lodMode === 'FULL') return 'full';
+
+    // Auto calculate from viewport zoom
+    const z = viewport.zoom;
+    if (z < 0.65) return 'compact';
+    if (z < 1.15) return 'medium';
+    return 'full';
+  }, [lodMode, viewport.zoom]);
 
   // 1. Load Cases
   useEffect(() => {
@@ -167,6 +290,9 @@ const NetworkExplorerInternal: React.FC = () => {
     }
 
     setLoading(true);
+    setRemovedEntityIds(new Set());
+    setHighlightedPathIds(new Set());
+
     api.get(`/graph/${selectedCaseId}`)
       .then((data: any) => {
         const rawNodesList = data.nodes || [];
@@ -181,7 +307,7 @@ const NetworkExplorerInternal: React.FC = () => {
         const rawNodes = Array.from(uniqueNodesMap.values());
         const rawEdges = rawEdgesList.filter((e: any) => uniqueNodesMap.has(e.source) && uniqueNodesMap.has(e.target));
 
-        const positions = calculateNodePositions(rawNodes);
+        const positions = calculateLayoutPositions(rawNodes, rawEdges, currentLayout);
 
         const formattedNodes: GraphNode[] = rawNodes.map((n: any, idx: number) => {
           const props = n.properties || n.data?.properties || {};
@@ -231,8 +357,10 @@ const NetworkExplorerInternal: React.FC = () => {
 
         if (formattedNodes.length > 0) {
           setSelectedNodeId(formattedNodes[0].id);
-        } else {
-          setSelectedNodeId(null);
+          setPathSourceId(formattedNodes[0].id);
+          if (formattedNodes.length > 1) {
+            setPathTargetId(formattedNodes[1].id);
+          }
         }
 
         // Build React Flow Nodes
@@ -286,7 +414,7 @@ const NetworkExplorerInternal: React.FC = () => {
         setRfEdges(flowEdges);
 
         setTimeout(() => {
-          fitView({ padding: 0.2, duration: 600 });
+          fitView({ padding: 0.25, duration: 700 });
         }, 150);
       })
       .catch((err) => {
@@ -300,7 +428,23 @@ const NetworkExplorerInternal: React.FC = () => {
       .finally(() => {
         setLoading(false);
       });
-  }, [selectedCaseId, fitView, setRfNodes, setRfEdges]);
+  }, [selectedCaseId, currentLayout, fitView, setRfNodes, setRfEdges]);
+
+  // Handle Switch Layout Engine
+  const handleApplyLayout = (layout: LayoutType) => {
+    setCurrentLayout(layout);
+    const positions = calculateLayoutPositions(domainNodes, domainEdges, layout);
+    setRfNodes(prev =>
+      prev.map(n => ({
+        ...n,
+        position: positions[n.id] || n.position,
+      }))
+    );
+    setTimeout(() => {
+      fitView({ padding: 0.25, duration: 750 });
+    }, 100);
+    triggerToast(`Applied ${layout} layout engine.`);
+  };
 
   // Handle Filter Toggles
   const handleToggleFilter = (key: keyof typeof entityFilters) => {
@@ -319,41 +463,110 @@ const NetworkExplorerInternal: React.FC = () => {
     return true;
   }, [entityFilters]);
 
-  // Filtered React Flow Nodes & Edges
+  // Remove Entity from Canvas handler
+  const handleRemoveEntity = (entityId: string) => {
+    setRemovedEntityIds(prev => {
+      const next = new Set(prev);
+      next.add(entityId);
+      return next;
+    });
+    if (selectedNodeId === entityId) {
+      setSelectedNodeId(null);
+    }
+    triggerToast('Entity removed from active investigation canvas.');
+  };
+
+  // Restore All Removed Entities
+  const handleRestoreEntities = () => {
+    setRemovedEntityIds(new Set());
+    triggerToast('All removed entities restored to canvas.');
+  };
+
+  // Connected Neighbors map for Focus Dimming
+  const activeFocusNodeId = hoveredNodeId || selectedNodeId;
+  const connectedNodeIds = useMemo(() => {
+    if (!activeFocusNodeId) return null;
+    const set = new Set<string>([activeFocusNodeId]);
+    domainEdges.forEach(e => {
+      if (e.source === activeFocusNodeId) set.add(e.target);
+      if (e.target === activeFocusNodeId) set.add(e.source);
+    });
+    return set;
+  }, [activeFocusNodeId, domainEdges]);
+
+  // Filtered React Flow Nodes & Edges respecting Filters, LOD, and Path Highlighting
   const visibleRfNodes = useMemo(() => {
     return rfNodes.map((n) => {
       const data = n.data as unknown as InvestigationNodeData;
-      const isVisible = isTypeVisible(data.type);
+      const isRemoved = removedEntityIds.has(n.id);
+      const passesThreat = (data.riskScore || 50) >= minThreatFilter;
+      const isVisible = isTypeVisible(data.type) && !isRemoved && passesThreat;
       const isSearchMatch =
         !searchQuery.trim() ||
         data.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (data.role || '').toLowerCase().includes(searchQuery.toLowerCase());
 
+      const isPathHighlight = highlightedPathIds.has(n.id);
+      const isDimmed =
+        highlightedPathIds.size > 0
+          ? !isPathHighlight
+          : connectedNodeIds !== null && !connectedNodeIds.has(n.id);
+
       return {
         ...n,
         hidden: !isVisible || !isSearchMatch,
         selected: selectedNodeId === n.id,
+        data: {
+          ...data,
+          lod: activeLOD,
+          dimmed: isDimmed,
+          highlighted: isPathHighlight || n.id === activeFocusNodeId,
+        },
       };
     });
-  }, [rfNodes, isTypeVisible, searchQuery, selectedNodeId]);
+  }, [rfNodes, isTypeVisible, removedEntityIds, minThreatFilter, searchQuery, selectedNodeId, activeLOD, highlightedPathIds, connectedNodeIds, activeFocusNodeId]);
 
   const visibleRfEdges = useMemo(() => {
     const hiddenNodeIds = new Set(visibleRfNodes.filter(n => n.hidden).map(n => n.id));
-    return rfEdges.map(e => ({
-      ...e,
-      hidden: hiddenNodeIds.has(e.source) || hiddenNodeIds.has(e.target),
-    }));
-  }, [rfEdges, visibleRfNodes]);
+    return rfEdges.map(e => {
+      const isHidden = hiddenNodeIds.has(e.source) || hiddenNodeIds.has(e.target);
+      const isPathEdge = highlightedPathIds.has(e.source) && highlightedPathIds.has(e.target);
+      const isDimmed =
+        highlightedPathIds.size > 0
+          ? !isPathEdge
+          : connectedNodeIds !== null && !(connectedNodeIds.has(e.source) && connectedNodeIds.has(e.target));
+
+      return {
+        ...e,
+        hidden: isHidden,
+        style: {
+          ...e.style,
+          stroke: isPathEdge ? '#00e5ff' : e.style?.stroke,
+          strokeWidth: isPathEdge ? 3.5 : e.style?.strokeWidth || 1.8,
+          opacity: isDimmed ? 0.2 : 1,
+        },
+      };
+    });
+  }, [rfEdges, visibleRfNodes, highlightedPathIds, connectedNodeIds]);
 
   // Selected Node Data
   const currentNode = useMemo(() => {
-    return domainNodes.find(n => n.id === selectedNodeId) || domainNodes[0] || null;
-  }, [domainNodes, selectedNodeId]);
+    if (!selectedNodeId) return domainNodes.find(n => !removedEntityIds.has(n.id)) || null;
+    return domainNodes.find(n => n.id === selectedNodeId) || null;
+  }, [domainNodes, selectedNodeId, removedEntityIds]);
 
   // Handle Node Selection on canvas
   const handleNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
     setSelectedEdgeData(null);
     setSelectedNodeId(node.id);
+  }, []);
+
+  const handleNodeMouseEnter = useCallback((_: React.MouseEvent, node: Node) => {
+    setHoveredNodeId(node.id);
+  }, []);
+
+  const handleNodeMouseLeave = useCallback(() => {
+    setHoveredNodeId(null);
   }, []);
 
   // Handle Edge Selection for "WHY THIS CONNECTION?" Explainability Drawer
@@ -382,26 +595,64 @@ const NetworkExplorerInternal: React.FC = () => {
     });
   }, [domainNodes]);
 
-  // Handle Associate One-Click Navigation
+  // Handle Associate One-Click Navigation & Smooth Traversal
   const handleSelectAssociate = useCallback((targetId: string) => {
     setSelectedNodeId(targetId);
+    setSelectedEdgeData(null);
+
     const targetNode = rfNodes.find(n => n.id === targetId);
-    if (targetNode) {
-      setCenter(targetNode.position.x + 128, targetNode.position.y + 50, { zoom: 1.15, duration: 750 });
+    if (targetNode && setCenter) {
+      setCenter(targetNode.position.x + 100, targetNode.position.y + 50, { zoom: 1.25, duration: 800 });
+      triggerToast(`Focused on node: ${targetNode.data?.name || targetId}`);
     }
   }, [rfNodes, setCenter]);
 
-  // Reset Board Layout
-  const handleRearrangeBoard = () => {
-    const positions = calculateNodePositions(domainNodes);
-    setRfNodes(prev =>
-      prev.map(n => ({
-        ...n,
-        position: positions[n.id] || n.position,
-      }))
-    );
-    fitView({ padding: 0.2, duration: 600 });
-    triggerToast('Investigation board layout re-aligned.');
+  // Shortest Path Finder (BFS)
+  const handleFindShortestPath = () => {
+    if (!pathSourceId || !pathTargetId || pathSourceId === pathTargetId) {
+      triggerToast('Please select two distinct entities to trace shortest path.');
+      return;
+    }
+
+    // Build adjacency list
+    const adj: Record<string, string[]> = {};
+    domainNodes.forEach(n => { adj[n.id] = []; });
+    domainEdges.forEach(e => {
+      if (adj[e.source]) adj[e.source].push(e.target);
+      if (adj[e.target]) adj[e.target].push(e.source);
+    });
+
+    // BFS
+    const queue: Array<{ id: string; path: string[] }> = [{ id: pathSourceId, path: [pathSourceId] }];
+    const visited = new Set<string>([pathSourceId]);
+    let foundPath: string[] | null = null;
+
+    while (queue.length > 0) {
+      const current = queue.shift()!;
+      if (current.id === pathTargetId) {
+        foundPath = current.path;
+        break;
+      }
+      for (const neighbor of (adj[current.id] || [])) {
+        if (!visited.has(neighbor)) {
+          visited.add(neighbor);
+          queue.push({ id: neighbor, path: [...current.path, neighbor] });
+        }
+      }
+    }
+
+    if (foundPath && foundPath.length > 0) {
+      setHighlightedPathIds(new Set(foundPath));
+      setIsPathModalOpen(false);
+      triggerToast(`Found shortest path with ${foundPath.length - 1} hops between entities!`);
+    } else {
+      triggerToast('No connected pathway exists between selected entities.');
+    }
+  };
+
+  const handleClearPathHighlight = () => {
+    setHighlightedPathIds(new Set());
+    triggerToast('Cleared path highlights.');
   };
 
   const handleExportCypher = () => {
@@ -427,22 +678,22 @@ const NetworkExplorerInternal: React.FC = () => {
       )}
 
       {/* ================= TOP OPERATIONAL SUB-BAR ================= */}
-      <header className="flex justify-between items-center w-full px-4 h-10 border-b border-outline-variant bg-surface-container-lowest z-40 shrink-0">
+      <header className="flex flex-wrap justify-between items-center w-full px-4 py-2 border-b border-outline-variant bg-surface-container-lowest z-40 shrink-0 gap-2 font-mono text-xs">
         <div className="flex items-center space-x-3 overflow-hidden">
-          <span className="text-xs font-mono font-semibold tracking-wider text-primary uppercase flex items-center gap-1.5 shrink-0">
+          <span className="text-xs font-bold tracking-wider text-primary uppercase flex items-center gap-1.5 shrink-0">
             <span className="material-symbols-outlined text-primary text-[18px]">account_tree</span>
-            VEILLE // INVESTIGATION BOARD
+            VEILLE // FORENSIC LINK GRAPH
           </span>
           <div className="h-4 w-px bg-outline-variant hidden sm:block" />
 
           {/* Case Selector Dropdown */}
-          <div className="flex items-center space-x-2 text-[11px] font-mono">
+          <div className="flex items-center space-x-2 text-[11px]">
             <span className="text-outline">CASE:</span>
             {cases.length > 0 ? (
               <select
                 value={selectedCaseId}
                 onChange={(e) => setSelectedCaseId(e.target.value)}
-                className="bg-surface-container-low border border-outline-variant text-primary px-2 py-0.5 font-mono text-xs focus:outline-none"
+                className="bg-surface-container-low border border-outline-variant text-primary px-2.5 py-1 font-mono text-xs focus:outline-none rounded"
               >
                 {cases.map((c) => (
                   <option key={c.id} value={c.id}>
@@ -461,28 +712,28 @@ const NetworkExplorerInternal: React.FC = () => {
           <div className="relative hidden md:block">
             <input
               type="text"
-              placeholder="Search board nodes..."
+              placeholder="Search graph nodes..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="bg-surface-container-low border border-outline-variant text-on-surface text-[11px] font-mono pl-7 pr-2 py-1 w-48 focus:w-60 focus:border-primary focus:outline-none transition-all"
+              className="bg-surface-container-low border border-outline-variant text-on-surface text-[11px] font-mono pl-7 pr-2 py-1 w-44 focus:w-56 focus:border-primary focus:outline-none transition-all rounded"
             />
             <span className="material-symbols-outlined absolute left-1.5 top-1.5 text-xs text-outline pointer-events-none">
               search
             </span>
           </div>
 
-          <div className="flex border border-outline-variant p-0.5 bg-surface-container-low font-mono text-[10px]">
+          <div className="flex border border-outline-variant p-0.5 bg-surface-container-low font-mono text-[10px] rounded">
             <button
               onClick={() => setActiveTab('BOARD')}
-              className={`px-2 py-0.5 transition-colors cursor-pointer font-bold ${
+              className={`px-2 py-0.5 transition-colors cursor-pointer font-bold rounded ${
                 activeTab === 'BOARD' ? 'bg-primary text-surface-container-lowest' : 'text-outline hover:text-on-surface'
               }`}
             >
-              BOARD CANVAS
+              GRAPH CANVAS
             </button>
             <button
               onClick={() => setActiveTab('CENTRALITY_MATRIX')}
-              className={`px-2 py-0.5 transition-colors cursor-pointer font-bold ${
+              className={`px-2 py-0.5 transition-colors cursor-pointer font-bold rounded ${
                 activeTab === 'CENTRALITY_MATRIX' ? 'bg-primary text-surface-container-lowest' : 'text-outline hover:text-on-surface'
               }`}
             >
@@ -492,36 +743,99 @@ const NetworkExplorerInternal: React.FC = () => {
         </div>
       </header>
 
-      {/* ================= FILTER TOOLBAR STRIP ================= */}
+      {/* ================= DYNAMIC HUD TOOLBAR: LAYOUT ENGINE & LOD CONTROLS ================= */}
       <section className="flex flex-wrap items-center justify-between px-4 py-2 border-b border-outline-variant bg-surface-container-low gap-2 text-xs font-mono shrink-0">
+        {/* Left: Layout Engines & LOD View Modes */}
+        <div className="flex items-center space-x-3 flex-wrap gap-y-1.5">
+          {/* Layout Switcher */}
+          <div className="flex items-center space-x-1">
+            <span className="text-[10px] text-outline uppercase font-bold">LAYOUT:</span>
+            <div className="flex border border-outline-variant p-0.5 bg-surface-container-lowest rounded">
+              {(['ORGANIC', 'RADIAL', 'HIERARCHY', 'GRID'] as const).map((mode) => (
+                <button
+                  key={mode}
+                  onClick={() => handleApplyLayout(mode)}
+                  className={`px-2 py-0.5 text-[10px] font-bold rounded transition-colors cursor-pointer ${
+                    currentLayout === mode
+                      ? 'bg-primary text-surface-container-lowest'
+                      : 'text-outline hover:text-white'
+                  }`}
+                >
+                  {mode}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* LOD View Mode Switcher */}
+          <div className="flex items-center space-x-1">
+            <span className="text-[10px] text-outline uppercase font-bold">LOD SIZING:</span>
+            <div className="flex border border-outline-variant p-0.5 bg-surface-container-lowest rounded">
+              {(['AUTO', 'COMPACT', 'MEDIUM', 'FULL'] as const).map((m) => (
+                <button
+                  key={m}
+                  onClick={() => setLodMode(m)}
+                  className={`px-2 py-0.5 text-[10px] font-bold rounded transition-colors cursor-pointer ${
+                    lodMode === m
+                      ? 'bg-secondary text-surface-container-lowest'
+                      : 'text-outline hover:text-white'
+                  }`}
+                  title={m === 'AUTO' ? 'Auto-scale from zoom level' : `Lock to ${m} view`}
+                >
+                  {m === 'AUTO' ? `AUTO (${activeLOD.toUpperCase()})` : m}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Shortest Path Finder Button */}
+          <button
+            onClick={() => setIsPathModalOpen(true)}
+            className="px-2.5 py-1 bg-surface-container-lowest border border-outline-variant hover:border-primary text-primary font-bold rounded flex items-center gap-1 cursor-pointer transition-colors"
+          >
+            <span className="material-symbols-outlined text-[14px]">route</span>
+            <span>FIND PATH</span>
+          </button>
+
+          {highlightedPathIds.size > 0 && (
+            <button
+              onClick={handleClearPathHighlight}
+              className="px-2 py-1 bg-amber-500/15 border border-amber-500/40 text-amber-400 rounded text-[10px] font-bold cursor-pointer"
+            >
+              CLEAR PATH ({highlightedPathIds.size} NODES)
+            </button>
+          )}
+        </div>
+
+        {/* Right: Category Filter Pills & Metrics */}
         <div className="flex items-center space-x-2 flex-wrap gap-y-1">
-          <span className="text-[10px] text-outline font-bold uppercase">ENTITY FILTERS:</span>
-          {(['PERSONS', 'VEHICLES', 'COMMS', 'FINANCIAL', 'LOCATIONS', 'ORGS', 'EVENTS'] as const).map((cat) => (
+          {(['PERSONS', 'VEHICLES', 'COMMS', 'FINANCIAL', 'LOCATIONS', 'ORGS'] as const).map((cat) => (
             <button
               key={cat}
               onClick={() => handleToggleFilter(cat)}
-              className={`px-2 py-0.5 border text-[10px] font-bold transition-colors cursor-pointer ${
+              className={`px-1.5 py-0.5 border text-[9px] font-bold transition-colors cursor-pointer rounded ${
                 entityFilters[cat]
-                  ? 'border-primary text-primary bg-primary/10'
+                  ? 'border-primary/60 text-primary bg-primary/10'
                   : 'border-outline-variant text-outline bg-surface-container-lowest'
               }`}
             >
               {cat}
             </button>
           ))}
-        </div>
 
-        <div className="flex items-center space-x-3 text-[11px]">
-          <button
-            onClick={handleRearrangeBoard}
-            className="px-2 py-0.5 bg-surface-container border border-outline-variant hover:border-primary text-on-surface hover:text-primary transition-colors flex items-center gap-1 cursor-pointer font-bold"
-            title="Auto-organize card columns"
-          >
-            <span className="material-symbols-outlined text-[14px]">auto_fix_high</span>
-            <span>AUTO-ALIGN</span>
-          </button>
-          <span className="text-outline">NODES: <strong className="text-on-surface">{visibleRfNodes.filter(n => !n.hidden).length}</strong></span>
-          <span className="text-outline">EDGES: <strong className="text-on-surface">{visibleRfEdges.filter(e => !e.hidden).length}</strong></span>
+          {removedEntityIds.size > 0 && (
+            <button
+              onClick={handleRestoreEntities}
+              className="px-2 py-0.5 bg-amber-500/15 border border-amber-500/40 text-amber-400 hover:bg-amber-500/25 transition-colors flex items-center gap-1 cursor-pointer font-bold rounded text-[10px]"
+            >
+              <span className="material-symbols-outlined text-[12px]">undo</span>
+              <span>RESTORE ({removedEntityIds.size})</span>
+            </button>
+          )}
+
+          <div className="text-[10px] text-outline font-mono pl-2 border-l border-outline-variant">
+            NODES: <strong className="text-white">{visibleRfNodes.filter(n => !n.hidden).length}</strong>
+          </div>
         </div>
       </section>
 
@@ -529,8 +843,8 @@ const NetworkExplorerInternal: React.FC = () => {
       <div className="flex-1 flex overflow-hidden min-h-0 bg-surface">
         {activeTab === 'BOARD' ? (
           <>
-            {/* Graph Canvas Theater (65%) */}
-            <div className="w-full lg:w-[65%] border-r border-outline-variant flex flex-col bg-[#080d1a] relative overflow-hidden">
+            {/* Graph Canvas Theater (68%) */}
+            <div className="w-full lg:w-[68%] border-r border-outline-variant flex flex-col bg-[#060913] relative overflow-hidden">
               {loading ? (
                 <div className="flex-1 flex flex-col items-center justify-center p-8 text-outline font-mono text-xs">
                   <span className="material-symbols-outlined text-3xl animate-spin mb-2 text-primary">progress_activity</span>
@@ -547,7 +861,7 @@ const NetworkExplorerInternal: React.FC = () => {
                   </p>
                   <button
                     onClick={() => navigate('/evidence-library')}
-                    className="mt-4 px-4 py-2 bg-primary text-surface-container-lowest text-xs font-mono font-bold hover:bg-primary-fixed-dim transition-colors cursor-pointer"
+                    className="mt-4 px-4 py-2 bg-primary text-surface-container-lowest text-xs font-mono font-bold hover:bg-primary-fixed-dim transition-colors cursor-pointer rounded"
                   >
                     OPEN EVIDENCE VAULT
                   </button>
@@ -561,27 +875,29 @@ const NetworkExplorerInternal: React.FC = () => {
                     onNodesChange={onNodesChange}
                     onEdgesChange={onEdgesChange}
                     onNodeClick={handleNodeClick}
+                    onNodeMouseEnter={handleNodeMouseEnter}
+                    onNodeMouseLeave={handleNodeMouseLeave}
                     onEdgeClick={handleEdgeClick}
                     onPaneClick={() => {
                       setSelectedNodeId(null);
                       setSelectedEdgeData(null);
                     }}
                     minZoom={0.2}
-                    maxZoom={2.5}
+                    maxZoom={2.8}
                     fitView
-                    className="bg-[#080d1a]"
+                    className="bg-[#060913]"
                   >
-                    <Background color="#38bdf8" gap={24} size={1} className="opacity-15" />
+                    <Background color="#00e5ff" gap={28} size={1} className="opacity-10" />
                     <Controls className="!m-4" showInteractive={false} />
                     <MiniMap
-                      className="!m-4"
+                      className="!m-4 !border !border-outline-variant !bg-[#0a0f1d]"
                       nodeColor={(n) => {
                         const data = n.data as unknown as InvestigationNodeData;
                         const t = (data.type || '').toUpperCase();
                         if (t.includes('PERSON')) return '#ef4444';
                         if (t.includes('VEHICLE')) return '#06b6d4';
-                        if (t.includes('PHONE')) return '#a855f7';
-                        if (t.includes('ACCOUNT')) return '#f59e0b';
+                        if (t.includes('PHONE')) return '#c084fc';
+                        if (t.includes('ACCOUNT')) return '#fbbf24';
                         if (t.includes('LOCATION')) return '#10b981';
                         return '#3b82f6';
                       }}
@@ -593,12 +909,11 @@ const NetworkExplorerInternal: React.FC = () => {
               )}
             </div>
 
-            {/* Right Intelligence Dossier Inspector Drawer (35%) */}
-            <div className="w-full lg:w-[35%] flex flex-col bg-surface-container-low overflow-y-auto p-4 font-mono text-xs">
+            {/* Right Intelligence Dossier Inspector Drawer (32%) */}
+            <div className="w-full lg:w-[32%] flex flex-col bg-surface-container-low overflow-y-auto p-4 font-mono text-xs">
               {selectedEdgeData ? (
                 /* ================= WHY THIS CONNECTION? EXPLAINABILITY PANEL ================= */
                 <div className="space-y-4 animate-fade-in">
-                  {/* Header Banner */}
                   <div className="flex items-center justify-between pb-3 border-b border-primary/40">
                     <div className="flex items-center gap-2">
                       <span className="material-symbols-outlined text-primary text-lg animate-pulse">schema</span>
@@ -614,7 +929,6 @@ const NetworkExplorerInternal: React.FC = () => {
                     <button
                       onClick={() => setSelectedEdgeData(null)}
                       className="text-outline hover:text-on-surface p-1 rounded cursor-pointer"
-                      title="Close edge explainer"
                     >
                       <span className="material-symbols-outlined text-sm">close</span>
                     </button>
@@ -664,14 +978,14 @@ const NetworkExplorerInternal: React.FC = () => {
 
                     <div className="flex justify-between items-center">
                       <span className="text-outline uppercase text-[10px]">PRIMARY EVIDENCE SOURCE:</span>
-                      <span className="text-primary font-bold truncate max-w-[180px]">
+                      <span className="text-primary font-bold truncate max-w-[160px]">
                         {selectedEdgeData.evidenceId}
                       </span>
                     </div>
 
                     <div className="flex justify-between items-center">
                       <span className="text-outline uppercase text-[10px]">CITATION &amp; REFERENCE:</span>
-                      <span className="text-on-surface font-mono text-[10px] text-right">
+                      <span className="text-on-surface font-mono text-[10px] text-right truncate max-w-[160px]">
                         {selectedEdgeData.citation}
                       </span>
                     </div>
@@ -679,37 +993,9 @@ const NetworkExplorerInternal: React.FC = () => {
 
                   {/* Forensic Observations Table */}
                   <div className="space-y-1.5">
-                    <div className="text-[10px] uppercase font-bold text-outline tracking-wider flex items-center justify-between">
-                      <span>FORENSIC OBSERVATIONS</span>
-                      <span className="text-secondary text-[9px]">EXTRACTED TELEMETRY</span>
-                    </div>
+                    <div className="text-[10px] uppercase font-bold text-outline tracking-wider">FORENSIC OBSERVATIONS</div>
                     <div className="p-3 bg-surface-container-lowest border border-outline-variant rounded-xl text-[11px] leading-relaxed text-on-surface-variant space-y-2">
                       <p>{selectedEdgeData.observations}</p>
-                      
-                      {Object.keys(selectedEdgeData.properties || {}).length > 0 && (
-                        <div className="border-t border-outline-variant/40 pt-2 mt-2 space-y-1">
-                          {Object.entries(selectedEdgeData.properties)
-                            .filter(([k]) => !['citation', 'observations', 'confidence', 'evidence_id', 'case_id'].includes(k))
-                            .map(([k, v]) => (
-                              <div key={k} className="flex justify-between text-[10px] font-mono">
-                                <span className="text-outline uppercase">{k.replace(/_/g, ' ')}:</span>
-                                <span className="text-on-surface font-semibold">{String(v)}</span>
-                              </div>
-                            ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Temporal Bounds */}
-                  <div className="p-2.5 bg-surface-container-lowest border border-outline-variant rounded-xl flex items-center justify-between text-[10px] font-mono">
-                    <div>
-                      <span className="text-outline block">FIRST OBSERVED:</span>
-                      <span className="text-on-surface font-bold">{selectedEdgeData.firstSeen}</span>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-outline block">LAST OBSERVED:</span>
-                      <span className="text-secondary font-bold">{selectedEdgeData.lastSeen}</span>
                     </div>
                   </div>
 
@@ -720,7 +1006,7 @@ const NetworkExplorerInternal: React.FC = () => {
                       className="flex-1 py-2 bg-primary text-surface-container-lowest font-bold text-xs rounded hover:bg-primary-fixed-dim transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                     >
                       <span className="material-symbols-outlined text-[16px]">folder_open</span>
-                      <span>OPEN SOURCE EVIDENCE</span>
+                      <span>OPEN EVIDENCE VAULT</span>
                     </button>
                     <button
                       onClick={() => setSelectedEdgeData(null)}
@@ -739,9 +1025,18 @@ const NetworkExplorerInternal: React.FC = () => {
                       <div className="text-primary font-bold text-sm tracking-wide">{currentNode.name}</div>
                       <div className="text-outline text-[11px] font-mono mt-0.5">{currentNode.role}</div>
                     </div>
-                    <span className="px-2 py-0.5 border text-[10px] font-bold uppercase tracking-wider bg-surface-container border-primary/40 text-primary">
-                      {currentNode.type}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="px-2 py-0.5 border text-[10px] font-bold uppercase tracking-wider bg-surface-container border-primary/40 text-primary rounded">
+                        {currentNode.type}
+                      </span>
+                      <button
+                        onClick={() => handleRemoveEntity(currentNode.id)}
+                        className="p-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 rounded cursor-pointer transition-colors"
+                        title="Remove entity from canvas"
+                      >
+                        <span className="material-symbols-outlined text-[16px]">visibility_off</span>
+                      </button>
+                    </div>
                   </div>
 
                   {/* Threat Gauge & Key Metrics */}
@@ -770,7 +1065,7 @@ const NetworkExplorerInternal: React.FC = () => {
 
                     <div className="flex justify-between">
                       <span className="text-outline uppercase text-[10px]">EVIDENCE SOURCE:</span>
-                      <span className="text-primary font-bold">{currentNode.evidenceId}</span>
+                      <span className="text-primary font-bold truncate max-w-[150px]">{currentNode.evidenceId}</span>
                     </div>
 
                     <div className="flex justify-between">
@@ -796,9 +1091,6 @@ const NetworkExplorerInternal: React.FC = () => {
                               </span>
                             </div>
                           ))}
-                        {Object.entries(currentNode.rawProperties).filter(([key]) => !['id', 'case_id', 'updated_at', 'properties', 'source_evidence_id', 'name', 'alias', 'community', 'degree'].includes(key)).length === 0 && (
-                          <div className="text-outline text-[10px] italic">No secondary attributes extracted.</div>
-                        )}
                       </div>
                     </div>
                   )}
@@ -809,7 +1101,7 @@ const NetworkExplorerInternal: React.FC = () => {
                       <span className="text-[10px] uppercase font-bold text-outline tracking-wider">
                         CONNECTED NEIGHBORS ({currentNode.associates.length})
                       </span>
-                      <span className="text-[9px] text-primary font-mono">CLICK TO TRAVERSE ➔</span>
+                      <span className="text-[9px] text-primary font-mono font-bold">CLICK TO TRAVERSE ➔</span>
                     </div>
 
                     {currentNode.associates.length > 0 ? (
@@ -818,7 +1110,7 @@ const NetworkExplorerInternal: React.FC = () => {
                           <div
                             key={i}
                             onClick={() => handleSelectAssociate(assoc.id)}
-                            className="p-2 bg-surface-container-lowest border border-outline-variant hover:border-primary/80 hover:bg-surface-container transition-all cursor-pointer rounded flex items-center justify-between text-[11px] group"
+                            className="p-2 bg-surface-container-lowest border border-outline-variant hover:border-primary/80 hover:bg-surface-container transition-all cursor-pointer rounded flex items-center justify-between text-[11px] group shadow-sm"
                           >
                             <div className="overflow-hidden mr-2">
                               <div className="text-on-surface font-bold truncate group-hover:text-primary transition-colors">
@@ -829,7 +1121,7 @@ const NetworkExplorerInternal: React.FC = () => {
                                 {assoc.details && <span>• {assoc.details}</span>}
                               </div>
                             </div>
-                            <span className="text-[9px] font-mono px-1.5 py-0.5 bg-surface-container-high border border-outline-variant text-secondary shrink-0 rounded">
+                            <span className="text-[9px] font-mono px-1.5 py-0.5 bg-surface-container-high border border-outline-variant text-secondary shrink-0 rounded font-bold">
                               {assoc.type}
                             </span>
                           </div>
@@ -842,19 +1134,11 @@ const NetworkExplorerInternal: React.FC = () => {
                     )}
                   </div>
 
-                  {/* Forensic Investigative Notes */}
-                  <div className="space-y-1">
-                    <div className="text-[10px] uppercase font-bold text-outline tracking-wider">INTELLIGENCE BRIEFING</div>
-                    <div className="p-3 bg-surface-container-lowest border border-outline-variant text-[11px] leading-relaxed text-on-surface-variant rounded">
-                      {currentNode.details}
-                    </div>
-                  </div>
-
                   {/* Actions */}
                   <div className="pt-2 space-y-2">
                     <button
                       onClick={handleExportCypher}
-                      className="w-full py-2 bg-surface-container-high border border-outline-variant hover:border-primary text-on-surface font-mono text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer rounded"
+                      className="w-full py-2 bg-surface-container-high border border-outline-variant hover:border-primary text-on-surface font-mono text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer rounded font-bold"
                     >
                       <span className="material-symbols-outlined text-xs">terminal</span>
                       <span>EXPORT CYPHER QUERY</span>
@@ -872,7 +1156,7 @@ const NetworkExplorerInternal: React.FC = () => {
         ) : (
           /* Centrality Matrix Analytical View */
           <div className="flex-1 overflow-y-auto p-4 bg-surface font-mono">
-            <div className="border border-outline-variant bg-surface-container-lowest overflow-hidden">
+            <div className="border border-outline-variant bg-surface-container-lowest overflow-hidden rounded">
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
                   <tr className="bg-surface-container-low border-b border-outline-variant text-outline text-[10px] uppercase tracking-wider h-8">
@@ -882,10 +1166,11 @@ const NetworkExplorerInternal: React.FC = () => {
                     <th className="px-3 py-2 font-semibold text-right">BETWEENNESS</th>
                     <th className="px-3 py-2 font-semibold text-right">DEGREE</th>
                     <th className="px-3 py-2 font-semibold text-center">RISK SCORE</th>
+                    <th className="px-3 py-2 font-semibold text-right">ACTION</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-surface-container-high">
-                  {domainNodes.map((n, idx) => (
+                  {domainNodes.filter(n => !removedEntityIds.has(n.id)).map((n, idx) => (
                     <tr
                       key={`${n.id}-${idx}`}
                       onClick={() => {
@@ -897,7 +1182,7 @@ const NetworkExplorerInternal: React.FC = () => {
                     >
                       <td className="px-3 py-2.5 font-bold text-primary">{n.name}</td>
                       <td className="px-3 py-2.5">
-                        <span className="px-1.5 py-0.5 bg-surface-container border border-outline-variant text-[10px] font-bold text-on-surface uppercase">
+                        <span className="px-1.5 py-0.5 bg-surface-container border border-outline-variant text-[10px] font-bold text-on-surface uppercase rounded">
                           {n.type}
                         </span>
                       </td>
@@ -915,6 +1200,19 @@ const NetworkExplorerInternal: React.FC = () => {
                           {n.riskScore}/100
                         </span>
                       </td>
+                      <td className="px-3 py-2.5 text-right">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedNodeId(n.id);
+                            setActiveTab('BOARD');
+                            handleSelectAssociate(n.id);
+                          }}
+                          className="text-primary hover:text-primary-fixed-dim text-xs font-bold"
+                        >
+                          Inspect ➔
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -923,6 +1221,66 @@ const NetworkExplorerInternal: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Shortest Path Finder Modal */}
+      {isPathModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 font-mono text-xs">
+          <div className="w-full max-w-md bg-surface-container border border-outline-variant rounded-xl shadow-2xl p-6 space-y-4 animate-scale-in">
+            <div className="flex items-center justify-between border-b border-outline-variant pb-3">
+              <div className="flex items-center gap-2 text-primary font-bold text-sm">
+                <span className="material-symbols-outlined text-primary">route</span>
+                <span>TRACE SHORTEST SYNDICATE PATH</span>
+              </div>
+              <button onClick={() => setIsPathModalOpen(false)} className="text-outline hover:text-white">
+                <span className="material-symbols-outlined text-sm">close</span>
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="text-[10px] uppercase text-outline block mb-1">ORIGIN SUSPECT / ENTITY</label>
+                <select
+                  value={pathSourceId}
+                  onChange={(e) => setPathSourceId(e.target.value)}
+                  className="w-full bg-surface-container-lowest border border-outline-variant px-3 py-2 text-on-surface rounded focus:border-primary focus:outline-none"
+                >
+                  {domainNodes.map(n => (
+                    <option key={n.id} value={n.id}>{n.name} ({n.type})</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-[10px] uppercase text-outline block mb-1">DESTINATION TARGET ENTITY</label>
+                <select
+                  value={pathTargetId}
+                  onChange={(e) => setPathTargetId(e.target.value)}
+                  className="w-full bg-surface-container-lowest border border-outline-variant px-3 py-2 text-on-surface rounded focus:border-primary focus:outline-none"
+                >
+                  {domainNodes.map(n => (
+                    <option key={n.id} value={n.id}>{n.name} ({n.type})</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="pt-2 flex items-center justify-end gap-2">
+              <button
+                onClick={() => setIsPathModalOpen(false)}
+                className="px-3 py-1.5 bg-surface-container-low border border-outline-variant text-outline hover:text-white rounded"
+              >
+                CANCEL
+              </button>
+              <button
+                onClick={handleFindShortestPath}
+                className="px-4 py-1.5 bg-primary text-surface-container-lowest font-bold rounded hover:bg-primary-fixed-dim transition-colors cursor-pointer"
+              >
+                CALCULATE HOPS
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

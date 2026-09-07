@@ -58,6 +58,49 @@ Key Guidelines:
 """
 
 
+OUT_OF_SCOPE_WORDS = {
+    "tomato", "potato", "recipe", "cook", "cooking", "cake", "bake", "baking", "pizza", "food",
+    "movie", "film", "actor", "actress", "song", "music", "joke", "funny", "game", "gaming",
+    "cricket", "football", "basketball", "weather", "forecast", "climate", "poem", "poetry",
+    "story", "novel", "fiction", "photosynthesis", "biology", "physics", "chemistry",
+    "astronomy", "horoscope", "zodiac", "dress", "fashion", "makeup", "dating", "love"
+}
+
+INVESTIGATIVE_DOMAIN_WORDS = {
+    "case", "suspect", "evidence", "fir", "investigation", "investigate", "crime", "criminal",
+    "syndicate", "hawala", "bank", "account", "transfer", "cdr", "call", "wiretap", "phone",
+    "vehicle", "car", "location", "sighting", "warrant", "arrest", "court", "65b", "forensic",
+    "ledger", "money", "conduit", "shell", "intercept", "pki", "certificate", "summary",
+    "overview", "hierarchy", "network", "entity", "entities", "lead", "who", "where", "when",
+    "connection", "connected", "associated", "relationship", "timeline", "target", "operator",
+    "intel", "intelligence", "dossier", "flight", "passport", "identity", "alias", "threat"
+}
+
+
+def _is_out_of_scope_query(query: str, matched_nodes: list) -> bool:
+    """
+    Evaluates whether a user query is outside the domain of law enforcement
+    and criminal intelligence investigations.
+    """
+    import re
+    words = set(re.findall(r'\b[a-zA-Z0-9_-]+\b', query.lower()))
+    
+    # If the user mentioned a known entity that exists in the knowledge graph, it's in-scope
+    if matched_nodes:
+        return False
+        
+    # Check for explicit non-domain words
+    if words.intersection(OUT_OF_SCOPE_WORDS):
+        return True
+        
+    # If the query has no investigative domain words and no graph entities matched
+    if not words.intersection(INVESTIGATIVE_DOMAIN_WORDS) and len(words) >= 2:
+        # Check if it's general conversational small talk (e.g. "what is x", "tell me about y")
+        return True
+        
+    return False
+
+
 def _fetch_graph_context(query: str, case_id: Optional[str] = None, db: Optional[Session] = None) -> dict:
     """
     Intent-Aware GraphRAG Query Planner:
@@ -116,10 +159,21 @@ def _fetch_graph_context(query: str, case_id: Optional[str] = None, db: Optional
                 """
 
             node_result = list(session.run(cypher_nodes, **params))
-            if not node_result and case_id:
-                # Fallback to all case nodes if keyword match didn't yield
+
+            # Only fallback to general case nodes if query was general (no specific unmatched keywords)
+            is_general_query = not keywords or any(w.lower() in {"summary", "case", "overview", "all", "network", "investigate", "entities", "hierarchy"} for w in raw_words)
+            if not node_result and case_id and is_general_query:
                 node_result = list(session.run("MATCH (n {case_id: $case_id}) RETURN n.name AS name, labels(n)[0] AS type, properties(n) AS props, n.id AS id LIMIT 25", case_id=case_id))
             
+            # Check domain confinement
+            if _is_out_of_scope_query(query, node_result):
+                return {
+                    "is_out_of_scope": True,
+                    "context_text": "",
+                    "entities": [],
+                    "citations": []
+                }
+
             matched_node_ids = set()
 
             for record in node_result:
@@ -150,7 +204,7 @@ def _fetch_graph_context(query: str, case_id: Optional[str] = None, db: Optional
                             "confidence": "Verified",
                         })
 
-            # 2. Fetch multi-hop relationships around the matched nodes or case
+            # 2. Fetch multi-hop relationships around the matched nodes
             if matched_node_ids:
                 rel_params = {"node_ids": list(matched_node_ids), "case_id": case_id}
                 cypher_rels = """
@@ -161,7 +215,7 @@ def _fetch_graph_context(query: str, case_id: Optional[str] = None, db: Optional
                 LIMIT 25
                 """
                 rel_result = session.run(cypher_rels, **rel_params)
-            else:
+            elif is_general_query and case_id:
                 cypher_rels = """
                 MATCH (n)-[r]->(m)
                 WHERE n.case_id = $case_id OR $case_id IS NULL
@@ -169,6 +223,8 @@ def _fetch_graph_context(query: str, case_id: Optional[str] = None, db: Optional
                 LIMIT 20
                 """
                 rel_result = session.run(cypher_rels, case_id=case_id)
+            else:
+                rel_result = []
 
             for record in rel_result:
                 conf = f" (Confidence: {record['conf']:.2f})" if record.get("conf") else ""
@@ -194,13 +250,14 @@ def _fetch_graph_context(query: str, case_id: Optional[str] = None, db: Optional
                 context_parts.append("### Multi-Hop Relationships & Transactional Paths:\n" + "\n".join(rels))
 
             return {
+                "is_out_of_scope": False,
                 "context_text": "\n\n".join(context_parts) if context_parts else "",
                 "entities": extracted_entities,
                 "citations": citations,
             }
     except Exception as e:
         logger.warning(f"Failed to fetch intent-aware graph context for RAG: {e}")
-        return {"context_text": "", "entities": [], "citations": []}
+        return {"is_out_of_scope": False, "context_text": "", "entities": [], "citations": []}
 
 
 @router.post("/chat", response_model=ChatResponse)
@@ -222,6 +279,21 @@ async def chat_with_assistant(
 
     # ── RAG: Fetch live graph context from Neo4j ─────────────────────────────
     graph_data = _fetch_graph_context(user_query, body.case_id, db=db)
+    
+    # Check if query is explicitly out-of-scope (e.g. "what is tomato")
+    if graph_data.get("is_out_of_scope"):
+        out_of_scope_text = (
+            "## ⚠️ Query Out of Scope // Security Notice\n\n"
+            f"• **Operational Domain**: VEILLE AI is strictly restricted to law enforcement, criminal intelligence, forensic relationship analysis, and case evidence synthesis.\n"
+            f"• **Status**: The query `\"{user_query}\"` is unrelated to active case dossiers, suspect entities, or forensic evidence.\n"
+            "• **Guidance**: Please ask questions regarding case suspects, wiretap intercepts, financial ledgers, cell tower sightings, or evidentiary correlations."
+        )
+        return ChatResponse(
+            response=out_of_scope_text,
+            entities=[],
+            citations=[]
+        )
+
     graph_context = graph_data["context_text"]
     dynamic_entities = graph_data["entities"]
     dynamic_citations = graph_data["citations"]
@@ -259,9 +331,9 @@ No extracted entity relationships or graph records currently exist for this quer
             ai_text_response += "\n\n*— Generated via Gemini AI Engine*"
         except Exception as e:
             logger.warning(f"Gemini API call failed: {e}. Falling back to standard intelligence response.")
-            ai_text_response = _rule_based_fallback(user_query, graph_context)
+            ai_text_response = _rule_based_fallback(user_query, graph_context, case_id=body.case_id, db=db)
     else:
-        ai_text_response = _rule_based_fallback(user_query, graph_context)
+        ai_text_response = _rule_based_fallback(user_query, graph_context, case_id=body.case_id, db=db)
 
     return ChatResponse(
         response=ai_text_response,
@@ -270,52 +342,88 @@ No extracted entity relationships or graph records currently exist for this quer
     )
 
 
-def _rule_based_fallback(query: str, graph_context: str) -> str:
-    """Synthesizes factual intelligence response from graph context."""
+
+def _rule_based_fallback(query: str, graph_context: str, case_id: Optional[str] = None, db: Optional[Session] = None) -> str:
+    """Synthesizes factual intelligence response from graph context and case records."""
+    import re
     q = query.lower()
+    words = set(re.findall(r'\b[a-zA-Z0-9_-]+\b', q))
+
+    # Check for out-of-scope queries
+    if _is_out_of_scope_query(query, []):
+        return (
+            "## ⚠️ Query Out of Scope // Security Notice\n\n"
+            f"• **Operational Domain**: VEILLE AI is strictly restricted to law enforcement, criminal intelligence, forensic relationship analysis, and case evidence synthesis.\n"
+            f"• **Status**: The query `\"{query}\"` is unrelated to active case dossiers, suspect entities, or forensic evidence.\n"
+            "• **Guidance**: Please ask questions regarding case suspects, wiretap intercepts, financial ledgers, cell tower sightings, or evidentiary correlations."
+        )
     
-    if any(w in q for w in ["hey", "hi", "hello", "greetings"]):
+    # Only return greeting if it's purely a greeting message with no investigative query
+    if words.intersection({"hey", "hi", "hello", "greetings"}) and len(words) <= 2 and not words.intersection({"summary", "case", "investigate", "tell", "detail", "who", "what", "find"}):
         return "Hello Investigator. Ready to analyze case evidence and synthesize network intelligence. What would you like to investigate?"
+
+    # Fetch Case Title / Description if db available
+    case_info_header = "Active Investigation Case"
+    if db and case_id:
+        try:
+            case_rec = db.query(Case).filter(Case.id == case_id).first()
+            if case_rec:
+                case_info_header = f"Case {case_rec.case_number}: {case_rec.title}"
+        except Exception:
+            pass
 
     if not graph_context:
         return (
-            "## Intelligence Assistant // Notice\n\n"
-            "• No matching entities or transaction paths were identified in the knowledge graph for this query scope.\n"
-            "• **Recommended Action**: Ingest raw FIR documents, wiretap audio, or CDR files into the Seized Evidence Vault to allow the NLP pipeline to extract entities and build relationship topologies."
+            f"## Intelligence Briefing // {case_info_header}\n\n"
+            "• **Executive Summary**: Case file initialized under active investigative monitoring.\n"
+            "• **Graph Status**: No entity relationships currently mapped in the active subgraph.\n"
+            "• **Recommended Action**: Ingest raw FIR documents, wiretap audio, or CDR files into the Seized Evidence Vault to extract entity nodes and reconstruct syndicate transaction routes."
         )
     
-    import re
     lines = graph_context.split("\n")
+    entity_lines = [l.strip().lstrip("- ") for l in lines if l.strip().startswith("- [")]
     rel_lines = [l.strip().lstrip("- ") for l in lines if "--[" in l]
 
     summary_paragraphs = [
-        "## Forensic Network Intelligence Synthesis",
-        "Based on corroborated knowledge graph evidence in Case Intelligence:",
+        f"## Forensic Intelligence Dossier // {case_info_header}",
+        "Based on multi-source knowledge graph correlation and verified case telemetry:",
     ]
-    
-    seen_facts = set()
-    for rel in rel_lines:
-        m = re.search(r'([A-Za-z0-9_\+\-\.\s]+?)\s*--\[([A-Z_]+)\]-->\s*([A-Za-z0-9_\+\-\.\s]+)', rel)
-        if m:
-            s, r, o = m.group(1).strip(), m.group(2).strip(), m.group(3).split("(")[0].strip()
-            fact_key = (s, r, o)
-            if fact_key in seen_facts:
-                continue
-            seen_facts.add(fact_key)
 
-            if r == "OWNS":
-                summary_paragraphs.append(f"• Evidence confirms {s} owns and operates {o}.")
-            elif r == "COMMUNICATES_WITH":
-                summary_paragraphs.append(f"• Telecommunication records show {s} communicates directly with {o}.")
-            elif r == "TRANSFERS_FUNDS_TO":
-                summary_paragraphs.append(f"• Financial ledger records establish {s} transfers funds to {o}.")
-            elif r == "LOCATED_AT":
-                summary_paragraphs.append(f"• Operational intelligence confirms {s} is located at {o}.")
-            else:
-                summary_paragraphs.append(f"• Intelligence records establish {s} is associated with {o}.")
+    # 1. Key Identified Entities
+    if entity_lines:
+        summary_paragraphs.append("### Key Identified Entities & Roles:")
+        for ent in entity_lines[:8]:
+            summary_paragraphs.append(f"• {ent}")
 
-    summary_paragraphs.append("## Analytical Lead")
-    summary_paragraphs.append("• Cross-reference suspect phone numbers with cell tower pings.")
-    summary_paragraphs.append("• Review linked transaction paths for offshore intermediary conduits.")
+    # 2. Structural & Financial Links
+    if rel_lines:
+        summary_paragraphs.append("### Corroborated Syndicate Relationship Topology:")
+        seen_facts = set()
+        for rel in rel_lines:
+            m = re.search(r'([A-Za-z0-9_\+\-\.\s]+?)\s*--\[([A-Z_]+)\]-->\s*([A-Za-z0-9_\+\-\.\s]+)', rel)
+            if m:
+                s, r, o = m.group(1).strip(), m.group(2).strip(), m.group(3).split("(")[0].strip()
+                fact_key = (s, r, o)
+                if fact_key in seen_facts:
+                    continue
+                seen_facts.add(fact_key)
+
+                if r == "OWNS":
+                    summary_paragraphs.append(f"• **Ownership**: {s} owns and controls {o}.")
+                elif r == "COMMUNICATES_WITH":
+                    summary_paragraphs.append(f"• **Telephony Intercept**: Direct communications established between {s} and {o}.")
+                elif r == "TRANSFERS_FUNDS_TO":
+                    summary_paragraphs.append(f"• **Financial Conduit**: Ledger records establish monetary flow from {s} to {o}.")
+                elif r == "LOCATED_AT":
+                    summary_paragraphs.append(f"• **Geospatial Fix**: Intelligence places {s} at {o}.")
+                else:
+                    summary_paragraphs.append(f"• **Association**: Direct link established between {s} and {o} [{r.replace('_', ' ')}].")
+
+    # 3. Tactical Next Steps
+    summary_paragraphs.append("### Tactical Next Steps & Analytical Leads:")
+    summary_paragraphs.append("1. **Telephony Intercepts**: Cross-reference suspect phone numbers with tower CDR pings.")
+    summary_paragraphs.append("2. **Financial Tracing**: Subpoena transaction logs for offshore intermediary escrow accounts.")
+    summary_paragraphs.append("3. **Judicial Filing**: Prepare electronic evidence dossier under Section 65B.")
 
     return "\n\n".join(summary_paragraphs)
+

@@ -16,6 +16,7 @@ import ExportReport from './components/ExportReport';
 import KeyVaultHSM from './components/KeyVaultHSM';
 import PKIRevocation from './components/PKIRevocation';
 import LandingPage from './components/LandingPage';
+import CaseWorkspace from './components/CaseWorkspace';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import './index.css';
 
@@ -53,7 +54,7 @@ function App() {
       if (isValidToken) {
         setIsAuthenticated(true);
       } else if (localAuth) {
-        // Silent refresh attempt if token is missing or expired, but we think we are logged in
+        // Silent refresh attempt if token is missing or expired
         const refreshed = await tryRefreshToken();
         if (refreshed) {
           setIsAuthenticated(true);
@@ -87,7 +88,7 @@ function App() {
     setIsAuthenticated(false);
   };
 
-  // Full-screen spinner while validating token — prevents dashboard flash
+  // Full-screen spinner while validating token
   if (!authChecked) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -122,13 +123,15 @@ function App() {
         <Route
           element={
             isAuthenticated ? (
-              <Layout onLogout={handleLogout} />
+              <Layout />
             ) : (
               <Navigate to="/login" replace />
             )
           }
         >
           <Route path="/dashboard" element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
+          <Route path="/case-workspace" element={<ErrorBoundary><CaseWorkspace /></ErrorBoundary>} />
+          <Route path="/investigator" element={<ErrorBoundary><CaseWorkspace /></ErrorBoundary>} />
           <Route path="/network-explorer" element={<ErrorBoundary><NetworkExplorer /></ErrorBoundary>} />
           <Route path="/review-queue" element={<ErrorBoundary><ReviewQueue /></ErrorBoundary>} />
           <Route path="/evidence-library" element={<ErrorBoundary><EvidenceLibrary /></ErrorBoundary>} />
