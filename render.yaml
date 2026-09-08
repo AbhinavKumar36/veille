@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: veille-backend
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn api.main:app --host 0.0.0.0 --port $PORT
+    rootDir: CRIMENET_Codebase/backend
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: CORS_ORIGINS
+        value: https://veille-team-void.netlify.app,https://veille-void.netlify.app,*
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ADMIN_PASSWORD
+        value: admin12345
+      - key: DATABASE_URL
+        fromDatabase:
+          name: veille-db
+          property: connectionString
+
+databases:
+  - name: veille-db
+    databaseName: veille_db
+    user: veille
+    plan: free
