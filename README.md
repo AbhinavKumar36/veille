@@ -1,7 +1,10 @@
 # VEILLE // Forensic Intelligence Platform (SIH Research Prototype)
 ### National Security, Threat Matrix & Forensic Relationship Fusion Platform
 
-VEILLE (formerly CRIMENET) is an investigative forensic intelligence and multi-source relationship analysis platform. It is engineered to ingest heterogeneous, semi-structured, and unstructured intelligence feeds—including police First Information Reports (FIRs), Telecom Call Detail Records (CDRs), financial transaction ledgers (hawala & banking), interrogation transcripts, SIGINT packet streams, and audio intercepts—and fuse them into a coherent, high-confidence knowledge graph.
+🚀 **Live Interactive Prototype**: **[https://veille-team-void.netlify.app/](https://veille-team-void.netlify.app/)**  
+📁 **Official SIH 2026 Deck**: **[docs/SIH2026_VEILLE_Official_Format.pptx](docs/SIH2026_VEILLE_Official_Format.pptx)**
+
+VEILLE is an investigative forensic intelligence and multi-source relationship analysis platform. It is engineered to ingest heterogeneous, semi-structured, and unstructured intelligence feeds—including police First Information Reports (FIRs), Telecom Call Detail Records (CDRs), financial transaction ledgers (hawala & banking), interrogation transcripts, SIGINT packet streams, and audio intercepts—and fuse them into a coherent, high-confidence knowledge graph.
 
 ---
 
