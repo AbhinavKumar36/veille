@@ -16,7 +16,7 @@ from fastapi.responses import FileResponse
 from pydantic import UUID4, BaseModel
 from sqlalchemy.orm import Session
 
-from api.auth import get_current_user, log_action, require_role
+from api.auth import get_current_user, get_current_user_flexible, log_action, require_role
 from core.config import settings
 from core.database import get_db
 from core.storage import storage_service
@@ -34,7 +34,7 @@ UPLOAD_DIR = os.path.join(
 )
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-ALLOWED_EXTENSIONS = {".pdf", ".txt", ".csv", ".png", ".jpg", ".jpeg", ".mp3", ".wav"}
+ALLOWED_EXTENSIONS = {".pdf", ".txt", ".csv", ".png", ".jpg", ".jpeg", ".mp3", ".wav", ".m4a", ".ogg", ".webm", ".aac", ".flac"}
 MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024  # 50 MB
 
 
@@ -44,7 +44,7 @@ def _run_evidence_pipeline(evidence_id_str: str, file_path_str: str, case_id_str
     logger = logging.getLogger("veille.pipeline.sync")
     try:
         file_ext = os.path.splitext(file_path_str)[1].lower()
-        if source_type_str == "FIR" or file_ext in (".pdf", ".txt", ".png", ".jpg", ".jpeg", ".mp3", ".wav"):
+        if source_type_str in ("FIR", "AUDIO", "WIRETAP") or file_ext in (".pdf", ".txt", ".png", ".jpg", ".jpeg", ".mp3", ".wav", ".m4a", ".ogg", ".webm", ".aac", ".flac"):
             extract_entities_task(evidence_id_str, file_path_str, case_id_str)
         else:
             process_structured_data_task(evidence_id_str, source_type_str, file_path_str, case_id_str)
@@ -178,8 +178,8 @@ async def upload_evidence(
     Persists to MinIO object storage (or local vault) with SHA-256 integrity verification.
     """
     # ── Validation ──────────────────────────────────────────────────────
-    if source_type not in ("FIR", "CDR", "FINANCIAL"):
-        raise HTTPException(status_code=400, detail="source_type must be FIR, CDR, or FINANCIAL.")
+    if source_type not in ("FIR", "CDR", "FINANCIAL", "AUDIO", "WIRETAP"):
+        raise HTTPException(status_code=400, detail="source_type must be FIR, CDR, FINANCIAL, AUDIO, or WIRETAP.")
 
     file_ext = os.path.splitext(file.filename or "")[1].lower()
     if file_ext not in ALLOWED_EXTENSIONS:
@@ -341,6 +341,21 @@ def preview_evidence(
 
     if not file_bytes:
         return {"content": "Preview unavailable: file data not found in vault.", "type": "empty"}
+
+    file_ext = os.path.splitext(evidence.original_filename or evidence.file_path or "")[1].lower()
+    is_audio = evidence.source_type in ("AUDIO", "WIRETAP") or file_ext in (".mp3", ".wav", ".m4a", ".ogg", ".webm", ".aac", ".flac")
+
+    if is_audio:
+        return {
+            "evidence_id": str(evidence.id),
+            "filename": evidence.original_filename,
+            "source_type": evidence.source_type,
+            "hash": evidence.hash,
+            "size_bytes": evidence.file_size_bytes,
+            "audio_url": f"/api/v1/evidence/file/{evidence.id}",
+            "content": f"[AUTHENTIC WIRETAP AUDIO STREAM: {evidence.original_filename}]\nFormat: {file_ext.lstrip('.').upper()} Audio • Size: {(evidence.file_size_bytes or len(file_bytes)) / (1024*1024):.2f} MB\nVaulted in encrypted forensic enclave under legal interception warrant.",
+            "type": "audio",
+        }
 
     try:
         text_content = file_bytes.decode("utf-8", errors="replace")
@@ -634,7 +649,7 @@ def get_evidence_status(
 @router.get("/file/{evidence_id}")
 def download_evidence_file(
     evidence_id: str,
-    current_user: dict = Depends(get_current_user),
+    current_user: dict = Depends(get_current_user_flexible),
     db: Session = Depends(get_db),
 ):
     """

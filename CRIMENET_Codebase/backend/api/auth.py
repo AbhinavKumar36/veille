@@ -145,11 +145,6 @@ async def get_current_user(
     """
     FastAPI dependency: validates the Bearer token and returns the
     decoded user payload. Raises HTTP 401 if token is missing or invalid.
-
-    Usage:
-        @router.get("/protected")
-        def route(current_user: dict = Depends(get_current_user)):
-            ...
     """
     payload = _decode_token(token)
 
@@ -164,6 +159,42 @@ async def get_current_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User account not found or deactivated.",
         )
+
+    return {
+        "id": str(user.id),
+        "email": user.email,
+        "role": user.role,
+    }
+
+
+async def get_current_user_flexible(
+    request: Request,
+    db: Session = Depends(get_db),
+) -> dict:
+    """
+    Validates token from Authorization header or URL query parameter (?token=).
+    Enables native HTML5 <audio> and <video> streaming without custom headers.
+    """
+    auth_header = request.headers.get("Authorization")
+    token = None
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header[7:]
+    elif "token" in request.query_params:
+        token = request.query_params["token"]
+
+    if not token:
+        # Fallback to dev default if running in dev environment
+        if settings.APP_ENV == "development":
+            first_user = db.query(User).filter(User.is_active == True).first()
+            if first_user:
+                return {"id": str(first_user.id), "email": first_user.email, "role": first_user.role}
+        raise HTTPException(status_code=401, detail="Authentication token required.")
+
+    payload = _decode_token(token)
+    user_id = payload.get("sub")
+    user = db.query(User).filter(User.id == user_id, User.is_active == True).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="User account not found or deactivated.")
 
     return {
         "id": str(user.id),

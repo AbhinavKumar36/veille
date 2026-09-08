@@ -75,6 +75,9 @@ def extract_entities_task(self, evidence_id: str, file_path: str, case_id: str):
                 logger.warning(f"pypdf extraction failed ({pdf_err}), falling back to text read")
                 with open(file_path, "r", encoding="utf-8", errors="replace") as f:
                     text_content = f.read()
+        elif ext in (".mp3", ".wav", ".m4a", ".ogg", ".aac", ".webm", ".flac", ".png", ".jpg", ".jpeg"):
+            # Binary audio or image file — transcription / OCR is handled directly by extractor
+            text_content = ""
         else:
             with open(file_path, "r", encoding="utf-8", errors="replace") as f:
                 text_content = f.read()
@@ -83,7 +86,7 @@ def extract_entities_task(self, evidence_id: str, file_path: str, case_id: str):
         _update_evidence_status(evidence_id, "FAILED", f"File not found: {file_path}")
         raise ValueError(f"Evidence file not found: {file_path}")
 
-    if not text_content.strip():
+    if not text_content.strip() and ext not in (".mp3", ".wav", ".m4a", ".ogg", ".aac", ".webm", ".flac", ".png", ".jpg", ".jpeg"):
         _update_evidence_status(evidence_id, "FAILED", "Empty file — nothing to extract")
         return {"status": "skipped", "evidence_id": evidence_id, "reason": "empty_file"}
 
