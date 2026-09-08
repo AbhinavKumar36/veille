@@ -49,121 +49,63 @@ export const CaseWorkspace: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'SUSPECTS' | 'TIMELINE' | 'TASKS' | 'NOTES'>('OVERVIEW');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Investigator dynamic notes & hypothesis
+  // Investigator dynamic notes & hypothesis (starts clean, persists per case)
   const [investigatorNotes, setInvestigatorNotes] = useState<string>(() => {
-    return localStorage.getItem('veille_investigator_notes') || 
-`[2026-09-07 09:30 UTC] Cross-referenced CDR telemetry with Hawala financial transfer #TRX-9941.
-• Target subject communicated with intermediary node at 03:14 AM.
-• Cell tower fix indicates physical presence within 1.2km radius of Bandra port.
-• Action item: File supplementary section 65B electronic certificate for CDR ledger.`;
+    return localStorage.getItem('veille_investigator_notes') || '';
   });
 
-  // Sample dynamic timeline milestones
-  const [milestones] = useState<Milestone[]>([
-    {
-      id: 'm-1',
-      timestamp: '2026-09-07 08:45',
-      title: 'Wiretap Intercept Intercepted',
-      description: 'GSM-PDU communication intercept recorded on Port 9092. Keywords matched Hawala transfer routing.',
-      category: 'INTERCEPT'
-    },
-    {
-      id: 'm-2',
-      timestamp: '2026-09-06 19:12',
-      title: 'Geospatial Signal Fix',
-      description: 'Cell tower triangulation detected burner SIM card activation in Zone 4.',
-      category: 'INTELLIGENCE'
-    },
-    {
-      id: 'm-3',
-      timestamp: '2026-09-05 14:30',
-      title: 'Evidence Ingestion: Bank Account Ledger',
-      description: '142 financial transactions ingested and cross-referenced with Neo4j entity graph.',
-      category: 'EVIDENCE'
-    },
-    {
-      id: 'm-4',
-      timestamp: '2026-09-04 10:00',
-      title: 'Initial Case Filing (FIR #0921/26)',
-      description: 'Cyber forensics unit initiated active surveillance under judicial warrant #W-8821.',
-      category: 'WARRANT'
+  // Dynamic timeline milestones (starts empty, editable)
+  const [milestones, setMilestones] = useState<Milestone[]>(() => {
+    try {
+      const saved = localStorage.getItem('veille_case_milestones');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
     }
-  ]);
+  });
 
-  // Sample POI list
-  const [suspects] = useState<SuspectProfile[]>([
-    {
-      id: 's-1',
-      name: 'Vikram "Falcon" Singhania',
-      role: 'Syndicate Logistics Coordinator',
-      threatLevel: 'CRITICAL',
-      status: 'AT_LARGE',
-      phone: '+91 98201 44921',
-      location: 'Mumbai Port Area / South Zone',
-      lastSeen: '2026-09-07 03:14',
-      notes: 'Primary custodian of encrypted burner handsets and international escrow channels.'
-    },
-    {
-      id: 's-2',
-      name: 'Devraj Kapoor',
-      role: 'Shell Corporation Director',
-      threatLevel: 'HIGH',
-      status: 'UNDER_SURVEILLANCE',
-      phone: '+91 98110 33819',
-      location: 'Bandra West, Mumbai',
-      lastSeen: '2026-09-06 18:22',
-      notes: 'Authorized signatory for 4 shell entity bank accounts linked to Hawala routing.'
-    },
-    {
-      id: 's-3',
-      name: 'Ananya Sharma',
-      role: 'Encrypted Comms Technical Operator',
-      threatLevel: 'MEDIUM',
-      status: 'PERSON_OF_INTEREST',
-      phone: '+91 97654 22109',
-      location: 'Andheri East Tech Park',
-      lastSeen: '2026-09-05 11:05',
-      notes: 'Discovered in SIP relay metadata headers as relay proxy maintainer.'
+  // Persons of Interest list (starts empty, editable)
+  const [suspects, setSuspects] = useState<SuspectProfile[]>(() => {
+    try {
+      const saved = localStorage.getItem('veille_case_suspects');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
     }
-  ]);
+  });
 
-  // Tasks list
-  const [tasks, setTasks] = useState<CaseTask[]>([
-    {
-      id: 't-1',
-      title: 'Subpoena cell tower CDR logs for Bandra cell tower TWR-MUMBAI-01',
-      assignee: 'Operator Vance',
-      dueDate: '2026-09-08',
-      completed: false,
-      priority: 'HIGH'
-    },
-    {
-      id: 't-2',
-      title: 'Run AI entity resolution on newly seized invoice PDFs',
-      assignee: 'Forensics Lead Miller',
-      dueDate: '2026-09-07',
-      completed: true,
-      priority: 'MEDIUM'
-    },
-    {
-      id: 't-3',
-      title: 'Cross-examine bank account transaction ledger with P2P escrow routes',
-      assignee: 'Operator Vance',
-      dueDate: '2026-09-09',
-      completed: false,
-      priority: 'HIGH'
-    },
-    {
-      id: 't-4',
-      title: 'Generate Section 65B Electronic Evidence Notarized Certificate',
-      assignee: 'Legal Officer Rao',
-      dueDate: '2026-09-10',
-      completed: false,
-      priority: 'LOW'
+  // Action Items / Tasks list (starts empty, editable)
+  const [tasks, setTasks] = useState<CaseTask[]>(() => {
+    try {
+      const saved = localStorage.getItem('veille_case_tasks');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
     }
-  ]);
+  });
 
   const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [newTaskPriority, setNewTaskPriority] = useState<'HIGH' | 'MEDIUM' | 'LOW'>('HIGH');
+
+  // Modals for adding suspect and milestone
+  const [isSuspectModalOpen, setIsSuspectModalOpen] = useState(false);
+  const [newSuspect, setNewSuspect] = useState<Partial<SuspectProfile>>({
+    name: '',
+    role: '',
+    threatLevel: 'HIGH',
+    status: 'PERSON_OF_INTEREST',
+    phone: '',
+    location: '',
+    notes: ''
+  });
+
+  const [isMilestoneModalOpen, setIsMilestoneModalOpen] = useState(false);
+  const [newMilestone, setNewMilestone] = useState<Partial<Milestone>>({
+    title: '',
+    description: '',
+    category: 'INTELLIGENCE',
+    timestamp: new Date().toISOString().slice(0, 16).replace('T', ' ')
+  });
 
   const triggerToast = (msg: string) => {
     setToastMessage(msg);
@@ -195,7 +137,17 @@ export const CaseWorkspace: React.FC = () => {
   };
 
   const handleToggleTask = (taskId: string) => {
-    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, completed: !t.completed } : t));
+    const updated = tasks.map(t => t.id === taskId ? { ...t, completed: !t.completed } : t);
+    setTasks(updated);
+    localStorage.setItem('veille_case_tasks', JSON.stringify(updated));
+  };
+
+  const handleDeleteTask = (taskId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const updated = tasks.filter(t => t.id !== taskId);
+    setTasks(updated);
+    localStorage.setItem('veille_case_tasks', JSON.stringify(updated));
+    triggerToast('Action item removed.');
   };
 
   const handleAddTask = (e: React.FormEvent) => {
@@ -207,11 +159,67 @@ export const CaseWorkspace: React.FC = () => {
       assignee: 'Active Operator',
       dueDate: new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0],
       completed: false,
-      priority: 'HIGH'
+      priority: newTaskPriority
     };
-    setTasks([newTask, ...tasks]);
+    const updated = [newTask, ...tasks];
+    setTasks(updated);
+    localStorage.setItem('veille_case_tasks', JSON.stringify(updated));
     setNewTaskTitle('');
-    triggerToast('Investigative task added.');
+    triggerToast('Action item added to investigation queue.');
+  };
+
+  const handleAddSuspect = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newSuspect.name?.trim()) return;
+    const suspect: SuspectProfile = {
+      id: `s-${Date.now()}`,
+      name: newSuspect.name.trim(),
+      role: newSuspect.role || 'Person of Interest',
+      threatLevel: newSuspect.threatLevel || 'MEDIUM',
+      status: newSuspect.status || 'PERSON_OF_INTEREST',
+      phone: newSuspect.phone || 'N/A',
+      location: newSuspect.location || 'Unknown',
+      lastSeen: new Date().toISOString().slice(0, 16).replace('T', ' '),
+      notes: newSuspect.notes || ''
+    };
+    const updated = [suspect, ...suspects];
+    setSuspects(updated);
+    localStorage.setItem('veille_case_suspects', JSON.stringify(updated));
+    setIsSuspectModalOpen(false);
+    setNewSuspect({ name: '', role: '', threatLevel: 'HIGH', status: 'PERSON_OF_INTEREST', phone: '', location: '', notes: '' });
+    triggerToast(`Person of Interest added: ${suspect.name}`);
+  };
+
+  const handleDeleteSuspect = (suspectId: string) => {
+    const updated = suspects.filter(s => s.id !== suspectId);
+    setSuspects(updated);
+    localStorage.setItem('veille_case_suspects', JSON.stringify(updated));
+    triggerToast('Person of Interest removed.');
+  };
+
+  const handleAddMilestone = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMilestone.title?.trim()) return;
+    const milestone: Milestone = {
+      id: `m-${Date.now()}`,
+      timestamp: newMilestone.timestamp || new Date().toISOString().slice(0, 16).replace('T', ' '),
+      title: newMilestone.title.trim(),
+      description: newMilestone.description || '',
+      category: newMilestone.category || 'INTELLIGENCE'
+    };
+    const updated = [milestone, ...milestones];
+    setMilestones(updated);
+    localStorage.setItem('veille_case_milestones', JSON.stringify(updated));
+    setIsMilestoneModalOpen(false);
+    setNewMilestone({ title: '', description: '', category: 'INTELLIGENCE', timestamp: new Date().toISOString().slice(0, 16).replace('T', ' ') });
+    triggerToast('Chronology event recorded.');
+  };
+
+  const handleDeleteMilestone = (milestoneId: string) => {
+    const updated = milestones.filter(m => m.id !== milestoneId);
+    setMilestones(updated);
+    localStorage.setItem('veille_case_milestones', JSON.stringify(updated));
+    triggerToast('Chronology event removed.');
   };
 
   return (
@@ -312,205 +320,257 @@ export const CaseWorkspace: React.FC = () => {
           </div>
         ) : activeTab === 'OVERVIEW' ? (
           /* ================= 1. CASE OVERVIEW TAB ================= */
-          <div className="space-y-6 max-w-6xl mx-auto">
-            {/* Top Metric Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 font-mono text-xs">
-              <div className="p-4 bg-surface-container-lowest border border-outline-variant rounded">
-                <div className="text-outline text-[10px] uppercase font-bold">CASE CLASSIFICATION</div>
-                <div className="text-xl font-bold text-primary mt-1">TOP SECRET // LE</div>
-                <div className="text-[10px] text-outline mt-0.5">Judicial Warrant #W-8821</div>
+          <div className="space-y-6 max-w-6xl mx-auto font-mono">
+            {!activeCase ? (
+              <div className="p-12 text-center bg-surface-container-lowest border border-outline-variant rounded flex flex-col items-center justify-center space-y-3">
+                <span className="material-symbols-outlined text-4xl text-outline">folder_off</span>
+                <div className="text-sm font-bold text-on-surface uppercase">NO ACTIVE INVESTIGATION FILE</div>
+                <p className="text-xs text-outline max-w-md">
+                  No cases are currently open in the PostgreSQL system of record. Initialize an investigation to start logging dossiers.
+                </p>
+                <button
+                  onClick={() => navigate('/dashboard')}
+                  className="mt-2 px-4 py-2 bg-primary text-surface-container-lowest font-bold text-xs hover:bg-primary-fixed-dim transition-colors rounded cursor-pointer"
+                >
+                  GO TO COMMAND CENTER
+                </button>
               </div>
-              <div className="p-4 bg-surface-container-lowest border border-outline-variant rounded">
-                <div className="text-outline text-[10px] uppercase font-bold">SYNDICATE THREAT LEVEL</div>
-                <div className="text-xl font-bold text-error mt-1">CRITICAL (88/100)</div>
-                <div className="text-[10px] text-outline mt-0.5">Multi-Jurisdiction Network</div>
-              </div>
-              <div className="p-4 bg-surface-container-lowest border border-outline-variant rounded">
-                <div className="text-outline text-[10px] uppercase font-bold">TRACKED SUSPECTS</div>
-                <div className="text-xl font-bold text-on-surface mt-1">{suspects.length} Targets</div>
-                <div className="text-[10px] text-secondary mt-0.5">1 At-Large, 1 Monitored</div>
-              </div>
-              <div className="p-4 bg-surface-container-lowest border border-outline-variant rounded">
-                <div className="text-outline text-[10px] uppercase font-bold">OPEN ACTION ITEMS</div>
-                <div className="text-xl font-bold text-amber-400 mt-1">{tasks.filter(t => !t.completed).length} Pending</div>
-                <div className="text-[10px] text-outline mt-0.5">{tasks.filter(t => t.completed).length} Completed</div>
-              </div>
-            </div>
-
-            {/* Case Summary Card */}
-            <div className="p-5 bg-surface-container-lowest border border-outline-variant rounded space-y-4">
-              <div className="flex items-center justify-between border-b border-outline-variant pb-3">
-                <div className="flex items-center gap-3">
-                  <div className="px-2 py-1 bg-primary/10 border border-primary/40 text-primary font-mono text-xs font-bold rounded">
-                    {activeCase?.case_number || 'CASE-2026-0921'}
+            ) : (
+              <>
+                {/* Top Metric Cards */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
+                  <div className="p-4 bg-surface-container-lowest border border-outline-variant rounded">
+                    <div className="text-outline text-[10px] uppercase font-bold">CASE CLASSIFICATION</div>
+                    <div className="text-xl font-bold text-primary mt-1">{activeCase.priority || 'MEDIUM'} PRIORITY</div>
+                    <div className="text-[10px] text-outline mt-0.5">{activeCase.case_number}</div>
                   </div>
-                  <h2 className="text-base font-bold text-on-surface font-headline-sm">
-                    {activeCase?.title || 'Operation Black Falcon: Transnational Hawala & Crypto Smuggling Syndicate'}
-                  </h2>
+                  <div className="p-4 bg-surface-container-lowest border border-outline-variant rounded">
+                    <div className="text-outline text-[10px] uppercase font-bold">OPERATIONAL STATUS</div>
+                    <div className="text-xl font-bold text-secondary mt-1">{activeCase.status || 'ACTIVE'}</div>
+                    <div className="text-[10px] text-outline mt-0.5">PostgreSQL System of Record</div>
+                  </div>
+                  <div className="p-4 bg-surface-container-lowest border border-outline-variant rounded">
+                    <div className="text-outline text-[10px] uppercase font-bold">TRACKED SUSPECTS</div>
+                    <div className="text-xl font-bold text-on-surface mt-1">{suspects.length} Targets</div>
+                    <div className="text-[10px] text-outline mt-0.5">Active Persons of Interest</div>
+                  </div>
+                  <div className="p-4 bg-surface-container-lowest border border-outline-variant rounded">
+                    <div className="text-outline text-[10px] uppercase font-bold">OPEN ACTION ITEMS</div>
+                    <div className="text-xl font-bold text-amber-400 mt-1">{tasks.filter(t => !t.completed).length} Pending</div>
+                    <div className="text-[10px] text-outline mt-0.5">{tasks.filter(t => t.completed).length} Completed</div>
+                  </div>
                 </div>
-                <span className="px-2 py-0.5 bg-secondary/10 text-secondary border border-secondary/30 text-[10px] font-mono font-bold uppercase rounded">
-                  STATUS: ACTIVE SURVEILLANCE
-                </span>
-              </div>
 
-              <div className="text-xs leading-relaxed text-on-surface-variant font-mono space-y-2">
-                <p>
-                  <strong>Executive Summary:</strong> Tactical investigation targeting a high-yield illicit fund movement network utilizing layered shell entities, encrypted VoIP relays, and hawala broker nodes across Mumbai, Dubai, and Singapore.
-                </p>
-                <p>
-                  Forensic cross-matching of seized CDR logs, electronic bank ledgers, and wiretap transcripts has mapped 18 key entities and over 40 cross-entity financial/telecom edges in the Neo4j knowledge graph.
-                </p>
-              </div>
-
-              {/* Quick Launchers */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-                <button
-                  onClick={() => navigate('/communications-intercept')}
-                  className="p-3 bg-surface-container-low border border-outline-variant hover:border-primary rounded flex items-center justify-between text-xs font-mono text-left cursor-pointer transition-colors"
-                >
-                  <div>
-                    <div className="font-bold text-on-surface">Comms Intercept</div>
-                    <div className="text-[10px] text-outline">Listen to wiretap audio</div>
+                {/* Case Summary Card */}
+                <div className="p-5 bg-surface-container-lowest border border-outline-variant rounded space-y-4">
+                  <div className="flex items-center justify-between border-b border-outline-variant pb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="px-2 py-1 bg-primary/10 border border-primary/40 text-primary text-xs font-bold rounded">
+                        {activeCase.case_number}
+                      </div>
+                      <h2 className="text-base font-bold text-on-surface font-sans">
+                        {activeCase.title}
+                      </h2>
+                    </div>
+                    <span className="px-2 py-0.5 bg-secondary/10 text-secondary border border-secondary/30 text-[10px] font-bold uppercase rounded">
+                      {activeCase.status}
+                    </span>
                   </div>
-                  <span className="material-symbols-outlined text-primary">phone_in_talk</span>
-                </button>
 
-                <button
-                  onClick={() => navigate('/geospatial-explorer')}
-                  className="p-3 bg-surface-container-low border border-outline-variant hover:border-primary rounded flex items-center justify-between text-xs font-mono text-left cursor-pointer transition-colors"
-                >
-                  <div>
-                    <div className="font-bold text-on-surface">Geospatial Fixes</div>
-                    <div className="text-[10px] text-outline">Cell tower &amp; sighting map</div>
+                  <div className="text-xs leading-relaxed text-on-surface-variant space-y-2">
+                    <p>
+                      <strong>Case Description:</strong> {activeCase.description || 'No detailed briefing description attached yet.'}
+                    </p>
+                    {activeCase.created_at && (
+                      <p className="text-[11px] text-outline">
+                        <strong>Opened:</strong> {new Date(activeCase.created_at).toLocaleString()}
+                      </p>
+                    )}
                   </div>
-                  <span className="material-symbols-outlined text-primary">pin_drop</span>
-                </button>
 
-                <button
-                  onClick={() => navigate('/ai-assistant')}
-                  className="p-3 bg-surface-container-low border border-outline-variant hover:border-primary rounded flex items-center justify-between text-xs font-mono text-left cursor-pointer transition-colors"
-                >
-                  <div>
-                    <div className="font-bold text-on-surface">AI Synthesis</div>
-                    <div className="text-[10px] text-outline">Query Gemini GraphRAG</div>
+                  {/* Quick Launchers */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                    <button
+                      onClick={() => navigate('/communications-intercept')}
+                      className="p-3 bg-surface-container-low border border-outline-variant hover:border-primary rounded flex items-center justify-between text-xs text-left cursor-pointer transition-colors"
+                    >
+                      <div>
+                        <div className="font-bold text-on-surface">Comms Intercept</div>
+                        <div className="text-[10px] text-outline">CDR &amp; wiretap telemetry</div>
+                      </div>
+                      <span className="material-symbols-outlined text-primary">phone_in_talk</span>
+                    </button>
+
+                    <button
+                      onClick={() => navigate('/geospatial-explorer')}
+                      className="p-3 bg-surface-container-low border border-outline-variant hover:border-primary rounded flex items-center justify-between text-xs text-left cursor-pointer transition-colors"
+                    >
+                      <div>
+                        <div className="font-bold text-on-surface">Geospatial Radar</div>
+                        <div className="text-[10px] text-outline">Cell tower &amp; sighting map</div>
+                      </div>
+                      <span className="material-symbols-outlined text-primary">pin_drop</span>
+                    </button>
+
+                    <button
+                      onClick={() => navigate('/ai-assistant')}
+                      className="p-3 bg-surface-container-low border border-outline-variant hover:border-primary rounded flex items-center justify-between text-xs text-left cursor-pointer transition-colors"
+                    >
+                      <div>
+                        <div className="font-bold text-on-surface">AI Synthesis</div>
+                        <div className="text-[10px] text-outline">Query Gemini GraphRAG</div>
+                      </div>
+                      <span className="material-symbols-outlined text-primary">smart_toy</span>
+                    </button>
                   </div>
-                  <span className="material-symbols-outlined text-primary">smart_toy</span>
-                </button>
-              </div>
-            </div>
+                </div>
+              </>
+            )}
           </div>
         ) : activeTab === 'SUSPECTS' ? (
           /* ================= 2. SUSPECTS / POI TAB ================= */
-          <div className="space-y-4 max-w-6xl mx-auto">
+          <div className="space-y-4 max-w-6xl mx-auto font-mono">
             <div className="flex items-center justify-between">
-              <div className="text-xs font-mono text-outline">
-                PRIMARY PERSONS OF INTEREST &amp; SYNDICATE OPERATIVES
+              <div className="text-xs text-outline">
+                PRIMARY PERSONS OF INTEREST &amp; OPERATIVES ({suspects.length})
               </div>
               <button
-                onClick={() => navigate('/network-explorer')}
-                className="px-3 py-1 bg-primary text-surface-container-lowest font-mono text-xs font-bold hover:bg-primary-fixed-dim transition-colors flex items-center gap-1.5 cursor-pointer rounded"
+                onClick={() => setIsSuspectModalOpen(true)}
+                className="px-3 py-1.5 bg-primary text-surface-container-lowest font-bold text-xs hover:bg-primary-fixed-dim transition-colors flex items-center gap-1.5 cursor-pointer rounded"
               >
-                <span className="material-symbols-outlined text-xs">schema</span>
-                <span>VIEW IN RELATIONSHIP GRAPH</span>
+                <span className="material-symbols-outlined text-[16px]">person_add</span>
+                <span>+ ADD PERSON OF INTEREST</span>
               </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {suspects.map((s) => (
-                <div
-                  key={s.id}
-                  className="p-4 bg-surface-container-lowest border border-outline-variant hover:border-primary/60 rounded flex flex-col justify-between font-mono text-xs space-y-3 transition-colors"
-                >
-                  <div className="space-y-2">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <div className="font-bold text-sm text-on-surface">{s.name}</div>
-                        <div className="text-[11px] text-outline mt-0.5">{s.role}</div>
+            {suspects.length === 0 ? (
+              <div className="p-12 text-center bg-surface-container-lowest border border-outline-variant rounded flex flex-col items-center justify-center space-y-2">
+                <span className="material-symbols-outlined text-3xl text-outline">person_search</span>
+                <div className="text-xs font-bold text-on-surface uppercase">NO PERSONS OF INTEREST RECORDED</div>
+                <p className="text-[11px] text-outline max-w-sm">
+                  Click "+ ADD PERSON OF INTEREST" to register suspects, affiliates, and tracked actors for this investigation.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {suspects.map((s) => (
+                  <div
+                    key={s.id}
+                    className="p-4 bg-surface-container-lowest border border-outline-variant hover:border-primary/60 rounded flex flex-col justify-between text-xs space-y-3 transition-colors"
+                  >
+                    <div className="space-y-2">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <div className="font-bold text-sm text-on-surface">{s.name}</div>
+                          <div className="text-[11px] text-outline mt-0.5">{s.role}</div>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span
+                            className={`px-2 py-0.5 text-[9px] font-bold uppercase rounded border ${
+                              s.threatLevel === 'CRITICAL'
+                                ? 'bg-red-500/15 text-red-400 border-red-500/40'
+                                : s.threatLevel === 'HIGH'
+                                ? 'bg-amber-500/15 text-amber-400 border-amber-500/40'
+                                : 'bg-blue-500/15 text-blue-400 border-blue-500/40'
+                            }`}
+                          >
+                            {s.threatLevel}
+                          </span>
+                          <button
+                            onClick={() => handleDeleteSuspect(s.id)}
+                            className="text-outline hover:text-red-400 transition-colors p-0.5 cursor-pointer"
+                            title="Remove Person of Interest"
+                          >
+                            <span className="material-symbols-outlined text-[16px]">delete</span>
+                          </button>
+                        </div>
                       </div>
-                      <span
-                        className={`px-2 py-0.5 text-[9px] font-bold uppercase rounded border ${
-                          s.threatLevel === 'CRITICAL'
-                            ? 'bg-red-500/15 text-red-400 border-red-500/40'
-                            : s.threatLevel === 'HIGH'
-                            ? 'bg-amber-500/15 text-amber-400 border-amber-500/40'
-                            : 'bg-blue-500/15 text-blue-400 border-blue-500/40'
-                        }`}
-                      >
-                        {s.threatLevel}
-                      </span>
+
+                      <div className="p-2.5 bg-surface-container-low border border-outline-variant/60 rounded space-y-1 text-[10px]">
+                        <div className="flex justify-between">
+                          <span className="text-outline">STATUS:</span>
+                          <span className="text-secondary font-bold">{s.status?.replace(/_/g, ' ')}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-outline">PHONE / SIP:</span>
+                          <span className="text-on-surface">{s.phone || 'N/A'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-outline">LOCATION:</span>
+                          <span className="text-on-surface truncate max-w-[140px]">{s.location || 'Unknown'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-outline">LAST RECORD:</span>
+                          <span className="text-primary">{s.lastSeen || 'Recently'}</span>
+                        </div>
+                      </div>
+
+                      {s.notes && (
+                        <p className="text-[11px] text-on-surface-variant leading-relaxed">
+                          {s.notes}
+                        </p>
+                      )}
                     </div>
-
-                    <div className="p-2.5 bg-surface-container-low border border-outline-variant/60 rounded space-y-1 text-[10px]">
-                      <div className="flex justify-between">
-                        <span className="text-outline">STATUS:</span>
-                        <span className="text-secondary font-bold">{s.status.replace(/_/g, ' ')}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-outline">PHONE / SIP:</span>
-                        <span className="text-on-surface">{s.phone}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-outline">LOCATION:</span>
-                        <span className="text-on-surface truncate max-w-[140px]">{s.location}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-outline">LAST FIX:</span>
-                        <span className="text-primary">{s.lastSeen}</span>
-                      </div>
-                    </div>
-
-                    <p className="text-[11px] text-on-surface-variant leading-relaxed">
-                      {s.notes}
-                    </p>
                   </div>
-
-                  <div className="pt-2 border-t border-outline-variant/40 flex items-center gap-2">
-                    <button
-                      onClick={() => navigate('/communications-intercept')}
-                      className="flex-1 py-1.5 bg-surface-container hover:bg-surface-container-high border border-outline-variant text-primary text-[11px] font-bold rounded text-center cursor-pointer transition-colors"
-                    >
-                      INTERCEPT COMMS
-                    </button>
-                    <button
-                      onClick={() => navigate('/geospatial-explorer')}
-                      className="px-2.5 py-1.5 bg-surface-container hover:bg-surface-container-high border border-outline-variant text-secondary text-[11px] font-bold rounded cursor-pointer transition-colors"
-                      title="Track GPS Fix"
-                    >
-                      <span className="material-symbols-outlined text-sm">my_location</span>
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         ) : activeTab === 'TIMELINE' ? (
           /* ================= 3. CHRONOLOGY TIMELINE TAB ================= */
           <div className="space-y-4 max-w-4xl mx-auto font-mono text-xs">
-            <div className="text-xs text-outline mb-4">
-              FORENSIC INCIDENT &amp; INTELLIGENCE MILESTONE CHRONOLOGY
+            <div className="flex items-center justify-between">
+              <div className="text-xs text-outline">
+                FORENSIC INCIDENT &amp; INTELLIGENCE MILESTONE CHRONOLOGY ({milestones.length})
+              </div>
+              <button
+                onClick={() => setIsMilestoneModalOpen(true)}
+                className="px-3 py-1.5 bg-primary text-surface-container-lowest font-bold text-xs hover:bg-primary-fixed-dim transition-colors flex items-center gap-1.5 cursor-pointer rounded"
+              >
+                <span className="material-symbols-outlined text-[16px]">add_circle</span>
+                <span>+ ADD EVENT / MILESTONE</span>
+              </button>
             </div>
 
-            <div className="relative border-l-2 border-outline-variant ml-4 pl-6 space-y-6">
-              {milestones.map((m) => (
-                <div key={m.id} className="relative group">
-                  {/* Timeline Node Dot */}
-                  <div className="absolute -left-[31px] top-1 w-3.5 h-3.5 rounded-full bg-primary border-2 border-surface-container-lowest shadow-[0_0_8px_rgba(0,229,255,0.4)]" />
+            {milestones.length === 0 ? (
+              <div className="p-12 text-center bg-surface-container-lowest border border-outline-variant rounded flex flex-col items-center justify-center space-y-2">
+                <span className="material-symbols-outlined text-3xl text-outline">timeline</span>
+                <div className="text-xs font-bold text-on-surface uppercase">NO CHRONOLOGY EVENTS RECORDED</div>
+                <p className="text-[11px] text-outline max-w-sm">
+                  Click "+ ADD EVENT / MILESTONE" to log electronic warrant filings, wiretap intercepts, and forensic actions.
+                </p>
+              </div>
+            ) : (
+              <div className="relative border-l-2 border-outline-variant ml-4 pl-6 space-y-6">
+                {milestones.map((m) => (
+                  <div key={m.id} className="relative group">
+                    <div className="absolute -left-[31px] top-1 w-3.5 h-3.5 rounded-full bg-primary border-2 border-surface-container-lowest shadow-[0_0_8px_rgba(0,229,255,0.4)]" />
 
-                  <div className="p-4 bg-surface-container-lowest border border-outline-variant rounded space-y-1.5 group-hover:border-primary/60 transition-colors">
-                    <div className="flex items-center justify-between">
-                      <span className="text-primary font-bold">{m.title}</span>
-                      <span className="text-[10px] text-outline">{m.timestamp}</span>
+                    <div className="p-4 bg-surface-container-lowest border border-outline-variant rounded space-y-1.5 group-hover:border-primary/60 transition-colors">
+                      <div className="flex items-center justify-between">
+                        <span className="text-primary font-bold">{m.title}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] text-outline">{m.timestamp}</span>
+                          <button
+                            onClick={() => handleDeleteMilestone(m.id)}
+                            className="text-outline hover:text-red-400 transition-colors p-0.5 cursor-pointer"
+                            title="Delete Milestone"
+                          >
+                            <span className="material-symbols-outlined text-[14px]">delete</span>
+                          </button>
+                        </div>
+                      </div>
+                      <span className="inline-block px-1.5 py-0.5 text-[9px] font-bold bg-surface-container border border-outline-variant text-secondary uppercase rounded">
+                        {m.category}
+                      </span>
+                      <p className="text-[11px] text-on-surface-variant leading-relaxed pt-1">
+                        {m.description}
+                      </p>
                     </div>
-                    <span className="inline-block px-1.5 py-0.5 text-[9px] font-bold bg-surface-container border border-outline-variant text-secondary uppercase rounded">
-                      {m.category}
-                    </span>
-                    <p className="text-[11px] text-on-surface-variant leading-relaxed pt-1">
-                      {m.description}
-                    </p>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         ) : activeTab === 'TASKS' ? (
           /* ================= 4. ACTION ITEMS / TASKS TAB ================= */
@@ -522,47 +582,73 @@ export const CaseWorkspace: React.FC = () => {
                 value={newTaskTitle}
                 onChange={(e) => setNewTaskTitle(e.target.value)}
                 placeholder="Enter new investigative action item or lead to track..."
-                className="flex-1 bg-surface-container-lowest border border-outline-variant px-3 py-2 text-xs text-on-surface placeholder-outline focus:outline-none focus:border-primary"
+                className="flex-1 bg-surface-container-lowest border border-outline-variant px-3 py-2 text-xs text-on-surface placeholder-outline focus:outline-none focus:border-primary rounded"
               />
+              <select
+                value={newTaskPriority}
+                onChange={(e: any) => setNewTaskPriority(e.target.value)}
+                className="bg-surface-container-lowest border border-outline-variant px-2.5 py-2 text-xs text-primary focus:outline-none focus:border-primary rounded"
+              >
+                <option value="HIGH">HIGH PRIORITY</option>
+                <option value="MEDIUM">MEDIUM PRIORITY</option>
+                <option value="LOW">LOW PRIORITY</option>
+              </select>
               <button
                 type="submit"
-                className="px-4 py-2 bg-primary text-surface-container-lowest font-bold text-xs hover:bg-primary-fixed-dim transition-colors cursor-pointer rounded"
+                className="px-4 py-2 bg-primary text-surface-container-lowest font-bold text-xs hover:bg-primary-fixed-dim transition-colors cursor-pointer rounded shrink-0"
               >
-                ADD TASK
+                + ADD ACTION ITEM
               </button>
             </form>
 
-            <div className="bg-surface-container-lowest border border-outline-variant rounded divide-y divide-surface-container-high overflow-hidden">
-              {tasks.map((task) => (
-                <div
-                  key={task.id}
-                  onClick={() => handleToggleTask(task.id)}
-                  className={`p-3.5 flex items-center justify-between gap-3 cursor-pointer transition-colors ${
-                    task.completed ? 'bg-surface-container/30 opacity-70' : 'hover:bg-surface-container-high/40'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-4 h-4 rounded border flex items-center justify-center ${
-                      task.completed ? 'bg-secondary border-secondary text-surface-container-lowest' : 'border-outline'
-                    }`}>
-                      {task.completed && <span className="material-symbols-outlined text-[14px]">check</span>}
+            {tasks.length === 0 ? (
+              <div className="p-12 text-center bg-surface-container-lowest border border-outline-variant rounded flex flex-col items-center justify-center space-y-2">
+                <span className="material-symbols-outlined text-3xl text-secondary">checklist</span>
+                <div className="text-xs font-bold text-on-surface uppercase">NO ACTION ITEMS IN QUEUE</div>
+                <p className="text-[11px] text-outline max-w-sm">
+                  Add operational leads, warrant deadlines, and forensic follow-ups above.
+                </p>
+              </div>
+            ) : (
+              <div className="bg-surface-container-lowest border border-outline-variant rounded divide-y divide-surface-container-high overflow-hidden">
+                {tasks.map((task) => (
+                  <div
+                    key={task.id}
+                    onClick={() => handleToggleTask(task.id)}
+                    className={`p-3.5 flex items-center justify-between gap-3 cursor-pointer transition-colors ${
+                      task.completed ? 'bg-surface-container/30 opacity-70' : 'hover:bg-surface-container-high/40'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-4 h-4 rounded border flex items-center justify-center ${
+                        task.completed ? 'bg-secondary border-secondary text-surface-container-lowest' : 'border-outline'
+                      }`}>
+                        {task.completed && <span className="material-symbols-outlined text-[14px]">check</span>}
+                      </div>
+                      <span className={`text-xs ${task.completed ? 'line-through text-outline' : 'text-on-surface font-bold'}`}>
+                        {task.title}
+                      </span>
                     </div>
-                    <span className={`text-xs ${task.completed ? 'line-through text-outline' : 'text-on-surface font-bold'}`}>
-                      {task.title}
-                    </span>
-                  </div>
 
-                  <div className="flex items-center gap-3 shrink-0 text-[10px]">
-                    <span className="text-outline font-mono">DUE: {task.dueDate}</span>
-                    <span className={`px-1.5 py-0.5 rounded font-bold uppercase ${
-                      task.priority === 'HIGH' ? 'bg-red-500/15 text-red-400' : 'bg-blue-500/15 text-blue-400'
-                    }`}>
-                      {task.priority}
-                    </span>
+                    <div className="flex items-center gap-3 shrink-0 text-[10px]">
+                      <span className="text-outline font-mono">DUE: {task.dueDate}</span>
+                      <span className={`px-1.5 py-0.5 rounded font-bold uppercase ${
+                        task.priority === 'HIGH' ? 'bg-red-500/15 text-red-400' : task.priority === 'MEDIUM' ? 'bg-amber-500/15 text-amber-400' : 'bg-blue-500/15 text-blue-400'
+                      }`}>
+                        {task.priority}
+                      </span>
+                      <button
+                        onClick={(e) => handleDeleteTask(task.id, e)}
+                        className="text-outline hover:text-red-400 transition-colors p-0.5 cursor-pointer ml-1"
+                        title="Delete Action Item"
+                      >
+                        <span className="material-symbols-outlined text-[14px]">delete</span>
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         ) : (
           /* ================= 5. NOTES & HYPOTHESIS TAB ================= */
@@ -588,6 +674,198 @@ export const CaseWorkspace: React.FC = () => {
           </div>
         )}
       </main>
+
+      {/* Add Suspect Modal */}
+      {isSuspectModalOpen && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-surface-container border border-outline-variant rounded-lg p-6 max-w-md w-full font-mono text-xs space-y-4 animate-fade-in shadow-2xl">
+            <div className="flex items-center justify-between border-b border-outline-variant pb-2">
+              <span className="font-bold text-primary flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[18px]">person_add</span>
+                <span>REGISTER PERSON OF INTEREST</span>
+              </span>
+              <button onClick={() => setIsSuspectModalOpen(false)} className="text-outline hover:text-white">
+                <span className="material-symbols-outlined text-sm">close</span>
+              </button>
+            </div>
+
+            <form onSubmit={handleAddSuspect} className="space-y-3">
+              <div>
+                <label className="text-[10px] uppercase text-outline block mb-1">SUSPECT FULL NAME *</label>
+                <input
+                  type="text"
+                  value={newSuspect.name}
+                  onChange={(e) => setNewSuspect({ ...newSuspect, name: e.target.value })}
+                  placeholder="e.g. Vikram Singhania"
+                  className="w-full bg-surface-container-lowest border border-outline-variant px-3 py-1.5 rounded text-on-surface text-xs focus:outline-none focus:border-primary"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] uppercase text-outline block mb-1">OPERATIONAL ROLE</label>
+                  <input
+                    type="text"
+                    value={newSuspect.role}
+                    onChange={(e) => setNewSuspect({ ...newSuspect, role: e.target.value })}
+                    placeholder="e.g. Courier / Director"
+                    className="w-full bg-surface-container-lowest border border-outline-variant px-3 py-1.5 rounded text-on-surface text-xs focus:outline-none focus:border-primary"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] uppercase text-outline block mb-1">THREAT LEVEL</label>
+                  <select
+                    value={newSuspect.threatLevel}
+                    onChange={(e: any) => setNewSuspect({ ...newSuspect, threatLevel: e.target.value })}
+                    className="w-full bg-surface-container-lowest border border-outline-variant px-2.5 py-1.5 rounded text-primary text-xs focus:outline-none focus:border-primary"
+                  >
+                    <option value="CRITICAL">CRITICAL</option>
+                    <option value="HIGH">HIGH</option>
+                    <option value="MEDIUM">MEDIUM</option>
+                    <option value="LOW">LOW</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] uppercase text-outline block mb-1">PHONE / MSISDN</label>
+                  <input
+                    type="text"
+                    value={newSuspect.phone}
+                    onChange={(e) => setNewSuspect({ ...newSuspect, phone: e.target.value })}
+                    placeholder="+91 98..."
+                    className="w-full bg-surface-container-lowest border border-outline-variant px-3 py-1.5 rounded text-on-surface text-xs focus:outline-none focus:border-primary"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] uppercase text-outline block mb-1">LOCATION FIX</label>
+                  <input
+                    type="text"
+                    value={newSuspect.location}
+                    onChange={(e) => setNewSuspect({ ...newSuspect, location: e.target.value })}
+                    placeholder="e.g. Mumbai South"
+                    className="w-full bg-surface-container-lowest border border-outline-variant px-3 py-1.5 rounded text-on-surface text-xs focus:outline-none focus:border-primary"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[10px] uppercase text-outline block mb-1">INVESTIGATIVE NOTES</label>
+                <textarea
+                  value={newSuspect.notes}
+                  onChange={(e) => setNewSuspect({ ...newSuspect, notes: e.target.value })}
+                  rows={3}
+                  placeholder="Key observations, vehicles, known associates..."
+                  className="w-full bg-surface-container-lowest border border-outline-variant p-2.5 rounded text-on-surface text-xs focus:outline-none focus:border-primary"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-outline-variant">
+                <button
+                  type="button"
+                  onClick={() => setIsSuspectModalOpen(false)}
+                  className="px-3 py-1.5 border border-outline-variant text-outline hover:text-white rounded"
+                >
+                  CANCEL
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-1.5 bg-primary text-surface-container-lowest font-bold rounded hover:bg-primary-fixed-dim"
+                >
+                  SAVE PERSON OF INTEREST
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Add Milestone Modal */}
+      {isMilestoneModalOpen && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-surface-container border border-outline-variant rounded-lg p-6 max-w-md w-full font-mono text-xs space-y-4 animate-fade-in shadow-2xl">
+            <div className="flex items-center justify-between border-b border-outline-variant pb-2">
+              <span className="font-bold text-primary flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[18px]">add_circle</span>
+                <span>RECORD CHRONOLOGY EVENT</span>
+              </span>
+              <button onClick={() => setIsMilestoneModalOpen(false)} className="text-outline hover:text-white">
+                <span className="material-symbols-outlined text-sm">close</span>
+              </button>
+            </div>
+
+            <form onSubmit={handleAddMilestone} className="space-y-3">
+              <div>
+                <label className="text-[10px] uppercase text-outline block mb-1">EVENT TITLE *</label>
+                <input
+                  type="text"
+                  value={newMilestone.title}
+                  onChange={(e) => setNewMilestone({ ...newMilestone, title: e.target.value })}
+                  placeholder="e.g. Warrant Section 65B Executed"
+                  className="w-full bg-surface-container-lowest border border-outline-variant px-3 py-1.5 rounded text-on-surface text-xs focus:outline-none focus:border-primary"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[10px] uppercase text-outline block mb-1">CATEGORY</label>
+                  <select
+                    value={newMilestone.category}
+                    onChange={(e: any) => setNewMilestone({ ...newMilestone, category: e.target.value })}
+                    className="w-full bg-surface-container-lowest border border-outline-variant px-2.5 py-1.5 rounded text-primary text-xs focus:outline-none focus:border-primary"
+                  >
+                    <option value="INTELLIGENCE">INTELLIGENCE</option>
+                    <option value="EVIDENCE">EVIDENCE</option>
+                    <option value="INTERCEPT">INTERCEPT</option>
+                    <option value="WARRANT">WARRANT</option>
+                    <option value="ARREST">ARREST</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] uppercase text-outline block mb-1">TIMESTAMP</label>
+                  <input
+                    type="text"
+                    value={newMilestone.timestamp}
+                    onChange={(e) => setNewMilestone({ ...newMilestone, timestamp: e.target.value })}
+                    placeholder="YYYY-MM-DD HH:MM"
+                    className="w-full bg-surface-container-lowest border border-outline-variant px-3 py-1.5 rounded text-on-surface text-xs focus:outline-none focus:border-primary"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[10px] uppercase text-outline block mb-1">EVENT DESCRIPTION</label>
+                <textarea
+                  value={newMilestone.description}
+                  onChange={(e) => setNewMilestone({ ...newMilestone, description: e.target.value })}
+                  rows={3}
+                  placeholder="Details of evidence seized, wiretap packet decrypted..."
+                  className="w-full bg-surface-container-lowest border border-outline-variant p-2.5 rounded text-on-surface text-xs focus:outline-none focus:border-primary"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-outline-variant">
+                <button
+                  type="button"
+                  onClick={() => setIsMilestoneModalOpen(false)}
+                  className="px-3 py-1.5 border border-outline-variant text-outline hover:text-white rounded"
+                >
+                  CANCEL
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-1.5 bg-primary text-surface-container-lowest font-bold rounded hover:bg-primary-fixed-dim"
+                >
+                  SAVE EVENT
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

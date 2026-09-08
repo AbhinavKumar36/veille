@@ -105,3 +105,18 @@ def get_audit_logs(
         )
 
     return logs
+
+
+@router.delete("", status_code=200)
+@router.delete("/", status_code=200)
+def clear_audit_logs(
+    current_user: dict = Depends(require_role(["HEAD", "ADMIN"])),
+    db: Session = Depends(get_db),
+):
+    """
+    Clears all system audit logs. Restricted to HEAD/ADMIN operators.
+    """
+    db.query(AuditLog).delete()
+    db.commit()
+    return {"message": "System audit logs cleared successfully"}
+

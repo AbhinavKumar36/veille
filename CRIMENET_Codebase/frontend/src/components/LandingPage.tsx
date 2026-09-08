@@ -53,7 +53,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ isAuthenticated }) => 
             onClick={handleConsoleAction}
             className="bg-[#4edea3] hover:bg-[#6ffbbe] text-[#003824] text-xs font-bold px-4 py-2 rounded-sm shadow-[0_0_15px_rgba(78,222,163,0.3)] hover:shadow-[0_0_22px_rgba(111,251,190,0.45)] transition-all flex items-center gap-2 cursor-pointer active:scale-95 uppercase tracking-wider"
           >
-            <span>{isAuthenticated ? 'OPEN CONSOLE' : 'ACCESS TERMINAL'}</span>
+            <span>{isAuthenticated ? 'OPEN CONSOLE' : 'LOGIN'}</span>
             <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
           </button>
         </div>
@@ -85,8 +85,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ isAuthenticated }) => 
             onClick={handleConsoleAction}
             className="bg-[#4edea3] hover:bg-[#6ffbbe] text-[#003824] text-xs font-bold px-7 py-3.5 rounded-sm shadow-[0_0_24px_rgba(78,222,163,0.35)] hover:shadow-[0_0_30px_rgba(111,251,190,0.5)] transition-all flex items-center gap-2.5 cursor-pointer active:scale-95 uppercase tracking-wider"
           >
-            <span className="material-symbols-outlined text-[18px]">terminal</span>
-            <span>{isAuthenticated ? 'ENTER WORKSPACE CONSOLE' : 'INITIALIZE DEMO SESSION'}</span>
+            <span className="material-symbols-outlined text-[18px]">lock_open</span>
+            <span>{isAuthenticated ? 'ENTER WORKSPACE' : 'LOGIN'}</span>
           </button>
           <a
             href="#features"

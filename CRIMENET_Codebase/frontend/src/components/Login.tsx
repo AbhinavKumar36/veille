@@ -95,7 +95,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
           </Link>
           <div className="hidden sm:flex items-center gap-2 text-[#4edea3] bg-[#4edea3]/10 border border-[#4edea3]/30 px-2.5 py-1 text-[10px] font-bold rounded-sm tracking-wider uppercase">
             <span className="w-1.5 h-1.5 rounded-full bg-[#4edea3] animate-ping" />
-            <span>TERMINAL ACTIVE</span>
+            <span>SYSTEM ACTIVE</span>
           </div>
         </div>
       </header>
@@ -216,21 +216,12 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 </>
               ) : (
                 <>
-                  <span>INITIALIZE OPERATOR SESSION</span>
+                  <span>LOGIN</span>
                   <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
                 </>
               )}
             </button>
           </form>
-
-          {/* Quick Demo Credentials Footer */}
-          <div className="mt-5 pt-3.5 border-t border-[#212B3A] text-[10px] font-mono text-[#87929A] flex items-center justify-between">
-            <span className="flex items-center gap-1">
-              <span className="material-symbols-outlined text-[12px] text-[#4edea3]">touch_app</span>
-              <span>1-Click Presets Loaded</span>
-            </span>
-            <span className="text-[#4edea3] font-bold">READY</span>
-          </div>
         </div>
       </main>
 

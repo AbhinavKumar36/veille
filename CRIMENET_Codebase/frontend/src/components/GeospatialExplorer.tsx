@@ -92,7 +92,14 @@ export const GeospatialExplorer: React.FC = () => {
   // 3. Fetch Locations for selected case
   useEffect(() => {
     setLoading(true);
-    const endpoint = selectedCaseId ? `/geospatial?case_id=${selectedCaseId}` : '/geospatial';
+    if (!selectedCaseId) {
+      setLocations([]);
+      setSelectedPin(null);
+      setLoading(false);
+      return;
+    }
+
+    const endpoint = `/geospatial?case_id=${selectedCaseId}`;
     api.get(endpoint)
       .then((data: any) => {
         const items = Array.isArray(data) ? data : [];
@@ -100,38 +107,8 @@ export const GeospatialExplorer: React.FC = () => {
           setLocations(items);
           setSelectedPin(items[0]);
         } else {
-          // Default forensic locations for demo case
-          const defaultLocs: GeoLocation[] = [
-            {
-              id: 'loc-1',
-              lat: 19.0760,
-              lng: 72.8777,
-              label: 'Bandra Port Warehouse #4',
-              type: 'LOGISTICS_HUB',
-              timestamp: '2026-09-07 03:14',
-              details: 'Physical coordinates of suspected Hawala cargo drop point verified via wiretap SIG-2026-001.'
-            },
-            {
-              id: 'loc-2',
-              lat: 18.9220,
-              lng: 72.8347,
-              label: 'Colaba Waterfront Checkpoint',
-              type: 'SURVEILLANCE_FIX',
-              timestamp: '2026-09-06 22:45',
-              details: 'Burner handset cell tower triangulation fix registered by Mumbai South-02 antenna.'
-            },
-            {
-              id: 'loc-3',
-              lat: 19.1136,
-              lng: 72.8697,
-              label: 'Andheri East Safehouse',
-              type: 'SUSPECT_RESIDENCE',
-              timestamp: '2026-09-05 18:20',
-              details: 'Residence of registered shell director Devraj Kapoor; vehicle sighting #MH02-CB-8812 recorded.'
-            }
-          ];
-          setLocations(defaultLocs);
-          setSelectedPin(defaultLocs[0]);
+          setLocations([]);
+          setSelectedPin(null);
         }
       })
       .catch((err) => {
@@ -369,24 +346,34 @@ export const GeospatialExplorer: React.FC = () => {
 
           {/* Location Pins List */}
           <div className="space-y-2">
-            {locations.map((loc) => {
-              const isSelected = selectedPin?.id === loc.id;
-              return (
-                <div
-                  key={loc.id}
-                  onClick={() => handleSelectPin(loc)}
-                  className={`p-3 bg-surface-container-low border rounded cursor-pointer transition-all ${
-                    isSelected ? 'border-primary bg-surface-container text-white shadow-sm' : 'border-outline-variant hover:border-outline text-on-surface'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-xs">{loc.label}</span>
-                    <span className="text-[9px] text-outline">{loc.timestamp.slice(11, 16)}</span>
+            {locations.length === 0 ? (
+              <div className="p-8 text-center bg-surface-container-low border border-outline-variant rounded flex flex-col items-center justify-center space-y-1.5">
+                <span className="material-symbols-outlined text-2xl text-outline">location_off</span>
+                <div className="text-xs font-bold text-on-surface uppercase">NO GEOLOCATIONS RECORDED</div>
+                <p className="text-[10px] text-outline">
+                  No cell tower triangulation or sighting coordinates found for this case.
+                </p>
+              </div>
+            ) : (
+              locations.map((loc) => {
+                const isSelected = selectedPin?.id === loc.id;
+                return (
+                  <div
+                    key={loc.id}
+                    onClick={() => handleSelectPin(loc)}
+                    className={`p-3 bg-surface-container-low border rounded cursor-pointer transition-all ${
+                      isSelected ? 'border-primary bg-surface-container text-white shadow-sm' : 'border-outline-variant hover:border-outline text-on-surface'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-xs">{loc.label}</span>
+                      <span className="text-[9px] text-outline">{loc.timestamp.slice(11, 16)}</span>
+                    </div>
+                    <div className="text-[10px] text-outline mt-1 truncate">{loc.details}</div>
                   </div>
-                  <div className="text-[10px] text-outline mt-1 truncate">{loc.details}</div>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
         </div>
       </div>

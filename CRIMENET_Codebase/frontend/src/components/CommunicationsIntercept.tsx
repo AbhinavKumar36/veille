@@ -97,65 +97,21 @@ export const CommunicationsIntercept: React.FC = () => {
               setIntercepts(formatted);
               setSelectedIntercept(formatted[0]);
               return;
+            } else {
+              setIntercepts([]);
+              setSelectedIntercept(null);
+              return;
             }
           } catch (err) {
             console.error('Graph fetch failed:', err);
+            setIntercepts([]);
+            setSelectedIntercept(null);
+            return;
           }
         }
 
-        // Fallback default intercepted records
-        const defaultIntercepts: InterceptRow[] = [
-          {
-            id: 'SIG-2026-001',
-            time: '03:14:22',
-            channel: 'VOLTE-CH01',
-            src: '+91 98201 44921 (Vikram Singhania)',
-            dst: '+91 98110 33819 (Devraj Kapoor)',
-            protocol: 'GSM-VoLTE-PDU',
-            status: 'DECRYPTED',
-            statusColor: 'text-secondary border-secondary/40 bg-secondary/10',
-            association: 'Falcon ➔ Dubai Intermediary',
-            associationType: 'target',
-            hasAudio: true,
-            transcriptSnippet: 'Transmit the remaining 40 percent through the cryptocurrency escrow pool before midnight. The port clearance is already settled.',
-            keyword: 'CRYPTOCURRENCY ESCROW',
-            duration: 38
-          },
-          {
-            id: 'SIG-2026-002',
-            time: '04:22:15',
-            channel: 'SIP-TLS-CH04',
-            src: '+91 97654 22109 (Ananya Sharma)',
-            dst: 'sip:relay-04.veille.internal',
-            protocol: 'SIP-VoIP-AES',
-            status: 'DECRYPTED',
-            statusColor: 'text-secondary border-secondary/40 bg-secondary/10',
-            association: 'Tech Operator ➔ SIP Relay',
-            associationType: 'relay',
-            hasAudio: true,
-            transcriptSnippet: 'Server key rotation is complete on node delta. Awaiting verification hash from lead operator.',
-            keyword: 'KEY ROTATION',
-            duration: 25
-          },
-          {
-            id: 'SIG-2026-003',
-            time: '06:05:48',
-            channel: 'GSM-PDU-CH02',
-            src: '+91 99881 12345 (Burner SIM #1)',
-            dst: 'TWR-MUMBAI-SOUTH-02',
-            protocol: 'GSM-PDU',
-            status: 'DECRYPTED',
-            statusColor: 'text-secondary border-secondary/40 bg-secondary/10',
-            association: 'Burner Handset ➔ South Tower',
-            associationType: 'sensor',
-            hasAudio: true,
-            transcriptSnippet: 'Package collected from Colaba warehouse. Moving toward Navi Mumbai highway checkpoint.',
-            keyword: 'COLABA WAREHOUSE',
-            duration: 52
-          }
-        ];
-        setIntercepts(defaultIntercepts);
-        setSelectedIntercept(defaultIntercepts[0]);
+        setIntercepts([]);
+        setSelectedIntercept(null);
       })
       .catch(() => {
         setIntercepts([]);

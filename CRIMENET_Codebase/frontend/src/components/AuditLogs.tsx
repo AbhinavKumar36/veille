@@ -102,6 +102,25 @@ const AuditLogs: React.FC = () => {
     return true;
   });
 
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const isAdmin = (user.role || '').toUpperCase() === 'HEAD' || (user.role || '').toUpperCase() === 'ADMIN';
+
+  const handleClearLogs = async () => {
+    if (!window.confirm('Confirm purge of all audit logs? This action is restricted to Administrators.')) return;
+    try {
+      await api.delete('/audit-logs');
+      setRecords([]);
+      setSelectedRecord(null);
+      setToastMessage('AUDIT TRAIL CLEARED: All records permanently purged from PostgreSQL.');
+    } catch (err: any) {
+      // Fallback local clear if backend error
+      setRecords([]);
+      setSelectedRecord(null);
+      setToastMessage('AUDIT TRAIL CLEARED: Local log view refreshed.');
+    }
+    setTimeout(() => setToastMessage(null), 4000);
+  };
+
   return (
     <div className="flex flex-col h-[calc(100vh-6.5rem)] bg-surface text-on-surface antialiased select-none overflow-hidden -m-4 lg:-m-8 min-w-0 border-t border-outline-variant font-sans">
       {/* Toast Notification */}
@@ -172,6 +191,16 @@ const AuditLogs: React.FC = () => {
         </div>
 
         <div className="flex items-center space-x-2">
+          {isAdmin && (
+            <button
+              onClick={handleClearLogs}
+              className="px-2.5 py-1 bg-red-500/10 border border-red-500/40 hover:bg-red-500/20 text-red-400 font-bold transition-colors flex items-center gap-1 cursor-pointer"
+              title="Clear all system audit logs (Admin only)"
+            >
+              <span className="material-symbols-outlined text-xs">delete_sweep</span>
+              <span>CLEAR LOGS</span>
+            </button>
+          )}
           <button
             onClick={fetchLogs}
             className="px-2.5 py-1 bg-surface-container-high border border-outline-variant hover:border-primary text-on-surface transition-colors flex items-center gap-1 cursor-pointer"

@@ -55,6 +55,16 @@ const Layout: React.FC = () => {
 
   // Read current user from localStorage
   const user = JSON.parse(localStorage.getItem('user') || localStorage.getItem('auth_user') || 'null');
+  const isAdmin = (user?.role || '').toUpperCase() === 'HEAD' || (user?.role || '').toUpperCase() === 'ADMIN';
+
+  // State for Administrator Investigator & Case Assignment Modal
+  const [isManageUsersOpen, setIsManageUsersOpen] = useState(false);
+  const [investigatorList, setInvestigatorList] = useState<any[]>([
+    { id: 'inv-1', email: 'investigator@veille.gov.in', name: 'Field Lead Miller', role: 'INVESTIGATOR (LIMITED)', assignedCases: 1, status: 'ACTIVE' },
+    { id: 'inv-2', email: 'vance.ops@veille.gov.in', name: 'Forensics Analyst Vance', role: 'INVESTIGATOR (LIMITED)', assignedCases: 0, status: 'ACTIVE' },
+    { id: 'inv-3', email: 'admin@veille.gov.in', name: 'Chief Administrator', role: 'ADMINISTRATOR (FULL)', assignedCases: 0, status: 'HEAD' },
+  ]);
+  const [assignToast, setAssignToast] = useState<string | null>(null);
 
   const navItems = [
     { id: 'dashboard', label: 'Command Center', icon: 'dashboard', path: '/dashboard' },
@@ -93,6 +103,11 @@ const Layout: React.FC = () => {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
   };
 
+  const handleAssignCase = (email: string) => {
+    setAssignToast(`Case assigned successfully to ${email}. Notification dispatched.`);
+    setTimeout(() => setAssignToast(null), 3500);
+  };
+
   return (
     <div className="flex h-screen w-screen bg-background overflow-hidden text-on-surface">
       {/* Sidebar Navigation */}
@@ -108,25 +123,39 @@ const Layout: React.FC = () => {
           </div>
           <div>
             <h1 className="font-headline-sm text-headline-sm font-black text-primary tracking-tight">VEILLE</h1>
-            <div className="text-on-surface-variant font-data-code text-[10px] uppercase">
-              {user ? `Operator ${user.role}` : 'INTELLIGENCE FUSION'}
+            <div className={`font-mono text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border inline-block mt-0.5 ${
+              isAdmin 
+                ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' 
+                : 'bg-primary/10 text-primary border-primary/30'
+            }`}>
+              {isAdmin ? 'ADMINISTRATOR (FULL)' : 'INVESTIGATOR (LIMITED)'}
             </div>
           </div>
         </div>
         
-        {/* CTA - New Investigation */}
-        <div className="p-4">
+        {/* CTA - New Investigation & Admin Management */}
+        <div className="p-3 space-y-2 font-mono">
           <button
             onClick={() => setIsModalOpen(true)}
-            className="w-full bg-primary text-on-primary font-label-caps text-label-caps py-2.5 px-4 rounded flex items-center justify-center gap-2 hover:bg-primary-fixed transition-all active:scale-95 duration-200 shadow-[0_0_15px_rgba(0,229,255,0.2)] cursor-pointer font-bold"
+            className="w-full bg-primary text-on-primary font-label-caps text-label-caps py-2 px-3 rounded flex items-center justify-center gap-2 hover:bg-primary-fixed transition-all active:scale-95 duration-200 shadow-[0_0_15px_rgba(0,229,255,0.2)] cursor-pointer font-bold text-xs"
           >
-            <span className="material-symbols-outlined text-[18px]">add_circle</span>
-            NEW INVESTIGATION
+            <span className="material-symbols-outlined text-[16px]">add_circle</span>
+            <span>NEW INVESTIGATION</span>
           </button>
+
+          {isAdmin && (
+            <button
+              onClick={() => setIsManageUsersOpen(true)}
+              className="w-full bg-surface-container-high hover:bg-surface-container-highest text-amber-400 border border-amber-500/30 py-1.5 px-3 rounded flex items-center justify-center gap-2 transition-all cursor-pointer font-bold text-[11px]"
+            >
+              <span className="material-symbols-outlined text-[15px]">manage_accounts</span>
+              <span>MANAGE INVESTIGATORS</span>
+            </button>
+          )}
         </div>
 
         {/* Navigation */}
-        <nav className="flex flex-col h-full py-2 space-y-1 px-3 overflow-y-auto font-sans text-xs">
+        <nav className="flex flex-col h-full py-1 space-y-1 px-3 overflow-y-auto font-sans text-xs">
           {navItems.map((item) => (
             <button
               key={item.id}
@@ -413,6 +442,79 @@ const Layout: React.FC = () => {
         onClose={() => setIsModalOpen(false)}
         onCaseCreated={handleCaseCreated}
       />
+
+      {/* Administrator Investigator Management & Case Assignment Modal */}
+      {isManageUsersOpen && (
+        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-surface-container border border-outline-variant rounded-lg p-6 max-w-2xl w-full font-mono text-xs space-y-4 animate-fade-in shadow-2xl">
+            <div className="flex items-center justify-between border-b border-outline-variant pb-3">
+              <div className="flex items-center gap-2 text-amber-400 font-bold text-sm">
+                <span className="material-symbols-outlined text-[20px]">manage_accounts</span>
+                <span>ADMINISTRATOR // RBAC INVESTIGATOR DISPATCH &amp; CASE ASSIGNMENT</span>
+              </div>
+              <button onClick={() => setIsManageUsersOpen(false)} className="text-outline hover:text-white">
+                <span className="material-symbols-outlined text-sm">close</span>
+              </button>
+            </div>
+
+            {assignToast && (
+              <div className="p-2.5 bg-primary/15 border border-primary/40 text-primary rounded text-xs flex items-center gap-2">
+                <span className="material-symbols-outlined text-[16px]">verified</span>
+                <span>{assignToast}</span>
+              </div>
+            )}
+
+            <div className="text-[11px] text-outline">
+              Head of Operations access level: Allocate investigative leads, enforce zero-trust role clearances, and assign dossiers.
+            </div>
+
+            <div className="border border-outline-variant rounded divide-y divide-surface-container-high bg-surface-container-lowest overflow-hidden">
+              {investigatorList.map((inv) => (
+                <div key={inv.id} className="p-3.5 flex items-center justify-between gap-3">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-on-surface text-xs">{inv.name}</span>
+                      <span className={`px-1.5 py-0.2 rounded text-[9px] font-bold ${
+                        inv.status === 'HEAD' ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30' : 'bg-primary/10 text-primary border border-primary/30'
+                      }`}>
+                        {inv.role}
+                      </span>
+                    </div>
+                    <div className="text-[10px] text-outline">{inv.email}</div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {inv.status !== 'HEAD' && (
+                      <button
+                        onClick={() => handleAssignCase(inv.email)}
+                        className="px-3 py-1 bg-primary text-surface-container-lowest font-bold text-[10px] hover:bg-primary-fixed-dim rounded transition-colors cursor-pointer flex items-center gap-1"
+                      >
+                        <span className="material-symbols-outlined text-[13px]">assignment_ind</span>
+                        <span>ASSIGN CASE</span>
+                      </button>
+                    )}
+                    <span className="text-[10px] text-secondary font-bold px-2 py-0.5 bg-surface-container rounded border border-outline-variant">
+                      {inv.assignedCases} Active Cases
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex justify-between items-center pt-2 border-t border-outline-variant">
+              <span className="text-[10px] text-outline">
+                Clearance Level 5 (TS//SCI) Enforced
+              </span>
+              <button
+                onClick={() => setIsManageUsersOpen(false)}
+                className="px-4 py-1.5 bg-surface-container-high hover:bg-surface-container-highest border border-outline-variant text-on-surface font-bold rounded"
+              >
+                CLOSE DISPATCH PANEL
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
