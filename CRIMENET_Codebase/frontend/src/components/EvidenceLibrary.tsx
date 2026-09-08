@@ -52,6 +52,9 @@ export const EvidenceLibrary: React.FC = () => {
   const [inspectTab, setInspectTab] = useState<'ENTITIES' | 'FORENSICS' | 'CONTENT'>('ENTITIES');
   const [inspectLoading, setInspectLoading] = useState(false);
   const [inspectEntities, setInspectEntities] = useState<ExtractedEntity[]>([]);
+  const [inspectRelationships, setInspectRelationships] = useState<any[]>([]);
+  const [inspectStatus, setInspectStatus] = useState<string>('');
+  const [inspectError, setInspectError] = useState<string | null>(null);
   const [inspectContent, setInspectContent] = useState<string>('');
   const [entityFilter, setEntityFilter] = useState<string>('ALL');
   const [contentSearch, setContentSearch] = useState<string>('');
@@ -91,7 +94,7 @@ export const EvidenceLibrary: React.FC = () => {
             evidenceNum: `#EVD-${item.id ? item.id.slice(0, 6).toUpperCase() : (8500 + idx)}`,
             sha256: item.hash || '8f4a3c1e92d8819034aa1109bcdef4491023bba12001',
             filename: item.original_filename || `evidence_document_${idx}.pdf`,
-            fileSize: item.file_size_bytes ? `${(item.file_size_bytes / (1024 * 1024)).toFixed(2)} MB` : '1.24 MB',
+            fileSize: item.file_size_bytes ? `${(item.file_size_bytes / (1024 * 1024)).toFixed(2)} MB` : '0.00 MB',
             fileType: item.source_type || 'FIR',
             source: 'MinIO Evidence Vault',
             seizureDate: formatLocalTimestamp(item.created_at),
@@ -103,7 +106,7 @@ export const EvidenceLibrary: React.FC = () => {
               : 'bg-amber-500/10 text-amber-400 border border-amber-500/30',
             caseId: item.case_id,
             caseTitle: matchedCase ? matchedCase.title : `Case ${item.case_id?.slice(0, 8) || 'N/A'}`,
-            extractedEntitiesCount: Math.floor(Math.random() * 6) + 4,
+            extractedEntitiesCount: isDone ? 1 : 0,
           };
         });
 
@@ -128,71 +131,54 @@ export const EvidenceLibrary: React.FC = () => {
     loadData(true);
   }, []);
 
-  const extractEntitiesFromContent = (text: string, filename: string, fileType: string): ExtractedEntity[] => {
-    const list: ExtractedEntity[] = [];
-    const lowerName = filename.toLowerCase();
+  // Auto-polling when evidence is processing
+  useEffect(() => {
+    const hasProcessing = evidenceList.some(e => e.status === 'PROCESSING');
+    if (!hasProcessing) return;
 
-    if (fileType.includes('CDR') || lowerName.includes('cdr') || lowerName.includes('telecom')) {
-      list.push(
-        { name: '+91 98201 44829', type: 'PHONE', confidence: 0.99, context: 'Primary Originating Cell Station (IMEI 35489201)' },
-        { name: '+91 88790 12044', type: 'PHONE', confidence: 0.98, context: 'Frequent Recipient (Tower Node DL-72)' },
-        { name: '+91 91672 90112', type: 'PHONE', confidence: 0.95, context: 'Burner Intercept Target (Roaming IMEI)' },
-        { name: 'Sanjay Rawat', type: 'PERSON', confidence: 0.92, context: 'Subscriber Registered Name (SIM-KYC 449)' },
-        { name: 'Vikram "Blade" Sharma', type: 'PERSON', confidence: 0.89, context: 'Co-located Cell Identifier Match' },
-        { name: 'South Delhi Gateway Station', type: 'LOCATION', confidence: 0.96, context: 'Cell Tower Triangulation Coordinates' },
-      );
-    } else if (fileType.includes('FINANCIAL') || lowerName.includes('ledger') || lowerName.includes('aml')) {
-      list.push(
-        { name: 'HDFC-ACC-8829104', type: 'ACCOUNT', confidence: 0.99, context: 'Primary Layering Conduit Account' },
-        { name: 'ICICI-ESCROW-3392', type: 'ACCOUNT', confidence: 0.97, context: 'Offshore Remittance Inflow Escrow' },
-        { name: 'Al-Madina Bullion Trading', type: 'ORGANIZATION', confidence: 0.95, context: 'Shell Company Front Invoice #8849' },
-        { name: 'Farooq Merchant', type: 'PERSON', confidence: 0.94, context: 'Signatory & Beneficiary Owner' },
-        { name: 'Hawala Node Dubai-Deira', type: 'LOCATION', confidence: 0.93, context: 'Remittance Clearing Point' },
-        { name: '₹ 4,85,00,000 Transfer', type: 'ACCOUNT', confidence: 0.91, context: 'Unexplained Cash Smurfing Batch' },
-      );
-    } else {
-      list.push(
-        { name: 'Vikram "Blade" Sharma', type: 'PERSON', confidence: 0.98, context: 'Prime Accused (Extortion & Syndicate Ops)' },
-        { name: 'Sanjay Rawat', type: 'PERSON', confidence: 0.96, context: 'Logistics Facilitator & Safehouse Custodian' },
-        { name: 'Mohit "Kalia" Varma', type: 'PERSON', confidence: 0.92, context: 'Enforcer / Armed Operative' },
-        { name: 'Apex Logistics & Freight LLC', type: 'ORGANIZATION', confidence: 0.94, context: 'Cover Organization for Freight Shipments' },
-        { name: 'Okhla Industrial Area Safehouse', type: 'LOCATION', confidence: 0.97, context: 'Stash Location & Vehicle Depot' },
-        { name: 'DL-01-AB-9842 (Black Scorpio)', type: 'VEHICLE', confidence: 0.95, context: 'Identified Getaway Vehicle' },
-        { name: 'Section 302 IPC / 103 BNS (Murder)', type: 'SECTION', confidence: 0.99, context: 'Registered Cognizable Offence' },
-        { name: 'Section 386 IPC / 308 BNS (Extortion)', type: 'SECTION', confidence: 0.98, context: 'Syndicate Demand Note Evidence' },
-      );
-    }
+    const interval = setInterval(() => {
+      loadData(false);
+      if (selectedEvidence && inspectModalOpen) {
+        handleInspect(selectedEvidence, false);
+      }
+    }, 2500);
 
-    const phoneMatches = text.match(/(?:\+91|0)?[6-9]\d{9}/g);
-    if (phoneMatches) {
-      phoneMatches.slice(0, 3).forEach((phone) => {
-        if (!list.some(e => e.name === phone)) {
-          list.push({ name: phone, type: 'PHONE', confidence: 0.95, context: 'Extracted from raw text pattern' });
-        }
-      });
-    }
+    return () => clearInterval(interval);
+  }, [evidenceList, inspectModalOpen, selectedEvidence]);
 
-    return list;
-  };
-
-  const handleInspect = async (item: EvidenceRecord) => {
+  const handleInspect = async (item: EvidenceRecord, showSpinner: boolean = true) => {
     setSelectedEvidence(item);
     setInspectModalOpen(true);
-    setInspectLoading(true);
+    if (showSpinner) setInspectLoading(true);
     setInspectTab('ENTITIES');
     setContentSearch('');
+    setInspectStatus(item.status);
 
     try {
-      const data: any = await api.get(`/evidence/${item.id}/preview`).catch(() => null);
-      const text = data?.content || `[EVIDENCE VAULT RECORD]\nDocument ID: ${item.evidenceNum}\nCase: ${item.caseTitle || item.caseId}\nFile: ${item.filename}\nHash: ${item.sha256}\nIngestion: ${item.seizureDate}\n\nEvidence Summary: Extracted text and entity representations processed for neural graph ingestion.`;
+      const [previewRes, entitiesRes]: [any, any] = await Promise.all([
+        api.get(`/evidence/${item.id}/preview`).catch(() => null),
+        api.get(`/evidence/${item.id}/entities`).catch(() => null),
+      ]);
+
+      const text = previewRes?.content || `[EVIDENCE VAULT RECORD]\nDocument ID: ${item.evidenceNum}\nCase: ${item.caseTitle || item.caseId}\nFile: ${item.filename}\nHash: ${item.sha256}\nIngestion: ${item.seizureDate}\n\nEvidence processing status: ${item.status}`;
       setInspectContent(text);
-      const extracted = extractEntitiesFromContent(text, item.filename, item.fileType);
-      setInspectEntities(extracted);
+
+      if (entitiesRes) {
+        setInspectStatus(entitiesRes.status || item.status);
+        setInspectError(entitiesRes.error_message || null);
+        setInspectEntities(Array.isArray(entitiesRes.entities) ? entitiesRes.entities : []);
+        setInspectRelationships(Array.isArray(entitiesRes.relationships) ? entitiesRes.relationships : []);
+      } else {
+        setInspectEntities([]);
+        setInspectRelationships([]);
+      }
     } catch (err: any) {
       setInspectContent(`Failed to retrieve raw stream: ${err.message}`);
-      setInspectEntities(extractEntitiesFromContent('', item.filename, item.fileType));
+      setInspectEntities([]);
+      setInspectRelationships([]);
+      setInspectError(err.message);
     } finally {
-      setInspectLoading(false);
+      if (showSpinner) setInspectLoading(false);
     }
   };
 
@@ -421,6 +407,37 @@ export const EvidenceLibrary: React.FC = () => {
                 </div>
               ) : inspectTab === 'ENTITIES' ? (
                 <div className="space-y-4">
+                  {/* Status Banner if Processing or Failed */}
+                  {inspectStatus === 'PROCESSING' && (
+                    <div className="bg-amber-950/40 border border-amber-500/40 rounded-xl p-4 flex items-center gap-3 animate-pulse">
+                      <span className="material-symbols-outlined text-amber-400 text-2xl animate-spin">progress_activity</span>
+                      <div>
+                        <div className="font-semibold text-amber-300 text-xs">Evidence Pipeline Ingestion In Progress</div>
+                        <div className="text-[11px] text-slate-400 mt-0.5">
+                          Parsing telecom / document payloads, resolving entities, and syncing Neo4j knowledge graph in background...
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {inspectStatus === 'FAILED' && (
+                    <div className="bg-rose-950/40 border border-rose-500/40 rounded-xl p-4 flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <span className="material-symbols-outlined text-rose-400 text-2xl">error</span>
+                        <div>
+                          <div className="font-semibold text-rose-300 text-xs">Entity Extraction Failed</div>
+                          <div className="text-[11px] text-slate-400 mt-0.5">{inspectError || 'File processing error occurred.'}</div>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleReprocess(selectedEvidence.id)}
+                        className="px-3 py-1.5 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 text-xs font-semibold rounded-lg border border-rose-500/40 cursor-pointer"
+                      >
+                        Retry Ingestion
+                      </button>
+                    </div>
+                  )}
+
                   {/* Entity Filters & Graph Action Bar */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-950/60 p-3 rounded-xl border border-slate-800">
                     <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
@@ -453,55 +470,100 @@ export const EvidenceLibrary: React.FC = () => {
                   </div>
 
                   {/* Entity List Cards */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {filteredEntities.map((ent, idx) => {
-                      const typeColors: Record<string, string> = {
-                        PERSON: 'bg-rose-500/10 text-rose-400 border-rose-500/30',
-                        ORGANIZATION: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
-                        PHONE: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
-                        LOCATION: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30',
-                        ACCOUNT: 'bg-violet-500/10 text-violet-400 border-violet-500/30',
-                        VEHICLE: 'bg-orange-500/10 text-orange-400 border-orange-500/30',
-                        SECTION: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30',
-                      };
-                      return (
-                        <div
-                          key={idx}
-                          className="bg-slate-950/70 border border-slate-800 rounded-xl p-3.5 flex flex-col justify-between hover:border-slate-700 transition-all"
-                        >
-                          <div className="flex items-start justify-between gap-2">
-                            <div>
-                              <div className="font-semibold text-white text-sm flex items-center gap-2">
-                                <span>{ent.name}</span>
+                  {filteredEntities.length === 0 ? (
+                    <div className="bg-slate-950/40 border border-slate-800 rounded-xl p-8 text-center text-slate-400">
+                      <span className="material-symbols-outlined text-3xl text-slate-600 mb-1">
+                        {inspectStatus === 'PROCESSING' ? 'hourglass_top' : 'sentiment_dissatisfied'}
+                      </span>
+                      <div className="font-semibold text-slate-300">
+                        {inspectStatus === 'PROCESSING' ? 'Extracting Entities...' : 'No entities found in this evidence'}
+                      </div>
+                      <p className="text-xs text-slate-500 mt-1">
+                        {inspectStatus === 'PROCESSING'
+                          ? 'Real-time pipeline is processing the file. Entities will appear once completed.'
+                          : 'No matching nodes were identified in this document or filter.'}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {filteredEntities.map((ent, idx) => {
+                        const typeColors: Record<string, string> = {
+                          PERSON: 'bg-rose-500/10 text-rose-400 border-rose-500/30',
+                          ORGANIZATION: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
+                          PHONE: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
+                          LOCATION: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30',
+                          ACCOUNT: 'bg-violet-500/10 text-violet-400 border-violet-500/30',
+                          VEHICLE: 'bg-orange-500/10 text-orange-400 border-orange-500/30',
+                          SECTION: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30',
+                        };
+                        return (
+                          <div
+                            key={idx}
+                            className="bg-slate-950/70 border border-slate-800 rounded-xl p-3.5 flex flex-col justify-between hover:border-slate-700 transition-all"
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div>
+                                <div className="font-semibold text-white text-sm flex items-center gap-2">
+                                  <span>{ent.name}</span>
+                                </div>
+                                <div className="text-xs text-slate-400 mt-1">
+                                  {ent.context || 'Identified in evidence context'}
+                                </div>
                               </div>
-                              <div className="text-xs text-slate-400 mt-1">
-                                {ent.context || 'Identified in evidence context'}
-                              </div>
+                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${typeColors[ent.type] || 'bg-slate-800 text-slate-300'}`}>
+                                {ent.type}
+                              </span>
                             </div>
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${typeColors[ent.type] || 'bg-slate-800 text-slate-300'}`}>
-                              {ent.type}
-                            </span>
-                          </div>
 
-                          <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-slate-800/80 text-[11px]">
-                            <span className="text-slate-500">
-                              Extraction Confidence: <strong className="text-slate-300">{Math.round(ent.confidence * 100)}%</strong>
-                            </span>
-                            <button
-                              onClick={() => {
-                                setInspectModalOpen(false);
-                                navigate('/network');
-                              }}
-                              className="text-sky-400 hover:text-sky-300 font-medium flex items-center gap-1 cursor-pointer"
-                            >
-                              <span>Trace Node</span>
-                              <span className="material-symbols-outlined text-[13px]">arrow_forward</span>
-                            </button>
+                            <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-slate-800/80 text-[11px]">
+                              <span className="text-slate-500">
+                                Extraction Confidence: <strong className="text-slate-300">{Math.round(ent.confidence * 100)}%</strong>
+                              </span>
+                              <button
+                                onClick={() => {
+                                  setInspectModalOpen(false);
+                                  navigate('/network');
+                                }}
+                                className="text-sky-400 hover:text-sky-300 font-medium flex items-center gap-1 cursor-pointer"
+                              >
+                                <span>Trace Node</span>
+                                <span className="material-symbols-outlined text-[13px]">arrow_forward</span>
+                              </button>
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Discovered Relationships Section */}
+                  {inspectRelationships.length > 0 && (
+                    <div className="mt-4 bg-slate-950/70 border border-slate-800 rounded-xl p-4 space-y-3">
+                      <div className="flex items-center gap-2 text-xs font-semibold text-slate-300 border-b border-slate-800 pb-2">
+                        <span className="material-symbols-outlined text-sky-400 text-[16px]">sync_alt</span>
+                        <span>Discovered Linkages &amp; Interactions ({inspectRelationships.length})</span>
+                      </div>
+                      <div className="space-y-2 max-h-48 overflow-y-auto">
+                        {inspectRelationships.map((rel, rIdx) => (
+                          <div key={rIdx} className="bg-slate-900/80 border border-slate-800 rounded-lg p-2.5 flex items-center justify-between gap-3 text-xs">
+                            <div className="flex items-center gap-2 font-mono text-[11px]">
+                              <span className="text-sky-300 font-semibold">{rel.source}</span>
+                              <span className="material-symbols-outlined text-slate-500 text-[14px]">arrow_forward</span>
+                              <span className="text-emerald-300 font-semibold">{rel.target}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="bg-slate-800 text-slate-400 px-2 py-0.5 rounded text-[10px] font-bold border border-slate-700">
+                                {rel.type}
+                              </span>
+                              {rel.properties?.duration_seconds && (
+                                <span className="text-slate-400 text-[10px]">{rel.properties.duration_seconds}s call</span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : inspectTab === 'FORENSICS' ? (
                 <div className="space-y-4">

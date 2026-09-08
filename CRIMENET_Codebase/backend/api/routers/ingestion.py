@@ -57,6 +57,8 @@ def _run_evidence_pipeline(evidence_id_str: str, file_path_str: str, case_id_str
             logger.warning(f"Outbox flush skipped or deferred: {graph_err}")
     except Exception as e:
         logger.error(f"Background execution for evidence {evidence_id_str} failed: {e}")
+        from workers.base_task import _update_evidence_status
+        _update_evidence_status(evidence_id_str, "FAILED", str(e))
 
 
 # ── Pydantic Schemas ────────────────────────────────────────────────────────
@@ -455,6 +457,155 @@ async def stream_cdr(
 
     return {"status": "accepted", "message": "Record added to stream."}
 
+
+
+@router.get("/{evidence_id}/entities")
+def get_evidence_entities(
+    evidence_id: str,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Fetch real extracted entities & relationships linked to this specific evidence record.
+    Queries Neo4j knowledge graph with PostgreSQL Outbox fallback.
+    """
+    import json
+    from core.graph_db import get_graph_session
+    from db.models import OutboxEvent
+
+    evidence = db.query(Evidence).filter(Evidence.id == evidence_id).first()
+    if not evidence:
+        raise HTTPException(status_code=404, detail="Evidence record not found.")
+
+    case = evidence.case
+    if (
+        current_user["role"] == "INVESTIGATOR"
+        and case
+        and not any(str(inv.id) == current_user["id"] for inv in getattr(case, "investigators", []))
+    ):
+        raise HTTPException(status_code=403, detail="You do not have access to this case evidence.")
+
+    if evidence.status != "COMPLETED":
+        return {
+            "evidence_id": evidence_id,
+            "status": evidence.status,
+            "error_message": evidence.error_message,
+            "entities": [],
+            "relationships": [],
+        }
+
+    entities = []
+    relationships = []
+
+    # 1. Query Neo4j
+    try:
+        with get_graph_session() as session:
+            # Nodes
+            node_res = session.run(
+                """
+                MATCH (n)
+                WHERE n.source_evidence_id = $evidence_id
+                RETURN n.id AS id, labels(n)[0] AS label, n.name AS name, properties(n) AS props
+                """,
+                evidence_id=evidence_id,
+            )
+            for record in node_res:
+                props = dict(record["props"]) if record.get("props") else {}
+                if "properties" in props and isinstance(props["properties"], str):
+                    try:
+                        inner = json.loads(props["properties"])
+                        if isinstance(inner, dict):
+                            for k, v in inner.items():
+                                if k not in props:
+                                    props[k] = v
+                    except Exception:
+                        pass
+
+                lbl = (record["label"] or "ENTITY").upper()
+                name = record["name"] or record["id"]
+                ctx = props.get("role") or props.get("status") or f"Identified {lbl} in {evidence.source_type} data"
+
+                entities.append({
+                    "id": record["id"],
+                    "name": name,
+                    "type": lbl,
+                    "confidence": float(props.get("confidence", 0.95)),
+                    "context": ctx,
+                    "properties": props,
+                })
+
+            # Relationships
+            edge_res = session.run(
+                """
+                MATCH (n)-[r]->(m)
+                WHERE r.source_evidence_id = $evidence_id
+                RETURN n.name AS source_name, m.name AS target_name, type(r) AS type, r.confidence AS confidence, properties(r) AS props
+                """,
+                evidence_id=evidence_id,
+            )
+            for record in edge_res:
+                edge_props = dict(record["props"]) if record.get("props") else {}
+                if "properties" in edge_props and isinstance(edge_props["properties"], str):
+                    try:
+                        inner = json.loads(edge_props["properties"])
+                        if isinstance(inner, dict):
+                            for k, v in inner.items():
+                                if k not in edge_props:
+                                    edge_props[k] = v
+                    except Exception:
+                        pass
+
+                relationships.append({
+                    "source": record["source_name"] or "Source",
+                    "target": record["target_name"] or "Target",
+                    "type": record["type"],
+                    "confidence": float(record.get("confidence") or 0.95),
+                    "properties": edge_props,
+                })
+    except Exception as graph_err:
+        logger.warning(f"Neo4j query for evidence entities fallback to outbox: {graph_err}")
+
+    # 2. Fallback to OutboxEvents if Neo4j returned no rows yet
+    if not entities:
+        outbox_events = (
+            db.query(OutboxEvent)
+            .filter(OutboxEvent.payload.contains(f'"source_evidence_id": "{evidence_id}"'))
+            .all()
+        )
+        for ev in outbox_events:
+            try:
+                p = json.loads(ev.payload)
+                if ev.event_type == "NODE_UPSERT":
+                    lbl = (p.get("label") or "ENTITY").upper()
+                    name = p.get("name") or p.get("id")
+                    props = p.get("properties") or {}
+                    ctx = props.get("role") or props.get("status") or f"Identified {lbl}"
+                    entities.append({
+                        "id": p.get("id"),
+                        "name": name,
+                        "type": lbl,
+                        "confidence": float(props.get("confidence", 0.95)),
+                        "context": ctx,
+                        "properties": props,
+                    })
+                elif ev.event_type == "EDGE_CREATE":
+                    relationships.append({
+                        "source": p.get("source_id"),
+                        "target": p.get("target_id"),
+                        "type": p.get("type"),
+                        "confidence": float(p.get("confidence", 0.95)),
+                        "properties": p.get("properties") or {},
+                    })
+            except Exception:
+                pass
+
+    return {
+        "evidence_id": evidence_id,
+        "status": evidence.status,
+        "error_message": evidence.error_message,
+        "entities": entities,
+        "relationships": relationships,
+    }
 
 
 @router.get("/status/{evidence_id}")
