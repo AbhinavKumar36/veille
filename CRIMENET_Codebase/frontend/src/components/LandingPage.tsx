@@ -1,23 +1,27 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Login from './Login';
 
 interface LandingPageProps {
   isAuthenticated?: boolean;
+  onLogin?: () => void;
 }
 
-export const LandingPage: React.FC<LandingPageProps> = ({ isAuthenticated }) => {
+export const LandingPage: React.FC<LandingPageProps> = ({ isAuthenticated, onLogin }) => {
   const navigate = useNavigate();
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   const handleConsoleAction = () => {
     if (isAuthenticated) {
       navigate('/dashboard');
     } else {
-      navigate('/login');
+      setShowLoginModal(true);
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#090C10] text-[#E1E2E8] font-sans antialiased selection:bg-[#4edea3] selection:text-[#003824] relative overflow-x-hidden">
+    <>
+    <div className={`min-h-screen bg-[#090C10] text-[#E1E2E8] font-sans antialiased selection:bg-[#4edea3] selection:text-[#003824] relative overflow-x-hidden transition-all duration-300 ${showLoginModal ? 'blur-md pointer-events-none opacity-50' : ''}`}>
       {/* Tactical Ambient Glow — Emerald / Mint (#4edea3) as in DESIGN.md */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[480px] bg-[#4edea3]/10 rounded-full blur-[150px] pointer-events-none" />
       <div className="absolute top-[850px] right-1/4 w-[600px] h-[400px] bg-[#00a572]/10 rounded-full blur-[140px] pointer-events-none" />
@@ -311,6 +315,26 @@ export const LandingPage: React.FC<LandingPageProps> = ({ isAuthenticated }) => 
         </div>
       </footer>
     </div>
+    
+    {showLoginModal && (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div className="absolute inset-0 bg-black/60" onClick={() => setShowLoginModal(false)}></div>
+        <div className="relative w-full max-w-md mx-auto">
+          {/* Close Button */}
+          <button 
+            onClick={() => setShowLoginModal(false)}
+            className="absolute -top-10 right-0 text-[#87929A] hover:text-white cursor-pointer z-[101]"
+          >
+            <span className="material-symbols-outlined">close</span>
+          </button>
+          {/* The Login component will naturally style itself, but we ensure it takes full width */}
+          <div className="rounded-xl overflow-hidden shadow-2xl border border-[#212B3A]">
+             <Login onLogin={onLogin} />
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 };
 

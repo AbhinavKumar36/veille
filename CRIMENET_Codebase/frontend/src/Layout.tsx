@@ -1,42 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import NewInvestigationModal from './components/NewInvestigationModal';
+import { api } from './api/client';
 
 interface NotificationItem {
   id: string;
-  time: string;
+  created_at: string;
   title: string;
   message: string;
   type: 'CRITICAL' | 'WARNING' | 'INFO';
-  read: boolean;
+  is_read: boolean;
 }
-
-const INITIAL_NOTIFICATIONS: NotificationItem[] = [
-  {
-    id: 'n-1',
-    time: '2 mins ago',
-    title: 'Wiretap Intercept Captured',
-    message: 'New GSM-PDU wiretap communication packet intercepted for target Falcon.',
-    type: 'CRITICAL',
-    read: false
-  },
-  {
-    id: 'n-2',
-    time: '15 mins ago',
-    title: 'Geospatial Sighting Detected',
-    message: 'Cell tower Bandra-01 registered burner handset activation.',
-    type: 'WARNING',
-    read: false
-  },
-  {
-    id: 'n-3',
-    time: '1 hour ago',
-    title: 'PKI Certificate Verified',
-    message: 'mTLS handshake established for AI inference worker cluster.',
-    type: 'INFO',
-    read: true
-  }
-];
 
 const Layout: React.FC = () => {
   const navigate = useNavigate();
@@ -45,7 +19,7 @@ const Layout: React.FC = () => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [notifications, setNotifications] = useState<NotificationItem[]>(INITIAL_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
 
   // Settings states
   const [apiEndpoint, setApiEndpoint] = useState('http://localhost:8000');
@@ -57,15 +31,6 @@ const Layout: React.FC = () => {
   const user = JSON.parse(localStorage.getItem('user') || localStorage.getItem('auth_user') || 'null');
   const isAdmin = (user?.role || '').toUpperCase() === 'HEAD' || (user?.role || '').toUpperCase() === 'ADMIN';
 
-  // State for Administrator Investigator & Case Assignment Modal
-  const [isManageUsersOpen, setIsManageUsersOpen] = useState(false);
-  const [investigatorList, setInvestigatorList] = useState<any[]>([
-    { id: 'inv-1', email: 'investigator@veille.gov.in', name: 'Field Lead Miller', role: 'INVESTIGATOR (LIMITED)', assignedCases: 1, status: 'ACTIVE' },
-    { id: 'inv-2', email: 'vance.ops@veille.gov.in', name: 'Forensics Analyst Vance', role: 'INVESTIGATOR (LIMITED)', assignedCases: 0, status: 'ACTIVE' },
-    { id: 'inv-3', email: 'admin@veille.gov.in', name: 'Chief Administrator', role: 'ADMINISTRATOR (FULL)', assignedCases: 0, status: 'HEAD' },
-  ]);
-  const [assignToast, setAssignToast] = useState<string | null>(null);
-
   const navItems = [
     { id: 'dashboard', label: 'Command Center', icon: 'dashboard', path: '/dashboard' },
     { id: 'investigator', label: 'Investigator Workspace', icon: 'badge', path: '/case-workspace' },
@@ -75,9 +40,11 @@ const Layout: React.FC = () => {
     { id: 'geospatial', label: 'Geospatial Radar', icon: 'explore', path: '/geospatial-explorer' },
     { id: 'ai-assistant', label: 'AI Intelligence Assistant', icon: 'smart_toy', path: '/ai-assistant' },
     { id: 'comms', label: 'Comms Intercept', icon: 'phone_in_talk', path: '/communications-intercept' },
-    { id: 'pki', label: 'PKI Operations', icon: 'verified_user', path: '/pki-revocation' },
-    { id: 'keyvault', label: 'HSM Key Vault', icon: 'lock', path: '/key-vault' },
-    { id: 'audit', label: 'Audit Logs', icon: 'history', path: '/audit-logs' },
+    ...(isAdmin ? [
+      { id: 'pki', label: 'PKI Operations', icon: 'verified_user', path: '/pki-revocation' },
+      { id: 'keyvault', label: 'HSM Key Vault', icon: 'lock', path: '/key-vault' },
+      { id: 'audit', label: 'Audit Logs', icon: 'history', path: '/audit-logs' },
+    ] : [])
   ];
 
   const isActiveRoute = (path: string) => {
@@ -97,15 +64,26 @@ const Layout: React.FC = () => {
     navigate('/dashboard');
   };
 
-  const unreadCount = notifications.filter(n => !n.read).length;
-
-  const handleMarkAllRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  const fetchNotifications = async () => {
+    try {
+      const res = await api.get('/api/v1/notifications');
+      setNotifications(res);
+    } catch (e) {}
   };
 
-  const handleAssignCase = (email: string) => {
-    setAssignToast(`Case assigned successfully to ${email}. Notification dispatched.`);
-    setTimeout(() => setAssignToast(null), 3500);
+  useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const unreadCount = notifications.filter(n => !n.is_read).length;
+
+  const handleMarkAllRead = async () => {
+    try {
+      await api.patch('/api/v1/notifications/read', {});
+      fetchNotifications();
+    } catch (e) {}
   };
 
   return (
@@ -145,7 +123,7 @@ const Layout: React.FC = () => {
 
           {isAdmin && (
             <button
-              onClick={() => setIsManageUsersOpen(true)}
+              onClick={() => navigate('/settings')}
               className="w-full bg-surface-container-high hover:bg-surface-container-highest text-amber-400 border border-amber-500/30 py-1.5 px-3 rounded flex items-center justify-center gap-2 transition-all cursor-pointer font-bold text-[11px]"
             >
               <span className="material-symbols-outlined text-[15px]">manage_accounts</span>
@@ -174,13 +152,15 @@ const Layout: React.FC = () => {
 
         {/* Footer Navigation */}
         <div className="mt-auto border-t border-outline-variant p-3 space-y-1 bg-surface-container-lowest/50">
-          <button
-            onClick={() => navigate('/system-health')}
-            className={`flex items-center gap-3 px-3 py-1.5 rounded duration-200 ease-in-out w-full text-left cursor-pointer text-xs ${isActiveRoute('/system-health') ? 'bg-secondary-container text-on-secondary-container font-bold' : 'text-on-surface-variant hover:bg-surface-variant/30'}`}
-          >
-            <span className="material-symbols-outlined text-[18px]">analytics</span>
-            <span>System Health</span>
-          </button>
+          {isAdmin && (
+            <button
+              onClick={() => navigate('/system-health')}
+              className={`flex items-center gap-3 px-3 py-1.5 rounded duration-200 ease-in-out w-full text-left cursor-pointer text-xs ${isActiveRoute('/system-health') ? 'bg-secondary-container text-on-secondary-container font-bold' : 'text-on-surface-variant hover:bg-surface-variant/30'}`}
+            >
+              <span className="material-symbols-outlined text-[18px]">analytics</span>
+              <span>System Health</span>
+            </button>
+          )}
           <button
             onClick={handleLogout}
             className="flex items-center gap-3 px-3 py-1.5 rounded duration-200 ease-in-out w-full text-left text-status-critical/80 hover:text-status-critical hover:bg-status-critical/10 cursor-pointer font-data-code text-xs"
@@ -249,7 +229,7 @@ const Layout: React.FC = () => {
                       <div
                         key={n.id}
                         className={`p-2.5 bg-surface-container-low border rounded space-y-1 ${
-                          !n.read ? 'border-primary/50' : 'border-outline-variant/60 opacity-75'
+                          !n.is_read ? 'border-primary/50' : 'border-outline-variant/60 opacity-75'
                         }`}
                       >
                         <div className="flex items-center justify-between">
@@ -258,7 +238,7 @@ const Layout: React.FC = () => {
                           }`}>
                             {n.title}
                           </span>
-                          <span className="text-[9px] text-outline">{n.time}</span>
+                          <span className="text-[9px] text-outline">{new Date(n.created_at).toLocaleString()}</span>
                         </div>
                         <p className="text-[11px] text-on-surface-variant leading-relaxed">
                           {n.message}
@@ -380,26 +360,30 @@ const Layout: React.FC = () => {
                 </div>
                 <div className="p-1 space-y-1">
                   <button 
-                    onClick={() => { setShowUserMenu(false); navigate('/case-workspace'); }}
+                    onClick={() => { setShowUserMenu(false); navigate('/settings'); }}
                     className="w-full text-left px-3 py-2 text-xs hover:bg-surface-variant rounded flex items-center gap-2 text-on-surface cursor-pointer"
                   >
-                    <span className="material-symbols-outlined text-[16px]">badge</span>
-                    Investigator Workspace
+                    <span className="material-symbols-outlined text-[16px]">manage_accounts</span>
+                    Profile & Settings
                   </button>
-                  <button 
-                    onClick={() => { setShowUserMenu(false); navigate('/pki-revocation'); }}
-                    className="w-full text-left px-3 py-2 text-xs hover:bg-surface-variant rounded flex items-center gap-2 text-on-surface cursor-pointer"
-                  >
-                    <span className="material-symbols-outlined text-[16px]">verified_user</span>
-                    PKI Certificates
-                  </button>
-                  <button 
-                    onClick={() => { setShowUserMenu(false); navigate('/system-health'); }}
-                    className="w-full text-left px-3 py-2 text-xs hover:bg-surface-variant rounded flex items-center gap-2 text-on-surface cursor-pointer"
-                  >
-                    <span className="material-symbols-outlined text-[16px]">monitor_heart</span>
-                    System Diagnostics
-                  </button>
+                  {isAdmin && (
+                    <>
+                      <button 
+                        onClick={() => { setShowUserMenu(false); navigate('/pki-revocation'); }}
+                        className="w-full text-left px-3 py-2 text-xs hover:bg-surface-variant rounded flex items-center gap-2 text-on-surface cursor-pointer"
+                      >
+                        <span className="material-symbols-outlined text-[16px]">verified_user</span>
+                        PKI Certificates
+                      </button>
+                      <button 
+                        onClick={() => { setShowUserMenu(false); navigate('/system-health'); }}
+                        className="w-full text-left px-3 py-2 text-xs hover:bg-surface-variant rounded flex items-center gap-2 text-on-surface cursor-pointer"
+                      >
+                        <span className="material-symbols-outlined text-[16px]">monitor_heart</span>
+                        System Diagnostics
+                      </button>
+                    </>
+                  )}
                   <button 
                     onClick={handleLogout}
                     className="w-full text-left px-3 py-2 text-xs text-status-critical hover:bg-status-critical/10 rounded flex items-center gap-2 cursor-pointer font-bold border-t border-outline-variant/40 mt-1"
@@ -442,79 +426,6 @@ const Layout: React.FC = () => {
         onClose={() => setIsModalOpen(false)}
         onCaseCreated={handleCaseCreated}
       />
-
-      {/* Administrator Investigator Management & Case Assignment Modal */}
-      {isManageUsersOpen && (
-        <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-surface-container border border-outline-variant rounded-lg p-6 max-w-2xl w-full font-mono text-xs space-y-4 animate-fade-in shadow-2xl">
-            <div className="flex items-center justify-between border-b border-outline-variant pb-3">
-              <div className="flex items-center gap-2 text-amber-400 font-bold text-sm">
-                <span className="material-symbols-outlined text-[20px]">manage_accounts</span>
-                <span>ADMINISTRATOR // RBAC INVESTIGATOR DISPATCH &amp; CASE ASSIGNMENT</span>
-              </div>
-              <button onClick={() => setIsManageUsersOpen(false)} className="text-outline hover:text-white">
-                <span className="material-symbols-outlined text-sm">close</span>
-              </button>
-            </div>
-
-            {assignToast && (
-              <div className="p-2.5 bg-primary/15 border border-primary/40 text-primary rounded text-xs flex items-center gap-2">
-                <span className="material-symbols-outlined text-[16px]">verified</span>
-                <span>{assignToast}</span>
-              </div>
-            )}
-
-            <div className="text-[11px] text-outline">
-              Head of Operations access level: Allocate investigative leads, enforce zero-trust role clearances, and assign dossiers.
-            </div>
-
-            <div className="border border-outline-variant rounded divide-y divide-surface-container-high bg-surface-container-lowest overflow-hidden">
-              {investigatorList.map((inv) => (
-                <div key={inv.id} className="p-3.5 flex items-center justify-between gap-3">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-on-surface text-xs">{inv.name}</span>
-                      <span className={`px-1.5 py-0.2 rounded text-[9px] font-bold ${
-                        inv.status === 'HEAD' ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30' : 'bg-primary/10 text-primary border border-primary/30'
-                      }`}>
-                        {inv.role}
-                      </span>
-                    </div>
-                    <div className="text-[10px] text-outline">{inv.email}</div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    {inv.status !== 'HEAD' && (
-                      <button
-                        onClick={() => handleAssignCase(inv.email)}
-                        className="px-3 py-1 bg-primary text-surface-container-lowest font-bold text-[10px] hover:bg-primary-fixed-dim rounded transition-colors cursor-pointer flex items-center gap-1"
-                      >
-                        <span className="material-symbols-outlined text-[13px]">assignment_ind</span>
-                        <span>ASSIGN CASE</span>
-                      </button>
-                    )}
-                    <span className="text-[10px] text-secondary font-bold px-2 py-0.5 bg-surface-container rounded border border-outline-variant">
-                      {inv.assignedCases} Active Cases
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="flex justify-between items-center pt-2 border-t border-outline-variant">
-              <span className="text-[10px] text-outline">
-                Clearance Level 5 (TS//SCI) Enforced
-              </span>
-              <button
-                onClick={() => setIsManageUsersOpen(false)}
-                className="px-4 py-1.5 bg-surface-container-high hover:bg-surface-container-highest border border-outline-variant text-on-surface font-bold rounded"
-              >
-                CLOSE DISPATCH PANEL
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

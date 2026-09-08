@@ -280,10 +280,10 @@ class EvidenceExtractor:
             # 2. Try Whisper local engine if Gemini was not used or failed
             if not audio_transcribed:
                 try:
-                    import whisper
-                    model = whisper.load_model("base")
-                    result = model.transcribe(file_path)
-                    text_content = result.get("text", "")
+                    from faster_whisper import WhisperModel
+                    model = WhisperModel("base", device="cpu", compute_type="int8")
+                    segments, info = model.transcribe(file_path, beam_size=5)
+                    text_content = " ".join([segment.text for segment in segments])
                     if text_content.strip():
                         audio_transcribed = True
                         try:
@@ -293,7 +293,7 @@ class EvidenceExtractor:
                             pass
                         logger.info("Successfully transcribed audio via Whisper local model")
                 except ImportError:
-                    logger.warning("whisper not installed")
+                    logger.warning("faster-whisper not installed")
                 except Exception as whisper_err:
                     logger.error(f"Whisper transcription failed for {file_path}: {whisper_err}")
 

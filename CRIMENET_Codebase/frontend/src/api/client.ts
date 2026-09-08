@@ -77,6 +77,7 @@ async function request(path: string, options: RequestInit = {}): Promise<any> {
     throw new APIError(response.status, errorBody.detail || errorBody.message || 'Unknown error');
   }
 
+  if (response.status === 204) return null;
   return response.json();
 }
 

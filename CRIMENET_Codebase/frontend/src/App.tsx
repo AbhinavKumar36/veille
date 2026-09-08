@@ -7,7 +7,6 @@ import NetworkExplorer from './components/NetworkExplorer';
 import ReviewQueue from './components/ReviewQueue';
 import GeospatialExplorer from './components/GeospatialExplorer';
 import EvidenceLibrary from './components/EvidenceLibrary';
-import Login from './components/Login';
 import SystemHealth from './components/SystemHealth';
 import AIAssistant from './components/AIAssistant';
 import AuditLogs from './components/AuditLogs';
@@ -17,6 +16,7 @@ import KeyVaultHSM from './components/KeyVaultHSM';
 import PKIRevocation from './components/PKIRevocation';
 import LandingPage from './components/LandingPage';
 import CaseWorkspace from './components/CaseWorkspace';
+import Settings from './components/Settings';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import './index.css';
 
@@ -100,24 +100,15 @@ function App() {
     );
   }
 
+  const user = JSON.parse(localStorage.getItem('user') || localStorage.getItem('auth_user') || 'null');
+  const isAdmin = (user?.role || '').toUpperCase() === 'HEAD' || (user?.role || '').toUpperCase() === 'ADMIN';
+
   return (
     <BrowserRouter>
       <Routes>
         {/* Default Homepage: Always show Landing Page on root / and /landing */}
-        <Route path="/" element={<LandingPage isAuthenticated={isAuthenticated} />} />
-        <Route path="/landing" element={<LandingPage isAuthenticated={isAuthenticated} />} />
-
-        {/* Login Route */}
-        <Route
-          path="/login"
-          element={
-            isAuthenticated ? (
-              <Navigate to="/dashboard" replace />
-            ) : (
-              <Login onLogin={handleLogin} />
-            )
-          }
-        />
+        <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LandingPage isAuthenticated={isAuthenticated} onLogin={handleLogin} />} />
+        <Route path="/landing" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LandingPage isAuthenticated={isAuthenticated} onLogin={handleLogin} />} />
 
         {/* Protected Application Workspace */}
         <Route
@@ -125,7 +116,7 @@ function App() {
             isAuthenticated ? (
               <Layout />
             ) : (
-              <Navigate to="/login" replace />
+              <Navigate to="/" replace />
             )
           }
         >
@@ -136,13 +127,16 @@ function App() {
           <Route path="/review-queue" element={<ErrorBoundary><ReviewQueue /></ErrorBoundary>} />
           <Route path="/evidence-library" element={<ErrorBoundary><EvidenceLibrary /></ErrorBoundary>} />
           <Route path="/geospatial-explorer" element={<ErrorBoundary><GeospatialExplorer /></ErrorBoundary>} />
-          <Route path="/system-health" element={<ErrorBoundary><SystemHealth /></ErrorBoundary>} />
           <Route path="/ai-assistant" element={<ErrorBoundary><AIAssistant /></ErrorBoundary>} />
-          <Route path="/audit-logs" element={<ErrorBoundary><AuditLogs /></ErrorBoundary>} />
           <Route path="/communications-intercept" element={<ErrorBoundary><CommunicationsIntercept /></ErrorBoundary>} />
-          <Route path="/pki-revocation" element={<ErrorBoundary><PKIRevocation /></ErrorBoundary>} />
-          <Route path="/key-vault" element={<ErrorBoundary><KeyVaultHSM /></ErrorBoundary>} />
           <Route path="/export-report" element={<ErrorBoundary><ExportReport /></ErrorBoundary>} />
+          <Route path="/settings" element={<ErrorBoundary><Settings /></ErrorBoundary>} />
+          
+          {/* Admin Only Routes */}
+          <Route path="/system-health" element={isAdmin ? <ErrorBoundary><SystemHealth /></ErrorBoundary> : <Navigate to="/dashboard" replace />} />
+          <Route path="/audit-logs" element={isAdmin ? <ErrorBoundary><AuditLogs /></ErrorBoundary> : <Navigate to="/dashboard" replace />} />
+          <Route path="/pki-revocation" element={isAdmin ? <ErrorBoundary><PKIRevocation /></ErrorBoundary> : <Navigate to="/dashboard" replace />} />
+          <Route path="/key-vault" element={isAdmin ? <ErrorBoundary><KeyVaultHSM /></ErrorBoundary> : <Navigate to="/dashboard" replace />} />
         </Route>
 
         {/* Fallback */}
