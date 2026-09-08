@@ -231,35 +231,51 @@ class EvidenceExtractor:
         elif ext in ("mp3", "wav", "m4a", "ogg", "webm", "aac", "flac"):
             logger.info(f"Transcribing intercepted audio wiretap: {file_path}")
             audio_transcribed = False
+            transcript_sidecar = f"{file_path}.transcript.txt"
 
-            # 1. Try Gemini Audio Multimodal API
-            if self.is_configured:
+            # 0. Check if transcript is already cached
+            if os.path.exists(transcript_sidecar):
                 try:
-                    import mimetypes
-                    from google.genai import types
-                    mime = mimetypes.guess_type(file_path)[0] or f"audio/{ext}"
-                    with open(file_path, "rb") as f:
-                        audio_bytes = f.read()
+                    with open(transcript_sidecar, "r", encoding="utf-8", errors="replace") as tf:
+                        cached_t = tf.read().strip()
+                        if cached_t:
+                            text_content = cached_t
+                            audio_transcribed = True
+                            logger.info("Loaded cached transcript from sidecar")
+                except Exception:
+                    pass
 
-                    model_name = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
-                    prompt_inst = (
-                        "You are an expert law enforcement forensic transcriber. Transcribe this telecommunication wiretap audio recording "
-                        "verbatim. Capture all spoken dialogues, speaker identities, telephone numbers, financial accounts, vehicles, meeting locations, and timestamps. "
-                        "Format your transcription clearly with timestamps and speaker tags."
-                    )
-                    resp = self._client.models.generate_content(
-                        model=model_name,
-                        contents=[
-                            types.Part.from_bytes(data=audio_bytes, mime_type=mime),
-                            prompt_inst,
-                        ]
-                    )
-                    if resp and resp.text:
-                        text_content = resp.text
-                        audio_transcribed = True
-                        logger.info("Successfully transcribed audio via Gemini AI Engine")
-                except Exception as gemini_err:
-                    logger.warning(f"Gemini audio API transcription failed ({gemini_err}), falling back to local speech engine...")
+            # 1. Try Gemini Audio API via files upload
+            if not audio_transcribed and self.is_configured:
+                for model_candidate in ["gemini-3.5-flash", "gemini-2.5-flash", "gemini-flash-latest", "gemini-2.5-pro"]:
+                    try:
+                        up_file = self._client.files.upload(file=file_path)
+                        prompt_inst = (
+                            "You are an expert law enforcement forensic transcriber. Transcribe this telecommunication wiretap audio recording "
+                            "verbatim. Capture all spoken dialogues word-for-word in English or Hindi (Romanized / English translation), "
+                            "including speaker dialogues, phone numbers, accounts, locations, and timestamps. "
+                            "Do not summarize — output the exact spoken words."
+                        )
+                        resp = self._client.models.generate_content(
+                            model=model_candidate,
+                            contents=[
+                                up_file,
+                                prompt_inst,
+                            ]
+                        )
+                        if resp and resp.text and resp.text.strip():
+                            text_content = resp.text.strip()
+                            audio_transcribed = True
+                            # Save transcript sidecar
+                            try:
+                                with open(transcript_sidecar, "w", encoding="utf-8") as tf:
+                                    tf.write(text_content)
+                            except Exception:
+                                pass
+                            logger.info(f"Successfully transcribed audio via Gemini model ({model_candidate})")
+                            break
+                    except Exception as gemini_err:
+                        logger.warning(f"Gemini model {model_candidate} failed ({gemini_err}), trying next candidate...")
 
             # 2. Try Whisper local engine if Gemini was not used or failed
             if not audio_transcribed:
@@ -270,6 +286,11 @@ class EvidenceExtractor:
                     text_content = result.get("text", "")
                     if text_content.strip():
                         audio_transcribed = True
+                        try:
+                            with open(transcript_sidecar, "w", encoding="utf-8") as tf:
+                                tf.write(text_content)
+                        except Exception:
+                            pass
                         logger.info("Successfully transcribed audio via Whisper local model")
                 except ImportError:
                     logger.warning("whisper not installed")

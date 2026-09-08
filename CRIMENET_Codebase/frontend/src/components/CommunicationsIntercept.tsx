@@ -35,12 +35,35 @@ export const CommunicationsIntercept: React.FC = () => {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
-  // Audio Playback State
+  // Audio Playback & Live 2D Wave State
   const [isPlayingAudio, setIsPlayingAudio] = useState<boolean>(false);
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [duration, setDuration] = useState<number>(0);
   const [volume, setVolume] = useState<number>(0.8);
+  const [wavePhase, setWavePhase] = useState<number>(0);
+  const [transcriptMap, setTranscriptMap] = useState<Record<string, string>>({});
+  const [copiedTranscript, setCopiedTranscript] = useState<boolean>(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const animFrameRef = useRef<number | null>(null);
+
+  // Live 2D Wave dynamic oscillation loop
+  useEffect(() => {
+    if (!isPlayingAudio) {
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+      return;
+    }
+
+    let start = performance.now();
+    const animate = (now: number) => {
+      setWavePhase((now - start) / 100);
+      animFrameRef.current = requestAnimationFrame(animate);
+    };
+
+    animFrameRef.current = requestAnimationFrame(animate);
+    return () => {
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+    };
+  }, [isPlayingAudio]);
 
   // Modal State for Upload & Mic Recording
   const [isUploadModalOpen, setIsUploadModalOpen] = useState<boolean>(false);
@@ -170,13 +193,29 @@ export const CommunicationsIntercept: React.FC = () => {
         } catch {}
       }
 
+      // Fetch transcripts in parallel for all audio evidence
+      for (const ev of rawEvidence) {
+        const ext = (ev.original_filename || '').split('.').pop()?.toLowerCase();
+        const isAudioType = ev.source_type === 'AUDIO' || ev.source_type === 'WIRETAP' || ['mp3', 'wav', 'm4a', 'ogg', 'webm', 'aac', 'flac'].includes(ext || '');
+        if (isAudioType) {
+          api.get(`/evidence/${ev.id}/preview`)
+            .then((res: any) => {
+              if (res && res.content && res.type !== 'empty') {
+                setTranscriptMap(prev => ({ ...prev, [ev.id]: res.content }));
+              }
+            })
+            .catch(() => {});
+        }
+      }
+
       // Combine real audio wiretaps (first) and CDR packets
       const combined = [...audioEvidenceRows, ...cdrRows];
       setIntercepts(combined);
 
       setSelectedIntercept(prev => {
         if (!prev) return combined[0] || null;
-        return combined.find(i => i.id === prev.id) || combined[0] || null;
+        const matched = combined.find(i => i.id === prev.id);
+        return matched ? { ...matched, transcriptSnippet: prev.transcriptSnippet || matched.transcriptSnippet } : combined[0] || null;
       });
 
     } catch (err: any) {
@@ -206,23 +245,25 @@ export const CommunicationsIntercept: React.FC = () => {
   // If selected intercept changes and has real audio evidence, fetch its entities & transcript
   useEffect(() => {
     if (selectedIntercept && selectedIntercept.hasAudio && selectedIntercept.evidenceId) {
-      api.get(`/evidence/${selectedIntercept.evidenceId}/entities`)
+      const eid = selectedIntercept.evidenceId;
+      api.get(`/evidence/${eid}/entities`)
         .then((res: any) => {
           if (res && res.entities && res.entities.length > 0) {
-            setSelectedIntercept(prev => prev && prev.id === selectedIntercept.id ? { ...prev, entities: res.entities } : prev);
+            setSelectedIntercept(prev => prev && prev.evidenceId === eid ? { ...prev, entities: res.entities } : prev);
           }
         })
         .catch(() => {});
 
-      api.get(`/evidence/${selectedIntercept.evidenceId}/preview`)
+      api.get(`/evidence/${eid}/preview`)
         .then((res: any) => {
           if (res && res.content && res.type !== 'empty') {
-            setSelectedIntercept(prev => prev && prev.id === selectedIntercept.id ? { ...prev, transcriptSnippet: res.content } : prev);
+            setTranscriptMap(prev => ({ ...prev, [eid]: res.content }));
+            setSelectedIntercept(prev => prev && prev.evidenceId === eid ? { ...prev, transcriptSnippet: res.content } : prev);
           }
         })
         .catch(() => {});
     }
-  }, [selectedIntercept?.id]);
+  }, [selectedIntercept?.id, selectedIntercept?.evidenceId]);
 
   // ── 2. Real HTML5 Audio Player Controller ──────────────────────────────────
   const handleTogglePlay = () => {
@@ -634,29 +675,91 @@ export const CommunicationsIntercept: React.FC = () => {
                   </span>
                 </div>
 
-                {/* Waveform Visualizer */}
-                <div className="h-16 bg-surface-container-lowest border border-outline-variant rounded flex items-center justify-center px-3 gap-1 overflow-hidden">
-                  {Array.from({ length: 36 }).map((_, idx) => {
-                    const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
-                    const isPassed = (idx / 36) * 100 <= progressPercent;
-                    const randomHeight = isPlayingAudio 
-                      ? Math.max(15, Math.floor(Math.sin(idx + Date.now() / 200) * 80 + Math.random() * 40))
-                      : selectedIntercept.hasAudio 
-                      ? (idx % 4 === 0 ? 50 : idx % 2 === 0 ? 30 : 18)
-                      : 10;
+                {/* 2D Live Waveform Visualizer */}
+                <div
+                  onClick={(e) => {
+                    if (!selectedIntercept.hasAudio || !duration || !audioRef.current) return;
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const clickRatio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                    const newTime = clickRatio * duration;
+                    audioRef.current.currentTime = newTime;
+                    setCurrentTime(newTime);
+                  }}
+                  title={selectedIntercept.hasAudio ? 'Click to seek audio timestamp' : undefined}
+                  className="h-20 bg-[#090d16] border border-slate-800/80 rounded-xl px-4 flex items-center justify-between gap-1 overflow-hidden cursor-pointer select-none group relative shadow-inner"
+                >
+                  {[
+                    { type: 'pill' as const, baseH: 34 },
+                    { type: 'dot' as const, baseH: 8 },
+                    { type: 'pill' as const, baseH: 22 },
+                    { type: 'dot' as const, baseH: 8 },
+                    { type: 'pill' as const, baseH: 38 },
+                    { type: 'dot' as const, baseH: 8 },
+                    { type: 'pill' as const, baseH: 24 },
+                    { type: 'dot' as const, baseH: 8 },
+                    { type: 'pill' as const, baseH: 30 },
+                    { type: 'dot' as const, baseH: 8 },
+                    { type: 'pill' as const, baseH: 20 },
+                    { type: 'dot' as const, baseH: 8 },
+                    { type: 'pill' as const, baseH: 32 },
+                    { type: 'dot' as const, baseH: 8 },
+                    { type: 'pill' as const, baseH: 26 },
+                    { type: 'dot' as const, baseH: 8 },
+                    { type: 'pill' as const, baseH: 36 },
+                    { type: 'dot' as const, baseH: 8 },
+                    { type: 'pill' as const, baseH: 20 },
+                    { type: 'dot' as const, baseH: 8 },
+                    { type: 'pill' as const, baseH: 34 },
+                    { type: 'dot' as const, baseH: 8 },
+                    { type: 'pill' as const, baseH: 28 },
+                    { type: 'dot' as const, baseH: 8 },
+                    { type: 'pill' as const, baseH: 38 },
+                    { type: 'dot' as const, baseH: 8 },
+                    { type: 'pill' as const, baseH: 22 },
+                    { type: 'dot' as const, baseH: 8 },
+                    { type: 'pill' as const, baseH: 32 },
+                    { type: 'dot' as const, baseH: 8 },
+                    { type: 'pill' as const, baseH: 24 },
+                    { type: 'dot' as const, baseH: 8 },
+                    { type: 'pill' as const, baseH: 30 },
+                    { type: 'dot' as const, baseH: 8 },
+                    { type: 'pill' as const, baseH: 26 },
+                  ].map((bar, idx, arr) => {
+                    const total = arr.length;
+                    const progressRatio = duration > 0 ? currentTime / duration : 0;
+                    const isPlayed = idx / total <= progressRatio;
+
+                    let dynamicHeight = bar.baseH;
+                    if (isPlayingAudio) {
+                      if (bar.type === 'pill') {
+                        const osc =
+                          Math.sin(idx * 0.55 + wavePhase * 1.6) * 10 +
+                          Math.cos(idx * 0.35 - wavePhase * 0.9) * 6;
+                        dynamicHeight = Math.max(12, Math.min(48, bar.baseH + osc));
+                      }
+                    }
+
+                    const isDot = bar.type === 'dot';
 
                     return (
                       <div
                         key={idx}
-                        className={`flex-1 rounded-full transition-all duration-150 ${
-                          !selectedIntercept.hasAudio
-                            ? 'bg-surface-container-high'
-                            : isPassed
-                            ? 'bg-primary shadow-[0_0_6px_rgba(0,229,255,0.6)]'
-                            : 'bg-surface-container-high'
-                        }`}
-                        style={{ height: `${randomHeight}%` }}
-                      />
+                        className="flex items-center justify-center shrink-0"
+                        style={{
+                          width: isDot ? '8px' : '9px',
+                          height: isDot ? '8px' : `${dynamicHeight}px`,
+                        }}
+                      >
+                        <div
+                          className={`w-full h-full rounded-full transition-all duration-75 ${
+                            !selectedIntercept.hasAudio
+                              ? 'bg-slate-800/50'
+                              : isPlayed
+                              ? 'bg-[#38bdf8] shadow-[0_0_12px_#38bdf8,0_0_22px_rgba(56,189,248,0.85)]'
+                              : 'bg-[#1e293b] group-hover:bg-[#283548]'
+                          }`}
+                        />
+                      </div>
                     );
                   })}
                 </div>
@@ -671,10 +774,10 @@ export const CommunicationsIntercept: React.FC = () => {
                     value={currentTime}
                     disabled={!selectedIntercept.hasAudio}
                     onChange={handleSeek}
-                    className="w-full accent-primary bg-surface-container-lowest h-1.5 rounded-full cursor-pointer disabled:opacity-40"
+                    className="w-full accent-[#38bdf8] bg-surface-container-lowest h-1.5 rounded-full cursor-pointer disabled:opacity-40"
                   />
                   <div className="flex justify-between text-[10px] text-outline font-mono">
-                    <span>{Math.floor(currentTime)}s</span>
+                    <span className="text-primary font-bold">{Math.floor(currentTime)}s</span>
                     <span>{selectedIntercept.hasAudio ? `${Math.floor(duration || selectedIntercept.duration || 45)}s (RECORDING DURATION)` : 'NO AUDIO'}</span>
                   </div>
                 </div>
@@ -687,7 +790,7 @@ export const CommunicationsIntercept: React.FC = () => {
                       disabled={!selectedIntercept.hasAudio}
                       className={`px-4 py-2 font-bold text-xs rounded transition-all flex items-center gap-1.5 ${
                         selectedIntercept.hasAudio
-                          ? 'bg-primary text-surface-container-lowest hover:bg-primary-fixed-dim cursor-pointer shadow-[0_0_12px_rgba(0,229,255,0.3)]'
+                          ? 'bg-primary text-surface-container-lowest hover:bg-primary-fixed-dim cursor-pointer shadow-[0_0_14px_rgba(56,189,248,0.4)]'
                           : 'bg-surface-container-high text-outline cursor-not-allowed border border-outline-variant'
                       }`}
                       title={selectedIntercept.hasAudio ? 'Play/Pause Audio' : 'Audio recording not attached'}
@@ -724,23 +827,46 @@ export const CommunicationsIntercept: React.FC = () => {
                         step="0.05"
                         value={volume}
                         onChange={handleVolumeChange}
-                        className="w-16 accent-primary cursor-pointer"
+                        className="w-16 accent-[#38bdf8] cursor-pointer"
                       />
                     </div>
                   )}
                 </div>
               </div>
 
-              {/* AI Voice Transcript */}
-              <div className="space-y-1.5">
+              {/* AI Voice Verbatim Transcript */}
+              <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] uppercase font-bold text-outline">WHISPER / GEMINI AI VOICE TRANSCRIPT</span>
-                  <span className="text-[9px] text-secondary font-mono">
-                    {selectedIntercept.hasAudio ? 'AI MULTI-LINGUAL SPEECH MODEL' : 'SIGNALING METADATA DESCRIPTOR'}
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-xs text-primary">record_voice_over</span>
+                    <span className="text-[10px] uppercase font-bold text-on-surface">WHISPER / GEMINI AI VOICE TRANSCRIPT</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[9px] text-emerald-400 font-mono bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/30">
+                      {selectedIntercept.hasAudio ? 'AI MULTI-LINGUAL SPEECH MODEL (VERBATIM)' : 'SIGNALING METADATA DESCRIPTOR'}
+                    </span>
+                    {selectedIntercept.hasAudio && (
+                      <button
+                        onClick={() => {
+                          const textToCopy = (selectedIntercept.evidenceId && transcriptMap[selectedIntercept.evidenceId]) || selectedIntercept.transcriptSnippet || '';
+                          navigator.clipboard.writeText(textToCopy);
+                          setCopiedTranscript(true);
+                          setTimeout(() => setCopiedTranscript(false), 2000);
+                          triggerToast('Verbatim speech transcript copied.');
+                        }}
+                        className="px-2 py-0.5 bg-surface-container-low hover:bg-surface-container-high border border-outline-variant text-on-surface text-[10px] rounded flex items-center gap-1 cursor-pointer transition-colors"
+                        title="Copy verbatim transcript"
+                      >
+                        <span className="material-symbols-outlined text-[12px]">
+                          {copiedTranscript ? 'check' : 'content_copy'}
+                        </span>
+                        <span>{copiedTranscript ? 'COPIED' : 'COPY'}</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
-                <div className="p-3 bg-surface-container-low border border-outline-variant text-[11px] leading-relaxed text-on-surface-variant rounded whitespace-pre-wrap font-mono">
-                  {selectedIntercept.transcriptSnippet || 'No spoken transcript available for this packet.'}
+                <div className="p-3.5 bg-surface-container-low border border-outline-variant text-xs leading-relaxed text-on-surface rounded-lg whitespace-pre-wrap font-mono shadow-inner border-l-4 border-l-primary">
+                  {(selectedIntercept.evidenceId && transcriptMap[selectedIntercept.evidenceId]) || selectedIntercept.transcriptSnippet || 'No spoken transcript available for this packet.'}
                 </div>
               </div>
 

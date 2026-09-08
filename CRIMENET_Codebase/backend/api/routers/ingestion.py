@@ -346,6 +346,52 @@ def preview_evidence(
     is_audio = evidence.source_type in ("AUDIO", "WIRETAP") or file_ext in (".mp3", ".wav", ".m4a", ".ogg", ".webm", ".aac", ".flac")
 
     if is_audio:
+        transcript_text = None
+        # Check transcript sidecar paths
+        transcript_candidates = [
+            f"{evidence.file_path}.transcript.txt",
+            os.path.join(UPLOAD_DIR, f"{evidence.id}{file_ext}.transcript.txt"),
+            os.path.join(UPLOAD_DIR, f"{os.path.basename(evidence.file_path)}.transcript.txt"),
+        ]
+        for tc in transcript_candidates:
+            if os.path.exists(tc):
+                try:
+                    with open(tc, "r", encoding="utf-8", errors="replace") as tf:
+                        t_content = tf.read().strip()
+                        if t_content:
+                            transcript_text = t_content
+                            break
+                except Exception:
+                    pass
+
+        # If not cached yet, transcribe on-demand via Gemini
+        if not transcript_text:
+            local_audio_path = os.path.join(UPLOAD_DIR, f"{evidence.id}{file_ext}")
+            if not os.path.exists(local_audio_path) and os.path.exists(evidence.file_path):
+                local_audio_path = evidence.file_path
+
+            if os.path.exists(local_audio_path):
+                try:
+                    from ml.nlp.extractor import EvidenceExtractor
+                    extractor = EvidenceExtractor()
+                    if extractor.is_configured:
+                        up_file = extractor._client.files.upload(file=local_audio_path)
+                        resp = extractor._client.models.generate_content(
+                            model="gemini-3.5-flash",
+                            contents=[
+                                up_file,
+                                "Transcribe this audio recording verbatim word-for-word in English or Hindi."
+                            ]
+                        )
+                        if resp and resp.text and resp.text.strip():
+                            transcript_text = resp.text.strip()
+                            with open(f"{local_audio_path}.transcript.txt", "w", encoding="utf-8") as tf:
+                                tf.write(transcript_text)
+                except Exception as ex:
+                    logger.warning(f"On-demand audio transcription failed: {ex}")
+
+        display_transcript = transcript_text or f"[AUTHENTIC WIRETAP AUDIO STREAM: {evidence.original_filename}]\nFormat: {file_ext.lstrip('.').upper()} Audio • Size: {(evidence.file_size_bytes or len(file_bytes)) / (1024*1024):.2f} MB\nVaulted in encrypted forensic enclave under legal interception warrant."
+
         return {
             "evidence_id": str(evidence.id),
             "filename": evidence.original_filename,
@@ -353,7 +399,7 @@ def preview_evidence(
             "hash": evidence.hash,
             "size_bytes": evidence.file_size_bytes,
             "audio_url": f"/api/v1/evidence/file/{evidence.id}",
-            "content": f"[AUTHENTIC WIRETAP AUDIO STREAM: {evidence.original_filename}]\nFormat: {file_ext.lstrip('.').upper()} Audio • Size: {(evidence.file_size_bytes or len(file_bytes)) / (1024*1024):.2f} MB\nVaulted in encrypted forensic enclave under legal interception warrant.",
+            "content": display_transcript,
             "type": "audio",
         }
 
