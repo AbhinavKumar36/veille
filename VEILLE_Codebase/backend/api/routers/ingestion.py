@@ -1,5 +1,5 @@
-"""
-VEILLE — Evidence Router
+﻿"""
+VEILLE â€” Evidence Router
 Real PostgreSQL inserts replace the mocked evidence ingestion.
 File is saved locally (MinIO integration deferred to Phase 2).
 Evidence record is written to DB before Celery task is dispatched.
@@ -61,7 +61,7 @@ def _run_evidence_pipeline(evidence_id_str: str, file_path_str: str, case_id_str
         _update_evidence_status(evidence_id_str, "FAILED", str(e))
 
 
-# ── Pydantic Schemas ────────────────────────────────────────────────────────
+# â”€â”€ Pydantic Schemas â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class EvidenceUploadResponse(BaseModel):
     status: str
@@ -83,7 +83,7 @@ class EvidenceResponse(BaseModel):
     created_at: str
 
 
-# ── Routes ──────────────────────────────────────────────────────────────────
+# â”€â”€ Routes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 @router.get("", response_model=List[EvidenceResponse])
 @router.get("/", response_model=List[EvidenceResponse])
@@ -177,7 +177,7 @@ async def upload_evidence(
     Upload an evidence file and dispatch to the async intelligence pipeline.
     Persists to MinIO object storage (or local vault) with SHA-256 integrity verification.
     """
-    # ── Validation ──────────────────────────────────────────────────────
+    # â”€â”€ Validation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if source_type not in ("FIR", "CDR", "FINANCIAL", "AUDIO", "WIRETAP"):
         raise HTTPException(status_code=400, detail="source_type must be FIR, CDR, FINANCIAL, AUDIO, or WIRETAP.")
 
@@ -199,7 +199,7 @@ async def upload_evidence(
     ):
         raise HTTPException(status_code=403, detail="Cannot upload evidence to another investigator's case.")
 
-    # ── Read & Verify File ──────────────────────────────────────────────
+    # â”€â”€ Read & Verify File â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     file_content = await file.read()
 
     # Enforce size limit
@@ -212,7 +212,7 @@ async def upload_evidence(
     evidence_id = uuid.uuid4()
     safe_filename = f"{evidence_id}{file_ext}"
 
-    # ── Upload to MinIO Object Storage (with local fallback) ─────────────
+    # â”€â”€ Upload to MinIO Object Storage (with local fallback) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     success, storage_path = storage_service.upload_file(
         safe_filename,
         file_content,
@@ -225,7 +225,7 @@ async def upload_evidence(
         with open(local_file_path, "wb") as f:
             f.write(file_content)
 
-    # ── Write Evidence Record to PostgreSQL ──────────────────────────────
+    # â”€â”€ Write Evidence Record to PostgreSQL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     evidence = Evidence(
         id=evidence_id,
         case_id=case_id,
@@ -241,7 +241,7 @@ async def upload_evidence(
 
     log_action(db, current_user["id"], "UPLOAD_EVIDENCE", case_id=case_id)
 
-    # ── Dispatch to Async Pipeline & Background Worker ───────────────────
+    # â”€â”€ Dispatch to Async Pipeline & Background Worker â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     job_id = str(uuid.uuid4())
     try:
         if source_type == "FIR" or file_ext in (".pdf", ".txt", ".png", ".jpg", ".jpeg", ".mp3", ".wav"):
@@ -364,7 +364,7 @@ def preview_evidence(
                 except Exception:
                     pass
 
-        # If not cached yet, transcribe on-demand via Gemini
+        # If not cached yet, transcribe offline using Whisper (no API key needed)
         if not transcript_text:
             local_audio_path = os.path.join(UPLOAD_DIR, f"{evidence.id}{file_ext}")
             if not os.path.exists(local_audio_path) and os.path.exists(evidence.file_path):
@@ -372,25 +372,12 @@ def preview_evidence(
 
             if os.path.exists(local_audio_path):
                 try:
-                    from ml.nlp.extractor import EvidenceExtractor
-                    extractor = EvidenceExtractor()
-                    if extractor.is_configured:
-                        up_file = extractor._client.files.upload(file=local_audio_path)
-                        resp = extractor._client.models.generate_content(
-                            model="gemini-3.5-flash",
-                            contents=[
-                                up_file,
-                                "Transcribe this audio recording verbatim word-for-word in English or Hindi."
-                            ]
-                        )
-                        if resp and resp.text and resp.text.strip():
-                            transcript_text = resp.text.strip()
-                            with open(f"{local_audio_path}.transcript.txt", "w", encoding="utf-8") as tf:
-                                tf.write(transcript_text)
+                    from ml.audio.transcriber import transcribe_audio
+                    transcript_text = transcribe_audio(local_audio_path)
                 except Exception as ex:
-                    logger.warning(f"On-demand audio transcription failed: {ex}")
+                    logger.error(f"Whisper transcription failed for {evidence_id}: {type(ex).__name__}: {ex}")
 
-        display_transcript = transcript_text or f"[AUTHENTIC WIRETAP AUDIO STREAM: {evidence.original_filename}]\nFormat: {file_ext.lstrip('.').upper()} Audio • Size: {(evidence.file_size_bytes or len(file_bytes)) / (1024*1024):.2f} MB\nVaulted in encrypted forensic enclave under legal interception warrant."
+        display_transcript = transcript_text or f"[AUTHENTIC WIRETAP AUDIO STREAM: {evidence.original_filename}]\nFormat: {file_ext.lstrip('.').upper()} Audio â€¢ Size: {(evidence.file_size_bytes or len(file_bytes)) / (1024*1024):.2f} MB\nVaulted in encrypted forensic enclave under legal interception warrant."
 
         return {
             "evidence_id": str(evidence.id),
@@ -701,7 +688,7 @@ def download_evidence_file(
     """
     Download / preview a stored evidence file.
     Streams the file from the local upload directory with proper MIME type headers.
-    Auth required — only accessible to assigned investigators and supervisors.
+    Auth required â€” only accessible to assigned investigators and supervisors.
     """
     import mimetypes
     from pathlib import Path

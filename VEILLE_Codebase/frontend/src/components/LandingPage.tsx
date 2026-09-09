@@ -1,281 +1,96 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+﻿import React, { useState } from 'react';
+import Scene3D from './landing/Scene3D';
+import HeroSection from './landing/HeroSection';
+import ProblemSection from './landing/ProblemSection';
+import PipelineSection from './landing/PipelineSection';
+import EntityResolutionSection from './landing/EntityResolutionSection';
+import HumanLoopSection from './landing/HumanLoopSection';
+import GraphRAGSection from './landing/GraphRAGSection';
+import DataFusionSection from './landing/DataFusionSection';
+import SecuritySection from './landing/SecuritySection';
+import ImpactSection from './landing/ImpactSection';
+import ArchitectureSection from './landing/ArchitectureSection';
+import FinalCTA from './landing/FinalCTA';
+import Footer from './landing/Footer';
 import Login from './Login';
+import { motion, useScroll } from 'framer-motion';
 
 interface LandingPageProps {
-  isAuthenticated?: boolean;
-  onLogin?: () => void;
+  isAuthenticated: boolean;
+  onLogin: () => void;
 }
 
-export const LandingPage: React.FC<LandingPageProps> = ({ isAuthenticated, onLogin }) => {
-  const navigate = useNavigate();
+export default function LandingPage({ isAuthenticated, onLogin }: LandingPageProps) {
   const [showLoginModal, setShowLoginModal] = useState(false);
-
-  const handleConsoleAction = () => {
-    if (isAuthenticated) {
-      navigate('/dashboard');
-    } else {
-      setShowLoginModal(true);
-    }
-  };
+  const { scrollYProgress } = useScroll();
 
   return (
-    <>
-    <div className={`min-h-screen bg-[#090C10] text-[#E1E2E8] font-sans antialiased selection:bg-[#4edea3] selection:text-[#003824] relative overflow-x-hidden transition-all duration-300 ${showLoginModal ? 'blur-md pointer-events-none opacity-50' : ''}`}>
-      {/* Tactical Ambient Glow — Emerald / Mint (#4edea3) as in DESIGN.md */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[480px] bg-[#4edea3]/10 rounded-full blur-[150px] pointer-events-none" />
-      <div className="absolute top-[850px] right-1/4 w-[600px] h-[400px] bg-[#00a572]/10 rounded-full blur-[140px] pointer-events-none" />
+    <div className="relative min-h-screen bg-[#020305] text-white font-sans selection:bg-[#4edea3]/30">
+      {/* 3D Background Canvas */}
+      <Scene3D />
 
-      {/* Top Tactical Command Header removed */}
-
-      {/* Hero Section */}
-      <section className="relative pt-16 pb-20 px-6 lg:px-12 max-w-7xl mx-auto text-center">
-        {/* Status Pill */}
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-sm bg-[#4edea3]/10 border border-[#4edea3]/30 text-[#4edea3] text-xs font-mono font-bold mb-6 tracking-wider uppercase shadow-[0_0_12px_rgba(78,222,163,0.15)]">
-          <span className="w-2 h-2 rounded-full bg-[#4edea3] animate-ping" />
-          <span>[MISSION CRITICAL] ADVANCED GRAPH INTELLIGENCE &amp; CRIME FUSION</span>
+      {/* Navigation */}
+      <nav className="fixed top-0 left-0 right-0 z-50 px-6 py-4 flex items-center justify-between backdrop-blur-md bg-[#020305]/60 border-b border-[#212B3A]/30 transition-all duration-300">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 flex items-center justify-center">
+            <img src="/logo.png" alt="VEILLE" className="w-full h-full object-contain drop-shadow-[0_0_10px_rgba(78,222,163,0.5)]" />
+          </div>
+          <span className="font-mono font-bold text-lg tracking-[0.2em] text-white">VEILLE</span>
+        </div>
+        
+        <div className="hidden md:flex items-center gap-8 text-sm font-mono tracking-wider text-[#87929A]">
+          <a href="#home" className="hover:text-white transition-colors">Home</a>
+          <a href="#platform" className="hover:text-white transition-colors">Platform</a>
+          <a href="#approach" className="hover:text-white transition-colors">Approach</a>
+          <a href="#impact" className="hover:text-white transition-colors">Impact</a>
         </div>
 
-        {/* Primary Headline with Emerald / Mint Gradient */}
-        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white tracking-tight leading-tight max-w-5xl mx-auto mb-6">
-          Unified Intelligence Fusion &amp;{' '}
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#4edea3] via-[#6ffbbe] to-[#00a572]">
-            Complex Criminal Network Analysis
-          </span>
-        </h1>
-
-        <p className="text-base sm:text-lg text-[#87929A] max-w-3xl mx-auto mb-10 leading-relaxed font-sans">
-          Transform unstructured police FIR documents, telecom CDR intercepts, forensic ledgers, and financial hawala trails into high-confidence graph relationships powered by Gemini AI and automated entity disambiguation.
-        </p>
-
-        {/* CTA Button Strip */}
-        <div className="flex flex-wrap items-center justify-center gap-4 mb-16 font-mono">
-          <button
-            onClick={handleConsoleAction}
-            className="bg-[#4edea3] hover:bg-[#6ffbbe] text-[#003824] text-xs font-bold px-7 py-3.5 rounded-sm shadow-[0_0_24px_rgba(78,222,163,0.35)] hover:shadow-[0_0_30px_rgba(111,251,190,0.5)] transition-all flex items-center gap-2.5 cursor-pointer active:scale-95 uppercase tracking-wider"
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => setShowLoginModal(true)}
+            className="text-xs font-mono tracking-widest text-[#87929A] hover:text-white transition-colors uppercase"
           >
-            <span className="material-symbols-outlined text-[18px]">lock_open</span>
-            <span>{isAuthenticated ? 'ENTER WORKSPACE' : 'LOGIN'}</span>
+            Sign In
           </button>
-          <a
-            href="#features"
-            className="bg-[#151B26] hover:bg-[#1D2024] text-[#E1E2E8] hover:text-[#4edea3] border border-[#212B3A] hover:border-[#4edea3]/50 text-xs font-bold px-6 py-3.5 rounded-sm transition-all flex items-center gap-2 uppercase tracking-wider"
+          <button 
+            onClick={() => setShowLoginModal(true)}
+            className="group flex items-center gap-2 bg-white text-black px-5 py-2 rounded-sm text-xs font-bold uppercase tracking-wider hover:bg-[#4edea3] transition-all"
           >
-            <span className="material-symbols-outlined text-[18px]">explore</span>
-            <span>EXPLORE CAPABILITIES</span>
-          </a>
-        </div>
-
-        {/* Live Operational Telemetry Strip */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-5xl mx-auto mb-16 text-left font-mono">
-          <div className="bg-[#0F141C]/90 border border-[#212B3A] p-4 rounded-sm hover:border-[#4edea3]/40 transition-colors">
-            <div className="text-[10px] text-[#87929A] font-bold uppercase tracking-wider">INGESTION ENGINE</div>
-            <div className="text-2xl font-bold text-[#4edea3] mt-1">REAL-TIME</div>
-            <div className="text-[10px] text-[#87929A] mt-0.5">Celery &amp; Kafka Outbox Sync</div>
-          </div>
-          <div className="bg-[#0F141C]/90 border border-[#212B3A] p-4 rounded-sm hover:border-[#4edea3]/40 transition-colors">
-            <div className="text-[10px] text-[#87929A] font-bold uppercase tracking-wider">GRAPH ENGINE</div>
-            <div className="text-2xl font-bold text-[#6ffbbe] mt-1">NEO4J GDS</div>
-            <div className="text-[10px] text-[#87929A] mt-0.5">Sub-second multi-hop traversal</div>
-          </div>
-          <div className="bg-[#0F141C]/90 border border-[#212B3A] p-4 rounded-sm hover:border-[#4edea3]/40 transition-colors">
-            <div className="text-[10px] text-[#87929A] font-bold uppercase tracking-wider">ENTITY RESOLUTION</div>
-            <div className="text-2xl font-bold text-[#4edea3] mt-1">AUTOMATED</div>
-            <div className="text-[10px] text-[#87929A] mt-0.5">Hybrid similarity &amp; review queue</div>
-          </div>
-          <div className="bg-[#0F141C]/90 border border-[#212B3A] p-4 rounded-sm hover:border-[#4edea3]/40 transition-colors">
-            <div className="text-[10px] text-[#87929A] font-bold uppercase tracking-wider">AI EXTRACTOR</div>
-            <div className="text-2xl font-bold text-[#6ffbbe] mt-1">GEMINI 2.5</div>
-            <div className="text-[10px] text-[#87929A] mt-0.5">Constrained JSON schema NER</div>
-          </div>
-        </div>
-
-        {/* Product Terminal & Board Preview */}
-        <div id="graph" className="relative rounded-sm border border-[#212B3A] bg-[#0F141C]/95 shadow-[0_20px_50px_rgba(0,0,0,0.8)] overflow-hidden text-left p-6 sm:p-8 max-w-5xl mx-auto font-mono">
-          <div className="flex items-center justify-between pb-4 border-b border-[#212B3A] mb-6">
-            <div className="flex items-center gap-3">
-              <span className="w-2.5 h-2.5 rounded-sm bg-red-500/80" />
-              <span className="w-2.5 h-2.5 rounded-sm bg-amber-500/80" />
-              <span className="w-2.5 h-2.5 rounded-sm bg-[#4edea3]" />
-              <span className="text-xs text-[#87929A] ml-2 font-bold tracking-wider uppercase">
-                VEILLE // LIVE INVESTIGATION BOARD PREVIEW
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] text-[#4edea3] bg-[#4edea3]/15 border border-[#4edea3]/30 px-2.5 py-0.5 rounded-sm font-bold uppercase tracking-wider">
-                SYNAPSE GRAPH LIVE
-              </span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs">
-            {/* Case Dossier Mini-Stack */}
-            <div className="space-y-3">
-              <div className="p-3.5 rounded-sm bg-[#090C10] border border-[#212B3A] hover:border-[#4edea3]/40 transition-colors">
-                <div className="text-xs font-bold text-white flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[#4edea3] text-[18px]">folder_open</span>
-                  Operation Falcon
-                </div>
-                <div className="text-[11px] text-[#87929A] mt-1 font-sans">
-                  Cross-border Hawala syndicate &amp; foreign exchange layering
-                </div>
-                <div className="mt-3 flex items-center gap-2 text-[10px] font-bold">
-                  <span className="px-2 py-0.5 rounded-sm bg-[#151B26] text-[#4edea3] border border-[#212B3A]">
-                    18 Entities
-                  </span>
-                  <span className="px-2 py-0.5 rounded-sm bg-[#151B26] text-[#E1E2E8] border border-[#212B3A]">
-                    17 Relations
-                  </span>
-                </div>
-              </div>
-
-              <div className="p-3.5 rounded-sm bg-[#090C10] border border-[#212B3A] hover:border-[#4edea3]/40 transition-colors">
-                <div className="text-xs font-bold text-white flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[#4edea3] text-[18px]">rule</span>
-                  Review Queue
-                </div>
-                <div className="text-[11px] text-[#87929A] mt-1 font-sans">
-                  Human-in-the-loop entity disambiguation
-                </div>
-                <div className="mt-3 text-[10px] text-[#4edea3] font-bold flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#4edea3] animate-pulse" />
-                  <span>Ambiguity resolution online</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Centroid & Telemetry Display */}
-            <div className="md:col-span-2 p-4 rounded-sm bg-[#090C10] border border-[#212B3A] flex flex-col justify-between">
-              <div>
-                <div className="flex items-center justify-between text-xs text-[#87929A] mb-3 pb-2 border-b border-[#212B3A]">
-                  <span className="font-bold text-white uppercase tracking-wider">LINK TELEMETRY &amp; CENTROID NODES</span>
-                  <span className="text-[#4edea3] font-bold">FUSION CONFIDENCE: 96.4%</span>
-                </div>
-                <div className="space-y-2 text-xs">
-                  <div className="flex items-center justify-between p-2 rounded-sm bg-[#0F141C] border border-[#212B3A]">
-                    <span className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-red-400 text-[16px]">person</span>
-                      <span className="text-white font-bold">Vikram Malhotra (Falcon)</span>
-                    </span>
-                    <span className="text-red-400 text-[10px] font-bold px-1.5 py-0.5 bg-red-500/10 border border-red-500/30">
-                      THREAT 85 // CRITICAL
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between p-2 rounded-sm bg-[#0F141C] border border-[#212B3A]">
-                    <span className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-[#4edea3] text-[16px]">credit_card</span>
-                      <span className="text-white font-bold">ACCT_APEX_SHELL ➔ ACCT_PRIYA_CORP</span>
-                    </span>
-                    <span className="text-[#4edea3] text-[10px] font-bold font-mono">₹14,20,000 INR LAYERED</span>
-                  </div>
-                  <div className="flex items-center justify-between p-2 rounded-sm bg-[#0F141C] border border-[#212B3A]">
-                    <span className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-purple-400 text-[16px]">phone_in_talk</span>
-                      <span className="text-white font-bold">Satellite Burner (+91-9820-11-2233)</span>
-                    </span>
-                    <span className="text-purple-400 text-[10px] font-bold">INTERCEPT // TWR-DEL-CP-01</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-4 mt-4 border-t border-[#212B3A] flex items-center justify-between text-xs text-[#87929A]">
-                <span className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-[#4edea3]" />
-                  <span>Neo4j Bolt Knowledge Graph Connected</span>
-                </span>
-                <span className="text-[#4edea3] hover:text-[#6ffbbe] cursor-pointer font-bold uppercase tracking-wider" onClick={handleConsoleAction}>
-                  LAUNCH FULL BOARD ➔
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Feature Capabilities Grid */}
-      <section id="features" className="py-20 px-6 lg:px-12 max-w-7xl mx-auto border-t border-[#212B3A]">
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight uppercase font-mono">
-            MISSION-CRITICAL CAPABILITIES
-          </h2>
-          <p className="text-xs sm:text-sm text-[#87929A] mt-2 font-mono">
-            Engineered for high-stakes intelligence analysts, law enforcement investigators, and forensic auditors.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 font-mono">
-          <div className="bg-[#0F141C] border border-[#212B3A] rounded-sm p-6 hover:border-[#4edea3]/50 transition-all">
-            <div className="w-10 h-10 rounded-sm bg-[#4edea3]/15 border border-[#4edea3]/40 text-[#4edea3] flex items-center justify-center mb-4">
-              <span className="material-symbols-outlined text-[20px]">account_tree</span>
-            </div>
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-2">Investigation Board</h3>
-            <p className="text-xs text-[#87929A] font-sans leading-relaxed">
-              Draggable entity cards, directional relationship splines, auto-alignment columns, and an interactive intelligence dossier with 1-click neighbor traversal.
-            </p>
-          </div>
-
-          <div className="bg-[#0F141C] border border-[#212B3A] rounded-sm p-6 hover:border-[#4edea3]/50 transition-all">
-            <div className="w-10 h-10 rounded-sm bg-[#4edea3]/15 border border-[#4edea3]/40 text-[#4edea3] flex items-center justify-center mb-4">
-              <span className="material-symbols-outlined text-[20px]">radar</span>
-            </div>
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-2">Geospatial Triangulation</h3>
-            <p className="text-xs text-[#87929A] font-sans leading-relaxed">
-              Clean, watermark-free tactical dark canvas maps with automatic Indian gazetteer coordinate resolution and cell-tower GPS triangulation.
-            </p>
-          </div>
-
-          <div className="bg-[#0F141C] border border-[#212B3A] rounded-sm p-6 hover:border-[#4edea3]/50 transition-all">
-            <div className="w-10 h-10 rounded-sm bg-[#4edea3]/15 border border-[#4edea3]/40 text-[#4edea3] flex items-center justify-center mb-4">
-              <span className="material-symbols-outlined text-[20px]">psychology</span>
-            </div>
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider mb-2">Gemini 2.5 Flash Engine</h3>
-            <p className="text-xs text-[#87929A] font-sans leading-relaxed">
-              State-of-the-art NLP extractor enforcing strict Pydantic JSON schemas to parse complex FIRs, seized chats, and witness statements with zero hallucinated entity types.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Security & Merkle Auditability */}
-      <section id="security" className="py-16 px-6 lg:px-12 max-w-7xl mx-auto border-t border-[#212B3A]">
-        <div className="bg-[#0F141C] border border-[#212B3A] rounded-sm p-8 sm:p-12 flex flex-col md:flex-row items-center justify-between gap-8 font-mono">
-          <div className="max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-sm bg-[#4edea3]/10 text-[#4edea3] border border-[#4edea3]/30 text-xs font-bold mb-4 uppercase tracking-wider">
-              <span className="material-symbols-outlined text-[16px]">verified_user</span>
-              <span>FORENSIC CHAIN OF CUSTODY</span>
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight font-sans">
-              Immutable Merkle Tree Audit Logging &amp; RBAC
-            </h2>
-            <p className="text-xs sm:text-sm text-[#87929A] mt-3 leading-relaxed font-sans">
-              Every query, evidence ingestion, entity merge, and graph export is immutably sealed with SHA-256 digests in an append-only audit trail with strict role-based access control.
-            </p>
-          </div>
-          <button
-            onClick={handleConsoleAction}
-            className="bg-[#4edea3] hover:bg-[#6ffbbe] text-[#003824] text-xs font-bold px-6 py-3.5 rounded-sm shadow-[0_0_18px_rgba(78,222,163,0.3)] transition-all cursor-pointer shrink-0 uppercase tracking-wider"
-          >
-            ENTER SECURE TERMINAL
+            Get Started
+            <span className="material-symbols-outlined text-[14px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
           </button>
         </div>
-      </section>
+      </nav>
 
-      {/* Terminal Footer removed */}
+      {/* Main Content Overlay */}
+      <main className="relative z-10 w-full overflow-hidden">
+        <HeroSection onStart={() => setShowLoginModal(true)} />
+        <ProblemSection />
+        <PipelineSection />
+        <EntityResolutionSection />
+        <HumanLoopSection />
+        <GraphRAGSection />
+        <DataFusionSection />
+        <SecuritySection />
+        <ImpactSection />
+        <ArchitectureSection />
+        <FinalCTA onStart={() => setShowLoginModal(true)} />
+      </main>
+
+      <Footer />
+
+      {/* Login Modal */}
+      {showLoginModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowLoginModal(false)}></div>
+          <div className="relative w-full max-w-md mx-auto">
+            <div className="shadow-[0_0_50px_rgba(78,222,163,0.1)] border border-[#212B3A] rounded-sm overflow-hidden bg-[#0F141C]">
+               <Login onLogin={onLogin} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
-    
-    {showLoginModal && (
-      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-        <div className="absolute inset-0 bg-black/60" onClick={() => setShowLoginModal(false)}></div>
-        <div className="relative w-full max-w-md mx-auto">
-          {/* The Login component will naturally style itself, but we ensure it takes full width */}
-          <div className="shadow-2xl border border-[#212B3A] rounded-sm overflow-hidden">
-             <Login onLogin={onLogin} />
-          </div>
-        </div>
-      </div>
-    )}
-    </>
   );
-};
+}
 
-export default LandingPage;

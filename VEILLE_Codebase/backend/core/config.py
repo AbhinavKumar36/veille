@@ -61,7 +61,7 @@ class Settings(BaseSettings):
 
     # ── Gemini AI ──────────────────────────────────────────────────────────
     GEMINI_API_KEY: str = ""
-    GEMINI_MODEL: str = "gemini-1.5-flash"
+    GEMINI_MODEL: str = "gemini-2.5-flash"
 
     # ── JWT Authentication ─────────────────────────────────────────────────
     JWT_SECRET: str = "CHANGE_ME_USE_A_LONG_RANDOM_STRING_AT_LEAST_64_CHARS"

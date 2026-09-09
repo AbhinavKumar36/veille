@@ -31,7 +31,7 @@ export default function Settings() {
     if (!isAdmin) return;
     setLoading(true);
     try {
-      const res = await api.get('/api/v1/users');
+      const res = await api.get('/users');
       setUsersList(res);
     } catch (err) {
       showToast('Failed to fetch users', 'error');
@@ -49,7 +49,7 @@ export default function Settings() {
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await api.patch('/api/v1/users/me/password', {
+      await api.patch('/users/me/password', {
         old_password: oldPassword,
         new_password: newPassword
       });
@@ -84,10 +84,10 @@ export default function Settings() {
       if (editUserMode) {
         const payload: any = { email: umEmail, role: umRole, full_name: umFullName };
         if (umPassword) payload.password = umPassword;
-        await api.patch(`/api/v1/users/${editUserMode}`, payload);
+        await api.patch(`/users/${editUserMode}`, payload);
         showToast('User updated successfully');
       } else {
-        await api.post('/api/v1/users', {
+        await api.post('/users', {
           email: umEmail,
           role: umRole,
           full_name: umFullName,
@@ -105,7 +105,7 @@ export default function Settings() {
   const handleDeleteUser = async (id: string) => {
     if (!window.confirm("Are you sure you want to delete this user?")) return;
     try {
-      await api.delete(`/api/v1/users/${id}`);
+      await api.delete(`/users/${id}`);
       showToast('User deleted successfully');
       fetchUsers();
     } catch (err: any) {
