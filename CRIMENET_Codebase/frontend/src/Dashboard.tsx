@@ -168,7 +168,7 @@ const Dashboard: React.FC = () => {
         <div>
           <div className="flex items-center space-x-2 font-mono text-xs text-primary mb-1">
             <span className="inline-block w-2 h-2 rounded-full bg-secondary animate-pulse" />
-            <span className="font-bold uppercase tracking-wider">COMMAND CENTER // EXECUTIVE INTEL FEED</span>
+            <span className="font-bold uppercase tracking-wider">COMMAND CENTER</span>
           </div>
           <h1 className="text-xl lg:text-2xl font-black tracking-tight text-on-surface uppercase">
             Operations &amp; Multi-Source Fusion Matrix

@@ -245,7 +245,7 @@ export const CaseWorkspace: React.FC = () => {
           </div>
           <div>
             <div className="text-xs font-mono font-bold tracking-wider text-primary uppercase flex items-center gap-2">
-              <span>VEILLE // INVESTIGATOR WORKSPACE</span>
+              <span>INVESTIGATOR WORKSPACE</span>
               <span className="px-1.5 py-0.2 bg-secondary/10 text-secondary border border-secondary/30 rounded text-[9px]">
                 ACTIVE BRIEFING
               </span>

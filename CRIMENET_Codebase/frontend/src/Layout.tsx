@@ -96,8 +96,8 @@ const Layout: React.FC = () => {
           className="p-4 border-b border-outline-variant flex items-center gap-3 cursor-pointer hover:bg-surface-variant/30 transition-colors"
           title="Return to VEILLE Landing Page"
         >
-          <div className="w-10 h-10 rounded bg-primary/15 flex items-center justify-center shrink-0 border border-primary/40 overflow-hidden shadow-[0_0_12px_rgba(0,229,255,0.2)]">
-            <span className="material-symbols-outlined text-[24px] text-primary">security</span>
+          <div className="w-14 h-14 flex items-center justify-center shrink-0">
+            <img src="/logo.png" alt="VEILLE" className="w-full h-full object-contain" />
           </div>
           <div>
             <h1 className="font-headline-sm text-headline-sm font-black text-primary tracking-tight">VEILLE</h1>
@@ -175,16 +175,16 @@ const Layout: React.FC = () => {
       {/* Main Workspace Area */}
       <div className="flex-1 ml-[280px] flex flex-col relative h-full bg-transparent">
         {/* TopAppBar */}
-        <header className="bg-surface-container text-primary font-headline-sm text-headline-sm font-semibold w-full h-14 flex items-center px-4 border-b border-outline-variant shadow-none sticky top-0 z-40 justify-between select-none">
-          <div className="flex items-center gap-6">
-            <div 
-              onClick={() => navigate('/')}
-              className="font-headline-md text-headline-md font-black tracking-wider text-primary flex items-center gap-2 cursor-pointer hover:opacity-85 transition-opacity"
-              title="Return to VEILLE Landing Page"
-            >
-              <span className="material-symbols-outlined text-[24px]">shield</span>
-              <span>VEILLE // INTELLIGENCE FUSION</span>
-            </div>
+        <header className="bg-surface-container text-primary font-headline-sm text-headline-sm font-semibold w-full h-14 flex items-center px-4 border-b border-outline-variant shadow-none sticky top-0 z-40 justify-between select-none relative">
+          <div></div>
+          
+          <div 
+            onClick={() => navigate('/')}
+            className="absolute left-1/2 -translate-x-1/2 font-headline-md text-headline-md font-black tracking-wider text-primary flex items-center gap-2 cursor-pointer hover:opacity-85 transition-opacity"
+            title="Return to VEILLE Landing Page"
+          >
+            <img src="/logo.png" alt="VEILLE" className="w-10 h-10 object-contain" />
+            <span>VEILLE</span>
           </div>
           
           <div className="flex items-center gap-2 relative">

@@ -233,7 +233,7 @@ export const PKIRevocation: React.FC = () => {
         <div>
           <h1 className="text-xl font-bold text-white tracking-tight flex items-center gap-2.5 font-headline-sm">
             <span className="material-symbols-outlined text-primary text-[26px]">verified_user</span>
-            VEILLE // PKI &amp; TRUST OPERATIONS CONSOLE
+            PKI &amp; TRUST OPERATIONS CONSOLE
           </h1>
           <p className="text-xs text-outline mt-1 font-mono">
             Zero-Trust Credential Lifecycle: unified certificate details, revocation lists (CRL), and cryptographic telemetry.

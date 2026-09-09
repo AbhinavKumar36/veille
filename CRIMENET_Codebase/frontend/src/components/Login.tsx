@@ -63,50 +63,21 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="min-h-screen bg-[#090C10] text-[#E1E2E8] flex flex-col justify-between relative overflow-hidden font-sans select-none antialiased">
+    <div className="bg-[#090C10] text-[#E1E2E8] flex flex-col relative overflow-hidden font-sans select-none antialiased">
       {/* Tactical Ambient Glow — Emerald / Mint (#4edea3) as in DESIGN.md */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] bg-[#4edea3]/10 rounded-full blur-[140px] pointer-events-none" />
       <div className="absolute bottom-10 right-10 w-[350px] h-[350px] bg-[#00a572]/10 rounded-full blur-[100px] pointer-events-none" />
 
       {/* Top Tactical Command Header */}
-      <header className="w-full border-b border-[#212B3A] bg-[#0F141C]/80 backdrop-blur-md px-6 py-3 flex items-center justify-between relative z-10">
-        <div className="flex items-center space-x-3.5">
-          <div className="w-8 h-8 rounded-sm bg-[#4edea3]/15 border border-[#4edea3]/40 flex items-center justify-center text-[#4edea3] shadow-[0_0_12px_rgba(78,222,163,0.25)]">
-            <span className="material-symbols-outlined text-[18px]">security</span>
-          </div>
-          <div>
-            <div className="text-xs font-mono font-bold tracking-wider text-white flex items-center gap-2">
-              VEILLE // CLINICAL INTELLIGENCE
-              <span className="text-[9px] font-mono font-semibold px-2 py-0.5 rounded-sm bg-[#4edea3]/15 text-[#4edea3] border border-[#4edea3]/30 uppercase tracking-widest">
-                v4.0 SECURE
-              </span>
-            </div>
-            <p className="text-[10px] font-mono text-[#87929A] mt-0.5">National Security &amp; Forensic Relationship Fusion</p>
-          </div>
-        </div>
 
-        <div className="flex items-center space-x-3 font-mono text-xs text-[#87929A]">
-          <Link
-            to="/"
-            className="flex items-center gap-1.5 px-3 py-1 bg-[#151B26] hover:bg-[#1D2024] hover:text-[#4edea3] text-[#E1E2E8] border border-[#212B3A] hover:border-[#4edea3]/50 transition-colors text-[11px] font-bold rounded-sm cursor-pointer"
-          >
-            <span className="material-symbols-outlined text-[14px]">visibility</span>
-            <span>PUBLIC OVERVIEW</span>
-          </Link>
-          <div className="hidden sm:flex items-center gap-2 text-[#4edea3] bg-[#4edea3]/10 border border-[#4edea3]/30 px-2.5 py-1 text-[10px] font-bold rounded-sm tracking-wider uppercase">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#4edea3] animate-ping" />
-            <span>SYSTEM ACTIVE</span>
-          </div>
-        </div>
-      </header>
 
       {/* Main Authentication Terminal Card */}
-      <main className="flex-1 flex items-center justify-center p-4 sm:p-6 relative z-10">
+      <main className="flex items-center justify-center p-6 relative z-10">
         <div className="w-full max-w-md bg-[#0F141C]/95 border border-[#212B3A] backdrop-blur-2xl shadow-[0_12px_40px_rgba(0,0,0,0.8)] p-6 sm:p-8 rounded-sm">
           {/* Card Title & Icon */}
           <div className="text-center mb-6">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-sm bg-[#4edea3]/15 border border-[#4edea3]/40 text-[#4edea3] mb-3 shadow-[0_0_20px_rgba(78,222,163,0.2)]">
-              <span className="material-symbols-outlined text-[24px]">vpn_key</span>
+            <div className="inline-flex items-center justify-center w-28 h-28 mb-4">
+              <img src="/logo.png" alt="VEILLE" className="w-full h-full object-contain" />
             </div>
             <h2 className="text-lg font-bold text-white tracking-wider uppercase font-mono">
               OPERATOR AUTHENTICATION
@@ -223,14 +194,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
             </button>
           </form>
         </div>
-      </main>
-
-      {/* Terminal Footer */}
-      <footer className="w-full border-t border-[#212B3A] bg-[#0F141C]/90 px-6 py-2.5 text-center text-[10px] font-mono text-[#87929A] relative z-10 flex flex-wrap items-center justify-between gap-2">
-        <span>© 2026 VEILLE INTELLIGENCE PLATFORM • RESTRICTED ACCESS ONLY</span>
-        <span className="text-[#4edea3]">SECURE CHANNEL // 256-BIT TLS ENCRYPTED</span>
-      </footer>
-    </div>
+      </main>    </div>
   );
 };
 

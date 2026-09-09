@@ -254,7 +254,7 @@ export const AIAssistant: React.FC = () => {
               <span className="material-symbols-outlined text-[18px]">smart_toy</span>
             </div>
             <span className="font-mono text-xs text-primary font-bold tracking-wider">
-              VEILLE AI ENGINE // GRAPH-GROUNDED SYNTHESIS (GRAPHRAG)
+              VEILLE AI ENGINE
             </span>
           </div>
 

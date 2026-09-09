@@ -116,7 +116,7 @@ const ReviewQueue: React.FC = () => {
         <div className="flex items-center space-x-3">
           <span className="text-xs font-semibold tracking-wider text-primary uppercase flex items-center gap-1.5">
             <span className="material-symbols-outlined text-primary text-[18px]">rule</span>
-            VEILLE // ENTITY DISAMBIGUATION REVIEW QUEUE
+            ENTITY DISAMBIGUATION REVIEW QUEUE
           </span>
           <span className="text-outline-variant">|</span>
           <span className="text-[10px] text-outline">PENDING CONFLICTS: {tasks.length}</span>

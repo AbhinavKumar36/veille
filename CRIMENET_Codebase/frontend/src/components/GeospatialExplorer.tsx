@@ -260,7 +260,7 @@ export const GeospatialExplorer: React.FC = () => {
         <div className="flex items-center space-x-3">
           <div className="flex items-center gap-2 text-primary font-bold">
             <span className="material-symbols-outlined text-primary text-[20px]">explore</span>
-            <span>VEILLE // GEOSPATIAL &amp; CELL TOWER RADAR</span>
+            <span>GEOSPATIAL &amp; CELL TOWER RADAR</span>
           </div>
           <div className="h-4 w-px bg-outline-variant hidden sm:block" />
 

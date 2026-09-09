@@ -26,42 +26,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ isAuthenticated, onLog
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[480px] bg-[#4edea3]/10 rounded-full blur-[150px] pointer-events-none" />
       <div className="absolute top-[850px] right-1/4 w-[600px] h-[400px] bg-[#00a572]/10 rounded-full blur-[140px] pointer-events-none" />
 
-      {/* Top Tactical Command Header */}
-      <header className="w-full border-b border-[#212B3A] bg-[#0F141C]/90 backdrop-blur-xl sticky top-0 z-50 px-6 lg:px-12 h-16 flex items-center justify-between font-mono">
-        <div className="flex items-center gap-3 cursor-pointer" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-          <div className="w-9 h-9 rounded-sm bg-[#4edea3]/15 border border-[#4edea3]/40 flex items-center justify-center text-[#4edea3] shadow-[0_0_15px_rgba(78,222,163,0.3)]">
-            <span className="material-symbols-outlined text-[20px]">account_tree</span>
-          </div>
-          <div>
-            <div className="font-bold text-sm tracking-wider text-white flex items-center gap-2">
-              VEILLE
-              <span className="text-[9px] font-bold px-2 py-0.5 rounded-sm bg-[#4edea3]/15 text-[#4edea3] border border-[#4edea3]/30 tracking-widest uppercase">
-                v4.0 PROD
-              </span>
-            </div>
-            <p className="text-[10px] text-[#87929A]">Clinical &amp; Financial Intelligence Fusion</p>
-          </div>
-        </div>
-
-        {/* Tactical Navigation Links */}
-        <nav className="hidden md:flex items-center gap-8 text-xs text-[#87929A]">
-          <a href="#features" className="hover:text-[#4edea3] transition-colors tracking-wider uppercase font-semibold">CAPABILITIES</a>
-          <a href="#graph" className="hover:text-[#4edea3] transition-colors tracking-wider uppercase font-semibold">INVESTIGATION BOARD</a>
-          <a href="#pipeline" className="hover:text-[#4edea3] transition-colors tracking-wider uppercase font-semibold">INGESTION ENGINE</a>
-          <a href="#security" className="hover:text-[#4edea3] transition-colors tracking-wider uppercase font-semibold">MERKLE SECURITY</a>
-        </nav>
-
-        {/* Action Button */}
-        <div className="flex items-center gap-3">
-          <button
-            onClick={handleConsoleAction}
-            className="bg-[#4edea3] hover:bg-[#6ffbbe] text-[#003824] text-xs font-bold px-4 py-2 rounded-sm shadow-[0_0_15px_rgba(78,222,163,0.3)] hover:shadow-[0_0_22px_rgba(111,251,190,0.45)] transition-all flex items-center gap-2 cursor-pointer active:scale-95 uppercase tracking-wider"
-          >
-            <span>{isAuthenticated ? 'OPEN CONSOLE' : 'LOGIN'}</span>
-            <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-          </button>
-        </div>
-      </header>
+      {/* Top Tactical Command Header removed */}
 
       {/* Hero Section */}
       <section className="relative pt-16 pb-20 px-6 lg:px-12 max-w-7xl mx-auto text-center">
@@ -295,40 +260,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({ isAuthenticated, onLog
         </div>
       </section>
 
-      {/* Terminal Footer */}
-      <footer className="w-full border-t border-[#212B3A] bg-[#090C10] px-6 lg:px-12 py-8 text-xs font-mono text-[#87929A]">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-white">VEILLE v4.0</span>
-            <span>•</span>
-            <span>Mission-Critical Crime &amp; Intelligence Fusion Platform</span>
-          </div>
-          <div className="flex items-center gap-6 text-[#87929A]">
-            <button onClick={handleConsoleAction} className="hover:text-[#4edea3] transition-colors cursor-pointer uppercase">
-              OPERATOR SIGN IN
-            </button>
-            <a href="#features" className="hover:text-[#4edea3] transition-colors uppercase">
-              CAPABILITIES
-            </a>
-            <span className="text-[#4edea3]">RESTRICTED OPERATIONAL DISPLAY</span>
-          </div>
-        </div>
-      </footer>
+      {/* Terminal Footer removed */}
     </div>
     
     {showLoginModal && (
       <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
         <div className="absolute inset-0 bg-black/60" onClick={() => setShowLoginModal(false)}></div>
         <div className="relative w-full max-w-md mx-auto">
-          {/* Close Button */}
-          <button 
-            onClick={() => setShowLoginModal(false)}
-            className="absolute -top-10 right-0 text-[#87929A] hover:text-white cursor-pointer z-[101]"
-          >
-            <span className="material-symbols-outlined">close</span>
-          </button>
           {/* The Login component will naturally style itself, but we ensure it takes full width */}
-          <div className="rounded-xl overflow-hidden shadow-2xl border border-[#212B3A]">
+          <div className="shadow-2xl border border-[#212B3A] rounded-sm overflow-hidden">
              <Login onLogin={onLogin} />
           </div>
         </div>
