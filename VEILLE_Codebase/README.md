@@ -191,7 +191,7 @@ python datasets/run_adapters.py
 python ml/evaluation/benchmark_suite.py
 ```
 
-Benchmark output and confusion matrices are published to `../CRIMENET_Documentation/BENCHMARK_REPORT.md`.
+Benchmark output and confusion matrices are published to `../CRIMENET_Docs/BENCHMARK_REPORT.md`.
 
 ---
 
