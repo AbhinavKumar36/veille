@@ -4,10 +4,7 @@ import sys
 from pathlib import Path
 from typing import Optional
 
-# Ensure venv/Scripts is in PATH so Whisper can find ffmpeg.exe
-venv_scripts_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', 'venv', 'Scripts'))
-if venv_scripts_path not in os.environ.get('PATH', ''):
-    os.environ['PATH'] = venv_scripts_path + os.pathsep + os.environ.get('PATH', '')
+
 
 logger = logging.getLogger('veille.transcriber')
 
@@ -84,4 +81,5 @@ def transcribe_audio(audio_path: str) -> Optional[str]:
     except Exception as e:
         logger.error(f"Whisper transcription failed for {audio_path}: {type(e).__name__}: {e}")
         return None
+
 
