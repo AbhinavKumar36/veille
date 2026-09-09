@@ -50,3 +50,4 @@ opentelemetry-instrumentation-sqlalchemy==0.43b0
 opentelemetry-instrumentation-redis==0.43b0
 opentelemetry-instrumentation-celery==0.43b0
 opentelemetry-exporter-otlp==1.22.0
+openai-whisper>=20231117

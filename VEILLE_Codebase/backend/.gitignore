@@ -1,3 +1,11 @@
 
 ffmpeg.exe
 ffprobe.exe
+
+# Temp uploads and evidence data
+tmp/
+tmp/uploads/
+*.m4a
+*.wav
+*.mp3
+*.transcript.txt

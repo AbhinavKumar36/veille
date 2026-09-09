@@ -1,4 +1,4 @@
-import logging
+﻿import logging
 import os
 import sys
 from pathlib import Path
@@ -84,3 +84,4 @@ def transcribe_audio(audio_path: str) -> Optional[str]:
     except Exception as e:
         logger.error(f"Whisper transcription failed for {audio_path}: {type(e).__name__}: {e}")
         return None
+

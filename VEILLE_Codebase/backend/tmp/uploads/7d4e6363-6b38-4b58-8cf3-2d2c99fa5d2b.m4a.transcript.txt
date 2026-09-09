@@ -1,1 +1,0 @@
-What is blockchain? Blockchain is a shared digital ledger that records information in a way that is very difficult to alter or delete without detection.
