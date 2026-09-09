@@ -1,0 +1,26 @@
+FIRST INFORMATION REPORT (FIR #CR-2026/0882)
+POLICE STATION: SPECIAL CELL, CRIME BRANCH, MUMBAI
+DATE OF REGISTRATION: 2026-09-02
+SECTIONS OF LAW: IPC 120B (CRIMINAL CONSPIRACY), IPC 420 (CHEATING), IPC 384 (EXTORTION), INFORMATION TECHNOLOGY ACT SEC 66D, PREVENTION OF MONEY LAUNDERING ACT (PMLA) SEC 3 & 4
+
+COMPLAINANT: INSPECTOR ARJUN DESHMUKH, SPECIAL INTELLIGENCE UNIT
+ACCUSED PERSONS:
+1. VIKRAM MEHTA @ "VICKY HAWALA" (DOB: 1984-05-12, NATIONALITY: INDIAN, PASSPORT: M9021841)
+2. ELENA ROSTOVA @ "MADAM RUSSIAN" (DOB: 1988-11-20, NATIONALITY: RUSSIAN, PASSPORT: RUS-77192804)
+3. TARIQ MANSOOR @ "TARIQ NAVI" (DOB: 1981-03-14, NATIONALITY: INDIAN, AADHAAR: 9948-1029-3810)
+4. SURESH SHARMA @ "SHARMAJI" (DOB: 1976-09-08, NATIONALITY: INDIAN)
+
+SUMMARY OF INFORMATION & INVESTIGATIVE INTELLIGENCE:
+1. Intelligence received from central agencies indicates that primary operative Vikram Mehta (Contact: +91-9820199482) is coordinating illicit financial conduits and receiving overseas consignments arriving at Mumbai Port Trust (Terminal 4, Latitude: 18.9438, Longitude: 72.8541).
+
+2. On 2026-09-01 at 19:30 hours, operative Vikram Mehta was physically surveilled meeting foreign national Elena Rostova at Hotel Oberoi Trident, Nariman Point (Latitude: 18.9270, Longitude: 72.8228). Elena Rostova entered using luxury vehicle Mercedes Benz E-Class bearing registration plate MH01-BK-9901.
+
+3. Elena Rostova acts as the beneficial director for shell front entity Zenith Maritime Logistics Pvt Ltd, having its registered corporate office at G-Block, Bandra Kurla Complex (BKC, Latitude: 19.0657, Longitude: 72.8685). Banking surveillance reveals that Zenith Maritime Logistics holds corporate current account ICICI-9948102394, which receives layered wire transfers originating from offshore entity Orion Global Holdings in Dubai.
+
+4. On 2026-09-02, Elena Rostova orchestrated a transfer of INR 45,00,000 via Hawala coordinator Tariq Mansoor (Mobile: +91-9821048192, Bank Account: HDFC-0091823901). Tariq Mansoor operates an underground cash clearing hub from Safehouse Sector 12, Navi Mumbai (Latitude: 19.0330, Longitude: 73.0297).
+
+5. Intercepted telecom records indicate that Tariq Mansoor maintains regular communication with Suresh Sharma (Contact: +91-9988776655), who oversees vehicle fleet logistics using Toyota Fortuner bearing registration number MH04-EX-4421. Suresh Sharma acts as the courier transporting physical satcom decryption hardware from the port terminal to the Navi Mumbai safehouse.
+
+6. Further technical surveillance confirms that Vikram Mehta transferred INR 28,00,000 to Elena Rostova's personal offshore account HSBC-4481029381. On 2026-09-02 at 15:45 hours, a cash hawala courier drop of INR 15,00,000 was executed by Tariq Mansoor directly to Vikram Mehta at the BKC corporate location.
+
+7. All accused persons are acting in active criminal conspiracy under IPC 120B to conceal proceeds of crime and transport encrypted communication equipment into Indian territorial boundaries without customs declaration.
